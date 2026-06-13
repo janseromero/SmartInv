@@ -3,7 +3,7 @@
 # CV1.E2 — Design Tokens & Tailwind Wiring
 
 **CV:** [CV1 — Foundations](../index.md)
-**Status:** ⚪ Planned
+**Status:** ✅ Done
 **Depends on:** CV1.E1
 **Prerequisite for:** CV1.E3, CV1.E8
 
@@ -21,20 +21,33 @@ This is the contract that makes the future migration to a shared design system (
 
 | Code | Story | Status |
 |------|-------|--------|
-| CV1.E2.S1 | Define design tokens in `@smartinv/tokens` from the HTML mock (colors, spacing, typography, radii, shadows) | 📥 Backlog |
-| CV1.E2.S2 | Wire `apps/web/tailwind.config.ts` to read from `@smartinv/tokens` | 📥 Backlog |
-| CV1.E2.S3 | Add Biome / Stylelint rule banning raw `#hex` literals in `apps/web` and `packages/ui-web` | 📥 Backlog |
-| CV1.E2.S4 | Add token export for "violet = AI" semantic ([AGENTS.md non-negotiable #8](../../../../AGENTS.md#architectural-non-negotiables)) | 📥 Backlog |
-| CV1.E2.S5 | Document token usage in `packages/tokens/README.md` | 📥 Backlog |
+| CV1.E2.S1 | Define design tokens in `@smartinv/tokens` from the HTML mock (colors, spacing, typography, radii, shadows) | ✅ Done |
+| CV1.E2.S2 | Wire `apps/web/tailwind.config.ts` to read from `@smartinv/tokens` | ✅ Done |
+| CV1.E2.S3 | Add no-raw-hex scanner banning `#hex` literals in `apps/web` and `packages/ui-web` (custom Node script, CI-wired) | ✅ Done |
+| CV1.E2.S4 | Add token export for "violet = AI" semantic ([AGENTS.md non-negotiable #8](../../../../AGENTS.md#architectural-non-negotiables)) | ✅ Done |
+| CV1.E2.S5 | Document token usage in `packages/tokens/README.md` | ✅ Done |
 
 ---
 
 ## Done Condition
 
-- Every color, spacing, radius, and font family used by the web app comes from `@smartinv/tokens`.
-- No file in `apps/web/` or `packages/ui-web/` contains a raw hex code; CI fails on regression.
-- The violet AI-content semantic is encoded as a named token, not a color value.
-- The token package builds and is consumed by the web app + Storybook.
+All criteria met:
+
+- ✅ Every color, spacing, radius, and font family used by the web app comes from `@smartinv/tokens`.
+- ✅ No file in `apps/web/` or `packages/ui-web/` contains a raw hex code; CI fails on regression (verified by planting and removing a violation).
+- ✅ The violet AI-content semantic is encoded as a named token (`semantic.aiContent` + Tailwind `bg-ai`, `text-ai`, `bg-ai-soft`).
+- ✅ The token package builds, type-checks strictly, and is consumed by the web app.
+
+Storybook consumption lands in CV1.E8 (component contracts), where the
+tokens earn their place in primitives like `KpiCard`, `EvidenceStrip`,
+and `Badge`.
+
+---
+
+## Delivered in
+
+- `9d1bcea` feat(tokens,web): populate @smartinv/tokens and wire Tailwind
+- `b2dfd69` ci(lint): add no-raw-hex scanner banning hex codes in components
 
 ---
 
