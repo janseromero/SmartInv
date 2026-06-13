@@ -46,6 +46,32 @@ For the target end-state: [docs/architecture/full-architecture.md](docs/architec
 
 ---
 
+## MVP scope — build this, defer that
+
+Stay inside this scope. If a task seems to require anything under **Deferred**,
+do not introduce it silently — flag it and ask.
+
+**Phase 0 (first):** pilot data-quality assessment before any feature.
+
+**In scope (MVP):**
+1. Inventory health & visibility (excess, obsolete, duplicate, missing data, stockout risk) + duplicate detection.
+2. Explainable min/max & reorder recommendations, with confidence and an approval queue.
+3. Critical-spare & risk dashboard (links inventory to downtime/operational impact).
+4. "Ask SmartInv": read-only Q&A over governed metrics, with evidence and source links. No dashboard-builder, no write actions.
+
+**Deferred (do NOT build in the MVP — flag if a task seems to need it):**
+- Full multi-agent orchestration (in the MVP, "Ask SmartInv" is ONE governed tool, not 7 agents).
+- Native mobile app (web-only for now; contracts pattern keeps the door open).
+- Streaming / event-driven / Kafka (batch is enough).
+- Lakehouse and feature store.
+- Deep learning / RL / GNN.
+- Temporal (approval queue stays a Postgres state machine until flows branch).
+- RFQ generation, price forecasting, SOC 2 certification (target readiness, not the audit).
+- Multi-tenant operations & hardening: tenant onboarding flows, cross-tenant admin, isolation test suites.
+  NOTE: tenant-aware *foundations* are NOT deferred — see non-negotiable #5.
+
+---
+
 ## Conventions
 
 - **Python:** `uv` for dependency management; `ruff` + `mypy`; tests via `pytest`.
@@ -67,6 +93,7 @@ For the target end-state: [docs/architecture/full-architecture.md](docs/architec
 5. **Tenant ID lives in the JWT, in every query, in every log line.** RLS is the safety net, not the primary defense.
 6. **Models, prompts, tools are versioned.** Reproducibility is non-negotiable.
 7. **No raw hex colors in components.** Tokens only.
+8. **Violet means AI-generated.** Any AI-produced content is visually marked as such. Green/amber/red are reserved for ok/warning/critical states.
 
 ---
 
@@ -108,13 +135,32 @@ Unit tests are **required** in every PR introducing or changing deterministic co
 
 ---
 
+## Where NOT to run on autopilot
+
+Fast lane (high autonomy, verify via the checks): UI, components, CRUD, screens,
+reports, local refactors. Generate, run the checks, move on.
+
+Slow lane (human reviews the actual diff — not just the plan):
+- **Security:** auth, RBAC, secret handling, permission context.
+- **Governance invariants** (section above): never relax explanation, mutate a
+  recommendation record, or let the LLM read raw rows.
+- **Writes to source systems (ERP/EAM):** irreversible at the customer. Always via
+  the Workflow & Approval Service; the writing code gets reviewed.
+- **DB schema:** only via Alembic migration, never an ad-hoc ALTER.
+- **Dependencies & licenses:** no AGPL/copyleft additions without approval
+  (the MinIO/Garage lesson). A dependency choice is an architecture choice — ask.
+
+---  
+
 ## When you make a change
 
 1. Find or create the task in [`docs/project/roadmap.md`](docs/project/roadmap.md).
 2. Slice the work **vertically** through the layers it touches.
-3. Write tests (or evals) first.
-4. Apply the type-specific Definition of Done.
-5. Update docs in the same PR if the change is architectural.
-6. Open a small PR with a clear "why" in the description.
+3. Propose the plan first (files touched, approach) and get it approved — reviewing a plan is cheap, reviewing a 600-line diff is not.
+4. Write tests (or evals) first.
+5. Apply the type-specific Definition of Done.
+6. Update docs in the same PR if the change is architectural.
+7. Open a small PR with a clear "why" in the description.
+
 
 That is the contract.
