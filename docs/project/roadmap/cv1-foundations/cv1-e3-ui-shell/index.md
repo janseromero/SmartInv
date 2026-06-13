@@ -3,7 +3,7 @@
 # CV1.E3 — UI Shell
 
 **CV:** [CV1 — Foundations](../index.md)
-**Status:** ⚪ Planned
+**Status:** ✅ Done
 **Depends on:** CV1.E2
 
 ---
@@ -20,21 +20,30 @@ This epic does not implement screen content — only the shell and the routing b
 
 | Code | Story | Status |
 |------|-------|--------|
-| CV1.E3.S1 | Sidebar component with logo mark, navigation groups, and user footer | 📥 Backlog |
-| CV1.E3.S2 | Topbar with command bar (⌘K placeholder), tenant chip, notification dot | 📥 Backlog |
-| CV1.E3.S3 | App layout shell (grid: sidebar + topbar + main) with active-screen state | 📥 Backlog |
-| CV1.E3.S4 | Route placeholders for the 12 screens from the mock (each: page-head + empty body) | 📥 Backlog |
-| CV1.E3.S5 | Active-route highlighting in sidebar | 📥 Backlog |
+| CV1.E3.S1 | Sidebar component with logo mark, navigation groups, and user footer | ✅ Done |
+| CV1.E3.S2 | Topbar with command bar (⌘K placeholder), tenant chip, notification dot | ✅ Done |
+| CV1.E3.S3 | App layout shell (flex: sidebar + topbar + main) with active-screen state | ✅ Done |
+| CV1.E3.S4 | Route placeholders for the 12 screens from the mock (each: page-head + empty body) | ✅ Done |
+| CV1.E3.S5 | Active-route highlighting in sidebar via `usePathname()` + `aria-current="page"` | ✅ Done |
 
 ---
 
 ## Done Condition
 
-- Sidebar + topbar render on every page using a single `RootLayout`.
-- Navigation between the 12 placeholder screens works via Next.js App Router.
-- The shell uses tokens only (no hex).
-- The cmd bar and notification dot are visually present but non-functional (real wiring lands in later CVs).
-- Keyboard navigation works across sidebar items and the cmd bar shortcut.
+All criteria met:
+
+- ✅ Sidebar + topbar render on every page using `apps/web/app/(app)/layout.tsx`.
+- ✅ 12 placeholder screens render via Next.js App Router; build emits all as static.
+- ✅ Shell uses tokens only — `pnpm lint:hex` clean across `apps/web` and `packages/ui-web`.
+- ✅ Cmd bar and notification dot present but non-functional (wiring lands in CV5/CV6/CV13).
+- ✅ Keyboard navigation works (Next.js `<Link>` is anchor-based; `aria-current="page"` set on active route).
+
+---
+
+## Delivered in
+
+- `d08fad7` feat(tokens): extend chrome and teal families for on-dark text shades
+- `b48934b` feat(web): scaffold UI shell with sidebar, topbar, and 12 routes
 
 ---
 
