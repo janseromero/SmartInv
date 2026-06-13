@@ -21,10 +21,10 @@ The promise once activated:
 
 | Code | Epic | User-visible outcome | Status |
 |------|------|----------------------|--------|
-| CV12.E1 | Cross-Platform Design System | Move the design tokens from CSS variables to a shared package consumed by Tamagui (web + native) | 🔵 Future |
-| CV12.E2 | React Native App (Expo) | Expo app that reuses `@smartinv/ui-contracts` and the new shared `ui-native` package | 🔵 Future |
-| CV12.E3 | Offline & Sync | WatermelonDB (or equivalent) offline cache for inventory lookups + sync on reconnect | 🔵 Future |
-| CV12.E4 | Push Notifications & Field Tools | Expo Notifications, barcode/QR via Expo Camera, biometric unlock | 🔵 Future |
+| [CV12.E1](cv12-e1-cross-platform-design-system/index.md) | Cross-Platform Design System | Move the design tokens from CSS variables to a shared package consumed by Tamagui (web + native) | 🔵 Future |
+| [CV12.E2](cv12-e2-react-native-app/index.md) | React Native App (Expo) | Expo app that reuses `@smartinv/ui-contracts` and the new shared `ui-native` package | 🔵 Future |
+| [CV12.E3](cv12-e3-offline-sync/index.md) | Offline & Sync | WatermelonDB (or equivalent) offline cache for inventory lookups + sync on reconnect | 🔵 Future |
+| [CV12.E4](cv12-e4-push-notifications-field-tools/index.md) | Push Notifications & Field Tools | Expo Notifications, barcode/QR via Expo Camera, biometric unlock | 🔵 Future |
 
 ---
 

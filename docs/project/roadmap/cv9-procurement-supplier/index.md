@@ -21,11 +21,11 @@ The promise once activated:
 
 | Code | Epic | User-visible outcome | Status |
 |------|------|----------------------|--------|
-| CV9.E1 | Late-PO Risk Prediction | Calibrated probability per open PO with reason codes | 🔵 Future |
-| CV9.E2 | Supplier Scorecards | Rolling 12-month scorecards with lead-time adherence, price trend, late deliveries, emergency buys | 🔵 Future |
-| CV9.E3 | Procurement UI | KPI cards, open-POs table with late-risk meters, supplier scorecards table | 🔵 Future |
-| CV9.E4 | Constrained RFQ Drafting (LLM) | LLM drafts RFQs from governed price history and supplier registry, never inventing values | 🔵 Future |
-| CV9.E5 | Requisition Workflow | "Create requisition" routed through Workflow & Approval ([CV6](../cv6-workflow-approval/index.md)) | 🔵 Future |
+| [CV9.E1](cv9-e1-late-po-risk/index.md) | Late-PO Risk Prediction | Calibrated probability per open PO with reason codes | 🔵 Future |
+| [CV9.E2](cv9-e2-supplier-scorecards/index.md) | Supplier Scorecards | Rolling 12-month scorecards with lead-time adherence, price trend, late deliveries, emergency buys | 🔵 Future |
+| [CV9.E3](cv9-e3-procurement-ui/index.md) | Procurement UI | KPI cards, open-POs table with late-risk meters, supplier scorecards table | 🔵 Future |
+| [CV9.E4](cv9-e4-rfq-drafting/index.md) | Constrained RFQ Drafting (LLM) | LLM drafts RFQs from governed price history and supplier registry, never inventing values | 🔵 Future |
+| [CV9.E5](cv9-e5-requisition-workflow/index.md) | Requisition Workflow | "Create requisition" routed through Workflow & Approval ([CV6](../cv6-workflow-approval/index.md)) | 🔵 Future |
 
 ---
 

@@ -21,9 +21,9 @@ The promise once activated:
 
 | Code | Epic | User-visible outcome | Status |
 |------|------|----------------------|--------|
-| CV14.E1 | Probabilistic Deep Forecasting | Temporal Fusion Transformer / DeepAR / N-BEATS deployed for items where data supports it; A/B against baseline | 🔵 Future |
-| CV14.E2 | Risk GNN (Asset Graph) | Graph neural network over the item × asset × supplier × work-order graph; A/B against deterministic risk scoring | 🔵 Future |
-| CV14.E3 | Reinforcement Learning Exploration | Bounded RL exploration for inventory policies in simulation; never directly applied to production without human approval | 🔵 Future |
+| [CV14.E1](cv14-e1-probabilistic-deep-forecasting/index.md) | Probabilistic Deep Forecasting | Temporal Fusion Transformer / DeepAR / N-BEATS deployed for items where data supports it; A/B against baseline | 🔵 Future |
+| [CV14.E2](cv14-e2-risk-gnn/index.md) | Risk GNN (Asset Graph) | Graph neural network over the item × asset × supplier × work-order graph; A/B against deterministic risk scoring | 🔵 Future |
+| [CV14.E3](cv14-e3-rl-exploration/index.md) | Reinforcement Learning Exploration | Bounded RL exploration for inventory policies in simulation; never directly applied to production without human approval | 🔵 Future |
 
 ---
 

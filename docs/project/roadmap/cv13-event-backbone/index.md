@@ -21,10 +21,10 @@ The promise once activated:
 
 | Code | Epic | User-visible outcome | Status |
 |------|------|----------------------|--------|
-| CV13.E1 | Event Broker (Kafka or NATS) | Schema-registered topics for source events, internal events, agent triggers, and audit | 🔵 Future |
-| CV13.E2 | CDC from Source Systems | Debezium for SAP/Oracle databases; Maximo MIF webhooks for events | 🔵 Future |
-| CV13.E3 | Event-Driven Agent Triggers | Specific events activate specific agents under defined rules | 🔵 Future |
-| CV13.E4 | Alert Center UI | Prioritized alert center page with severity, business impact, source event lineage | 🔵 Future |
+| [CV13.E1](cv13-e1-event-broker/index.md) | Event Broker (Kafka or NATS) | Schema-registered topics for source events, internal events, agent triggers, and audit | 🔵 Future |
+| [CV13.E2](cv13-e2-cdc-source-systems/index.md) | CDC from Source Systems | Debezium for SAP/Oracle databases; Maximo MIF webhooks for events | 🔵 Future |
+| [CV13.E3](cv13-e3-event-driven-agent-triggers/index.md) | Event-Driven Agent Triggers | Specific events activate specific agents under defined rules | 🔵 Future |
+| [CV13.E4](cv13-e4-alert-center-ui/index.md) | Alert Center UI | Prioritized alert center page with severity, business impact, source event lineage | 🔵 Future |
 
 ---
 

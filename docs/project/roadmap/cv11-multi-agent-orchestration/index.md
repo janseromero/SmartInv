@@ -21,10 +21,10 @@ The promise once activated:
 
 | Code | Epic | User-visible outcome | Status |
 |------|------|----------------------|--------|
-| CV11.E1 | Agent Orchestrator | LangGraph state machine with PostgresSaver checkpointing, intent routing, conflict resolution | 🔵 Future |
-| CV11.E2 | Specialist Agents | Inventory Health Agent, Risk Agent, Optimization Agent (then Procurement, Master Data, Narrative) as subgraphs | 🔵 Future |
-| CV11.E3 | Orchestration Trace UI | Live trace of agent steps, tool calls, evidence, and confidence — surfaced on the Agent Console | 🔵 Future |
-| CV11.E4 | Agent Eval Framework | Per-agent eval suites for tool-use correctness, faithfulness, and grounding ([ADR-014](../../decisions.md#adr-014--eval-driven-development-for-ai-features)) | 🔵 Future |
+| [CV11.E1](cv11-e1-agent-orchestrator/index.md) | Agent Orchestrator | LangGraph state machine with PostgresSaver checkpointing, intent routing, conflict resolution | 🔵 Future |
+| [CV11.E2](cv11-e2-specialist-agents/index.md) | Specialist Agents | Inventory Health Agent, Risk Agent, Optimization Agent (then Procurement, Master Data, Narrative) as subgraphs | 🔵 Future |
+| [CV11.E3](cv11-e3-orchestration-trace-ui/index.md) | Orchestration Trace UI | Live trace of agent steps, tool calls, evidence, and confidence — surfaced on the Agent Console | 🔵 Future |
+| [CV11.E4](cv11-e4-agent-eval-framework/index.md) | Agent Eval Framework | Per-agent eval suites for tool-use correctness, faithfulness, and grounding ([ADR-014](../../decisions.md#adr-014--eval-driven-development-for-ai-features)) | 🔵 Future |
 
 ---
 

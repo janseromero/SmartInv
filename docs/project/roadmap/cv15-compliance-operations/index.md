@@ -23,10 +23,10 @@ The promise once activated:
 
 | Code | Epic | User-visible outcome | Status |
 |------|------|----------------------|--------|
-| CV15.E1 | SOC 2 Readiness | Controls catalog mapped to SmartInv; readiness audit scoped; evidence collection automated | 🔵 Future |
-| CV15.E2 | Tenant Operations | Tenant onboarding, suspension, deletion, and data export as documented operations procedures with audit | 🔵 Future |
-| CV15.E3 | Cross-Tenant Admin Console | Internal-only admin surface to inspect tenants, audit access, and support customers with full audit trail | 🔵 Future |
-| CV15.E4 | Isolation Test Suites | Continuously running tests that assert no cross-tenant data leakage at the API, DB, queue, and storage layers | 🔵 Future |
+| [CV15.E1](cv15-e1-soc2-readiness/index.md) | SOC 2 Readiness | Controls catalog mapped to SmartInv; readiness audit scoped; evidence collection automated | 🔵 Future |
+| [CV15.E2](cv15-e2-tenant-operations/index.md) | Tenant Operations | Tenant onboarding, suspension, deletion, and data export as documented operations procedures with audit | 🔵 Future |
+| [CV15.E3](cv15-e3-cross-tenant-admin-console/index.md) | Cross-Tenant Admin Console | Internal-only admin surface to inspect tenants, audit access, and support customers with full audit trail | 🔵 Future |
+| [CV15.E4](cv15-e4-isolation-test-suites/index.md) | Isolation Test Suites | Continuously running tests that assert no cross-tenant data leakage at the API, DB, queue, and storage layers | 🔵 Future |
 
 ---
 

@@ -23,11 +23,11 @@ CV10 is the cleanest first multi-agent use case — narratives are pull-from-gov
 
 | Code | Epic | User-visible outcome | Status |
 |------|------|----------------------|--------|
-| CV10.E1 | Narrative Agent | Constrained-generation LLM that composes paragraphs from a pre-computed metric set with refusal on missing inputs | 🔵 Future |
-| CV10.E2 | Template Registry | Versioned templates: executive brief, plant review, planner worklist, procurement review | 🔵 Future |
-| CV10.E3 | Reports UI & Preview | Template gallery, preview screen, schedule controls | 🔵 Future |
-| CV10.E4 | PDF / PowerPoint Export | Board-ready PDF and PPTX via Playwright / `python-pptx` | 🔵 Future |
-| CV10.E5 | Scheduled Deliveries | Cron-driven generation + email / webhook delivery | 🔵 Future |
+| [CV10.E1](cv10-e1-narrative-agent/index.md) | Narrative Agent | Constrained-generation LLM that composes paragraphs from a pre-computed metric set with refusal on missing inputs | 🔵 Future |
+| [CV10.E2](cv10-e2-template-registry/index.md) | Template Registry | Versioned templates: executive brief, plant review, planner worklist, procurement review | 🔵 Future |
+| [CV10.E3](cv10-e3-reports-ui-preview/index.md) | Reports UI & Preview | Template gallery, preview screen, schedule controls | 🔵 Future |
+| [CV10.E4](cv10-e4-export-pdf-pptx/index.md) | PDF / PowerPoint Export | Board-ready PDF and PPTX via Playwright / `python-pptx` | 🔵 Future |
+| [CV10.E5](cv10-e5-scheduled-deliveries/index.md) | Scheduled Deliveries | Cron-driven generation + email / webhook delivery | 🔵 Future |
 
 ---
 
