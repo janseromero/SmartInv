@@ -7,8 +7,8 @@ requires-python = ">=3.12"
 [tool.uv.workspace]
 members = ["services/*"]
 
-[tool.uv]
-dev-dependencies = [
+[dependency-groups]
+dev = [
     "ruff>=0.8.0",
     "mypy>=1.13.0",
     "pytest>=8.3.0",
