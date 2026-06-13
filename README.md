@@ -2,6 +2,10 @@
 
 # SmartInv
 
+<picture>
+  <img src="docs/assets/hero.svg" alt="SmartInv — AI-Powered MRO Inventory Intelligence" width="100%" />
+</picture>
+
 **AI-Powered MRO Inventory Intelligence Platform**
 
 Reduce MRO inventory cost without increasing operational risk.
