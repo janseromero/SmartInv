@@ -1,3 +1,14 @@
 packages:
   - "apps/*"
   - "packages/*"
+
+# Allow these packages' build scripts to run. Required by pnpm 11+ for any
+# dependency that performs a postinstall/build step (native binaries, etc.).
+allowBuilds:
+  "@biomejs/biome": true
+  esbuild: true
+
+# A non-zero exit code on ignored builds breaks CI on hosts where these
+# binaries aren't strictly required (none of our tooling needs them at
+# runtime). Keep the warning, drop the failure.
+ignoredBuildsExitCode: 0
