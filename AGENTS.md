@@ -123,7 +123,7 @@ Unit tests are **required** in every PR introducing or changing deterministic co
 2. [`docs/architecture/mvp-architecture.md`](docs/architecture/mvp-architecture.md)
 3. [`docs/process/engineering-principles.md`](docs/process/engineering-principles.md)
 4. [`docs/project/decisions.md`](docs/project/decisions.md)
-5. [`docs/project/roadmap.md`](docs/project/roadmap.md)
+5. [`docs/project/roadmap/index.md`](docs/project/roadmap/index.md)
 
 ---
 
@@ -154,7 +154,7 @@ Slow lane (human reviews the actual diff — not just the plan):
 
 ## When you make a change
 
-1. Find or create the task in [`docs/project/roadmap.md`](docs/project/roadmap.md).
+1. Find or create the task in [`docs/project/roadmap/index.md`](docs/project/roadmap/index.md) (story under the right CV/Epic).
 2. Slice the work **vertically** through the layers it touches.
 3. Propose the plan first (files touched, approach) and get it approved — reviewing a plan is cheap, reviewing a 600-line diff is not.
 4. Write tests (or evals) first.

@@ -13,4 +13,4 @@ When operating in this repository:
    - [`docs/architecture/mvp-architecture.md`](docs/architecture/mvp-architecture.md)
    - [`docs/process/engineering-principles.md`](docs/process/engineering-principles.md)
    - [`docs/project/decisions.md`](docs/project/decisions.md)
-   - [`docs/project/roadmap.md`](docs/project/roadmap.md)
+   - [`docs/project/roadmap/index.md`](docs/project/roadmap/index.md)

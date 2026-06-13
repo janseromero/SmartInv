@@ -10,7 +10,7 @@
 
 Reduce MRO inventory cost without increasing operational risk.
 
-[![Status](https://img.shields.io/badge/status-MVP_design-blue)](docs/project/roadmap.md)
+[![Status](https://img.shields.io/badge/status-MVP_design-blue)](docs/project/roadmap/index.md)
 [![License](https://img.shields.io/badge/license-proprietary-lightgrey)](#license)
 [![Docs](https://img.shields.io/badge/docs-up--to--date-brightgreen)](docs/index.md)
 
@@ -106,7 +106,7 @@ SmartInv serves an entire decision chain — from the planner reviewing daily ex
 | [🚀 MVP Software Architecture](docs/architecture/mvp-architecture.md) | The simplified, ship-first architecture for the MVP — no Temporal, no Kafka, 3-component data platform. |
 | [🛠 Engineering Principles](docs/process/engineering-principles.md) | Code, testing, architecture, and process principles — startup-pragmatic but enterprise-aware. |
 | [📜 Decisions](docs/project/decisions.md) | Architecture Decision Records (ADRs) — every directional choice and its trade-offs. |
-| [🗺 Roadmap (Kanban)](docs/project/roadmap.md) | Vertical task list in Kanban format (Backlog · Doing · Blocked · Review · Done). |
+| [🗺 Roadmap (CV / Epic / Story)](docs/project/roadmap/index.md) | Strategic roadmap organized as Capability Value → Epic → Story. |
 | [🧭 Project operating instructions](AGENTS.md) | Conventions any AI assistant or new contributor must follow when working in this repo. |
 
 ### Supplementary artefacts
@@ -124,7 +124,7 @@ SmartInv serves an entire decision chain — from the planner reviewing daily ex
 2. Read [`AGENTS.md`](AGENTS.md) for project operating instructions.
 3. Read [`docs/architecture/mvp-architecture.md`](docs/architecture/mvp-architecture.md) to understand what we are building first.
 4. Read [`docs/process/engineering-principles.md`](docs/process/engineering-principles.md) to understand *how* we build.
-5. Check [`docs/project/roadmap.md`](docs/project/roadmap.md) for what to pick up next.
+5. Check [`docs/project/roadmap/index.md`](docs/project/roadmap/index.md) for what to pick up next.
 
 ---
 

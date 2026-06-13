@@ -119,18 +119,25 @@
 
 ---
 
-## ADR-008 — Kanban with 5 statuses for project management
+## ADR-008 — CV / Epic / Story hierarchy with Kanban at Story level
 
-**Context.** Team is small. Process must be light but not absent.
+**Context.** Team is small. We need a strategic structure that scales with the product *and* a light operational discipline for day-to-day work.
 
-**Decision.** Use **Kanban with 5 columns: Backlog · Doing · Blocked · Review · Done**, with WIP limits, weekly triage, weekly Friday demo, and type-specific Definition of Done.
+**Decision.** Use the **Mirror Mind CV / Epic / Story** hierarchy ([`docs/project/roadmap/index.md`](roadmap/index.md)):
+- **CV** (Capability Value) — major delivery stage, user-visible promise, months of work.
+- **Epic** — cohesive block of work inside a CV, weeks.
+- **Story** — atomic, user-centric delivery, hours to days.
+
+Story-level work uses a **5-column Kanban**: Backlog · Doing · Blocked · Review · Done, with WIP limits, weekly triage, weekly Friday demo, and type-specific Definition of Done.
 
 **Consequences.**
-- Tooling: GitHub Projects (or Linear) — board lives in the same place as the code.
+- Strategic doc: `docs/project/roadmap/index.md` + `docs/project/roadmap/cvN-*/index.md`.
+- Operational tooling: GitHub Projects (or Linear) — board lives in the same place as the code.
+- Epic folders (`cvN-*/cvN-eM-*/`) are created only when work on the epic starts (Mirror's discipline of not over-scaffolding ahead of work).
 - One hour per week of process; rest is work.
-- Tasks are sliced **vertically by user journey**, never horizontally by layer.
+- Stories are sliced **vertically by user journey**, never horizontally by layer.
 
-**Alternatives considered.** Scrum (rejected — too rigid for our size and shape of work); Shape Up cycles (viable later if predictability is demanded by customers).
+**Alternatives considered.** Flat Kanban with no strategic hierarchy (rejected — scales poorly past ~50 stories); Scrum (rejected — too rigid); Shape Up cycles (viable later if predictability is demanded by customers).
 
 ---
 

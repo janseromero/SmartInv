@@ -10,7 +10,7 @@ For the project overview, start with the [README](../README.md).
 | Document | Purpose |
 |---|---|
 | [Decisions (ADRs)](project/decisions.md) | Architectural decisions and trade-offs |
-| [Roadmap](project/roadmap.md) | Kanban roadmap and vertical task list |
+| [Roadmap](project/roadmap/index.md) | CV / Epic / Story roadmap |
 
 ## 📐 Architecture
 

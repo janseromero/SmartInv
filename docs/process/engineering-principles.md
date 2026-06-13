@@ -182,7 +182,7 @@ Until pain proves otherwise: 1 Postgres, 1 Redis, 1 object store, 1 FastAPI app,
 
 ### PR1 — Kanban with 5 statuses
 
-`Backlog · Doing · Blocked · Review · Done`. WIP-limited. Triaged weekly. Demoed weekly. Details in [roadmap.md](../project/roadmap.md).
+`Backlog · Doing · Blocked · Review · Done`. Used at the **Story level** inside the CV / Epic / Story hierarchy. WIP-limited. Triaged weekly. Demoed weekly. See [roadmap/index.md](../project/roadmap/index.md).
 
 ### PR2 — Vertical task slicing
 
