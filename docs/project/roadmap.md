@@ -49,12 +49,12 @@ The Backlog is grouped by **Epic** (a meaningful slice of customer value) and or
 
 > Goal: a runnable web app, the basic backend, design tokens, auth scaffold, and the contracts that protect future portability.
 
-- [ ] **E1.1** Initialize monorepo (Turborepo + pnpm + uv) with `apps/web`, `services/api`, `packages/{tokens,ui-contracts,ui-web,types,utils}`
+- [x] **E1.1** Initialize monorepo (Turborepo + pnpm + uv) with `apps/web`, `services/api`, `packages/{tokens,ui-contracts,ui-web,types,utils}` — ✅ done
 - [ ] **E1.2** Define design tokens in `packages/tokens` from the HTML mock (colors, spacing, typography, radii, shadows)
 - [ ] **E1.3** Wire Tailwind to read tokens from `packages/tokens`; ban raw hex in lint
 - [ ] **E1.4** Bootstrap `apps/web` with Next.js 14, layout, sidebar + topbar shell matching the UI mock
-- [ ] **E1.5** Set up CI on GitHub Actions: lint + type-check + tests + build
-- [ ] **E1.6** Stand up `services/api` (FastAPI) with health check, OpenAPI export, Pydantic models
+- [x] **E1.5** Set up CI on GitHub Actions: lint + type-check + tests + build — ✅ done
+- [x] **E1.6** Stand up `services/api` (FastAPI) with health check, OpenAPI export, Pydantic models — ✅ done
 - [ ] **E1.7** Docker Compose for local dev: Postgres + Redis + Garage + Langfuse
 - [ ] **E1.8** Postgres migration tool (Alembic) + initial schemas (`core`, `inventory`, `agent`, `workflow`, `audit`, `rag`, `ml`, `sources`)
 - [ ] **E1.9** Auth scaffold: integrate Auth0 (or Keycloak), JWT on the BFF, current user endpoint

@@ -128,6 +128,60 @@ SmartInv serves an entire decision chain — from the planner reviewing daily ex
 
 ---
 
+## Local development
+
+### Prerequisites
+
+| Tool | Version | Install |
+|---|---|---|
+| Node | `22 LTS` | nvm / fnm / volta |
+| pnpm | `11.x`   | `corepack enable && corepack prepare pnpm@11.6.0 --activate` |
+| Python | `3.12` | [pyenv](https://github.com/pyenv/pyenv) or [uv-managed](https://docs.astral.sh/uv/) |
+| uv | latest | `curl -LsSf https://astral.sh/uv/install.sh \| sh` |
+
+### Install
+
+```bash
+# JS/TS workspace
+pnpm install
+
+# Python workspace (creates .venv and resolves all members)
+uv sync --all-packages
+```
+
+### Run the web app
+
+```bash
+pnpm --filter=@smartinv/web dev
+# http://localhost:3000
+```
+
+### Run the API
+
+```bash
+uv run uvicorn api.main:app --reload --app-dir services/api/src
+# http://localhost:8000/health
+# http://localhost:8000/docs
+```
+
+### Common scripts
+
+```bash
+pnpm lint        # Biome lint+format across the whole monorepo
+pnpm typecheck   # tsc --noEmit across all packages (turbo)
+pnpm build       # production build (turbo)
+pnpm test        # vitest (turbo)
+
+uv run ruff check services         # Python lint
+uv run ruff format --check services
+uv run mypy services               # Python typecheck
+uv run pytest -v                   # Python tests
+```
+
+CI runs the same commands on every push and PR — see `.github/workflows/ci.yml`.
+
+---
+
 ## License
 
 Proprietary — © SmartInv. All rights reserved.
