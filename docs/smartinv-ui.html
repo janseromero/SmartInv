@@ -1,0 +1,1240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SmartInv — MRO Inventory Intelligence</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --chrome:#10161F;          /* deep graphite — sidebar/topbar */
+  --chrome-2:#161E2A;
+  --chrome-line:#243040;
+  --surface:#F4F6F8;         /* app canvas */
+  --card:#FFFFFF;
+  --line:#E3E8EE;
+  --ink:#16212E;
+  --ink-2:#5A6B7E;
+  --ink-3:#8B99A9;
+  --teal:#0E8C9C;            /* turbine teal — primary */
+  --teal-dark:#0A6B78;
+  --teal-soft:#E3F4F6;
+  --ai:#6D5AE6;              /* violet — AI-generated content ONLY */
+  --ai-soft:#F0EDFD;
+  --ok:#2E9E6B;  --ok-soft:#E5F5EE;
+  --warn:#D98E1B; --warn-soft:#FCF2DF;
+  --crit:#D64545; --crit-soft:#FBEAEA;
+  --mono:'IBM Plex Mono',monospace;
+  --disp:'Space Grotesk',sans-serif;
+  --body:'IBM Plex Sans',sans-serif;
+  --r:10px; --r-sm:7px;
+  --shadow:0 1px 2px rgba(22,33,46,.05),0 4px 14px rgba(22,33,46,.05);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{font-family:var(--body);background:var(--surface);color:var(--ink);font-size:13.5px;line-height:1.5;-webkit-font-smoothing:antialiased}
+button{font:inherit;cursor:pointer;border:none;background:none;color:inherit}
+input,select{font:inherit}
+::selection{background:var(--teal-soft)}
+
+/* ───── App shell ───── */
+.app{display:grid;grid-template-columns:236px 1fr;grid-template-rows:54px 1fr;height:100vh;
+  grid-template-areas:"side top" "side main"}
+.topbar{grid-area:top;background:var(--chrome);border-bottom:1px solid var(--chrome-line);display:flex;align-items:center;gap:14px;padding:0 18px;color:#C7D2DE}
+.sidebar{grid-area:side;background:var(--chrome);border-right:1px solid var(--chrome-line);display:flex;flex-direction:column;overflow-y:auto;color:#9DACBC}
+.main{grid-area:main;overflow-y:auto;padding:26px 30px 60px}
+
+/* ───── Sidebar ───── */
+.logo{display:flex;align-items:center;gap:10px;padding:16px 18px 14px;border-bottom:1px solid var(--chrome-line)}
+.logo-mark{width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,var(--teal) 0%,#0A5560 100%);display:grid;place-items:center;flex:none}
+.logo-mark svg{width:16px;height:16px}
+.logo-name{font-family:var(--disp);font-weight:700;font-size:16px;color:#fff;letter-spacing:.02em}
+.logo-name span{color:var(--teal);}
+.nav-group{padding:14px 10px 4px}
+.nav-label{font-size:10px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:#5E7187;padding:0 10px 6px}
+.nav-item{display:flex;align-items:center;gap:10px;width:100%;padding:7px 10px;border-radius:7px;color:#9DACBC;font-weight:500;text-align:left;margin-bottom:1px;font-size:13px}
+.nav-item svg{width:16px;height:16px;flex:none;opacity:.8}
+.nav-item:hover{background:var(--chrome-2);color:#DCE5EE}
+.nav-item.active{background:rgba(14,140,156,.16);color:#5FD3E0}
+.nav-item.active svg{opacity:1}
+.nav-item .pill{margin-left:auto;font-size:10px;font-weight:600;background:var(--crit);color:#fff;border-radius:20px;padding:0 6px;line-height:16px}
+.nav-item .pill.ai{background:var(--ai)}
+.side-foot{margin-top:auto;padding:14px 16px;border-top:1px solid var(--chrome-line);display:flex;align-items:center;gap:10px}
+.avatar{width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#3E536B,#22303F);display:grid;place-items:center;font-size:11px;font-weight:600;color:#CFE0EE;flex:none}
+.side-foot .who{font-size:12px;line-height:1.3}
+.side-foot .who b{color:#E2EAF2;font-weight:600;display:block}
+
+/* ───── Topbar ───── */
+.cmdbar{flex:1;max-width:620px;display:flex;align-items:center;gap:9px;background:var(--chrome-2);border:1px solid var(--chrome-line);border-radius:8px;padding:7px 12px;color:#7B8CA0;font-size:13px}
+.cmdbar svg{width:14px;height:14px;flex:none}
+.cmdbar kbd{margin-left:auto;font-family:var(--mono);font-size:10.5px;background:#0C1119;border:1px solid var(--chrome-line);border-radius:4px;padding:1px 6px;color:#67788C}
+.top-actions{margin-left:auto;display:flex;align-items:center;gap:6px}
+.icon-btn{width:34px;height:34px;border-radius:8px;display:grid;place-items:center;color:#9DACBC;position:relative}
+.icon-btn:hover{background:var(--chrome-2);color:#E2EAF2}
+.icon-btn svg{width:17px;height:17px}
+.icon-btn .dot{position:absolute;top:7px;right:7px;width:7px;height:7px;border-radius:50%;background:var(--crit);border:2px solid var(--chrome)}
+.env-chip{font-family:var(--mono);font-size:10.5px;color:#5FD3E0;border:1px solid rgba(14,140,156,.4);border-radius:6px;padding:3px 8px;letter-spacing:.04em}
+
+/* ───── Generic page pieces ───── */
+.screen{display:none;animation:fade .18s ease}
+.screen.on{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+.page-head{display:flex;align-items:flex-end;gap:16px;margin-bottom:20px;flex-wrap:wrap}
+.page-head h1{font-family:var(--disp);font-size:22px;font-weight:600;letter-spacing:-.01em}
+.page-head .crumb{font-size:11px;color:var(--ink-3);text-transform:uppercase;letter-spacing:.12em;font-weight:600;margin-bottom:3px}
+.page-head .sub{color:var(--ink-2);font-size:13px;margin-top:2px;max-width:640px}
+.head-actions{margin-left:auto;display:flex;gap:8px;align-items:center}
+.btn{display:inline-flex;align-items:center;gap:7px;border-radius:8px;padding:7px 13px;font-weight:600;font-size:12.5px;border:1px solid var(--line);background:var(--card);color:var(--ink);box-shadow:0 1px 1px rgba(22,33,46,.04)}
+.btn:hover{border-color:#C9D2DC}
+.btn.primary{background:var(--teal);border-color:var(--teal);color:#fff}
+.btn.primary:hover{background:var(--teal-dark)}
+.btn.ai{background:var(--ai);border-color:var(--ai);color:#fff}
+.btn.ghost{border-color:transparent;background:transparent;box-shadow:none;color:var(--ink-2)}
+.btn svg{width:14px;height:14px}
+.btn.sm{padding:4px 10px;font-size:11.5px;border-radius:6px}
+
+.grid{display:grid;gap:16px}
+.cols-4{grid-template-columns:repeat(4,1fr)}
+.cols-3{grid-template-columns:repeat(3,1fr)}
+.cols-2{grid-template-columns:repeat(2,1fr)}
+.span-2{grid-column:span 2}
+.span-3{grid-column:span 3}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow)}
+.card-h{display:flex;align-items:center;gap:10px;padding:13px 16px;border-bottom:1px solid var(--line)}
+.card-h h3{font-size:13px;font-weight:600}
+.card-h .hint{font-size:11.5px;color:var(--ink-3)}
+.card-h .right{margin-left:auto;display:flex;gap:6px;align-items:center}
+.card-b{padding:16px}
+
+/* KPI */
+.kpi{padding:14px 16px}
+.kpi .lbl{font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3)}
+.kpi .val{font-family:var(--disp);font-size:27px;font-weight:700;letter-spacing:-.02em;margin:3px 0 2px}
+.kpi .delta{font-size:12px;font-weight:600;display:inline-flex;align-items:center;gap:4px}
+.kpi .delta.up{color:var(--ok)}.kpi .delta.down{color:var(--crit)}.kpi .delta.flat{color:var(--ink-3)}
+.kpi .ctx{font-size:11.5px;color:var(--ink-3);margin-left:6px;font-weight:400}
+.kpi .spark{margin-top:8px}
+
+/* Badges */
+.badge{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;border-radius:20px;padding:2px 9px;white-space:nowrap}
+.badge::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.b-ok{background:var(--ok-soft);color:var(--ok)}
+.b-warn{background:var(--warn-soft);color:#A86A0D}
+.b-crit{background:var(--crit-soft);color:var(--crit)}
+.b-teal{background:var(--teal-soft);color:var(--teal-dark)}
+.b-ai{background:var(--ai-soft);color:var(--ai)}
+.b-mute{background:#EEF1F4;color:var(--ink-2)}
+.badge.nodot::before{display:none}
+
+/* Tables */
+table{width:100%;border-collapse:collapse;font-size:12.5px}
+th{font-size:10.5px;text-transform:uppercase;letter-spacing:.09em;color:var(--ink-3);font-weight:600;text-align:left;padding:9px 14px;border-bottom:1px solid var(--line);background:#FAFBFC}
+td{padding:10px 14px;border-bottom:1px solid #EEF1F4;vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tbody tr:hover{background:#F8FAFB}
+.mono{font-family:var(--mono);font-size:11.5px;color:var(--ink-2)}
+td .item-name{font-weight:600;display:block}
+td .item-sub{font-size:11px;color:var(--ink-3)}
+.num{text-align:right;font-variant-numeric:tabular-nums}
+th.num{text-align:right}
+
+/* Bars & meters */
+.meter{height:6px;border-radius:4px;background:#EDF0F3;overflow:hidden;min-width:70px}
+.meter i{display:block;height:100%;border-radius:4px;background:var(--teal)}
+.meter.ok i{background:var(--ok)}.meter.warn i{background:var(--warn)}.meter.crit i{background:var(--crit)}.meter.ai i{background:var(--ai)}
+.conf{display:flex;align-items:center;gap:8px;font-size:11.5px;color:var(--ink-2);font-weight:600}
+.conf .meter{width:64px}
+
+/* AI evidence strip — the signature element */
+.ai-strip{border-left:3px solid var(--ai);background:linear-gradient(90deg,var(--ai-soft),transparent 65%);border-radius:0 var(--r-sm) var(--r-sm) 0;padding:10px 14px;display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:11.5px}
+.ai-strip .ai-tag{display:inline-flex;align-items:center;gap:5px;font-weight:700;color:var(--ai);font-size:11px;letter-spacing:.06em;text-transform:uppercase}
+.ai-strip .ai-tag svg{width:13px;height:13px}
+.chip{display:inline-flex;align-items:center;gap:5px;background:#fff;border:1px solid var(--line);border-radius:6px;padding:2px 8px;font-size:11px;color:var(--ink-2);font-weight:500}
+.chip b{color:var(--ink);font-weight:600}
+.chip.link{cursor:pointer}
+.chip.link:hover{border-color:var(--ai);color:var(--ai)}
+.chip .mono{font-size:10.5px}
+
+/* Filters */
+.filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;align-items:center}
+.filter{display:inline-flex;align-items:center;gap:7px;background:var(--card);border:1px solid var(--line);border-radius:8px;padding:6px 11px;font-size:12px;font-weight:500;color:var(--ink-2)}
+.filter b{color:var(--ink);font-weight:600}
+.filter svg{width:12px;height:12px;color:var(--ink-3)}
+.search-inline{display:flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--line);border-radius:8px;padding:6px 11px;min-width:230px}
+.search-inline input{border:none;outline:none;flex:1;font-size:12.5px;background:transparent}
+.search-inline svg{width:13px;height:13px;color:var(--ink-3)}
+
+/* Tabs */
+.tabs{display:flex;gap:2px;border-bottom:1px solid var(--line);margin-bottom:16px}
+.tab{padding:8px 14px;font-size:12.5px;font-weight:600;color:var(--ink-2);border-bottom:2px solid transparent;margin-bottom:-1px}
+.tab.on{color:var(--teal-dark);border-color:var(--teal)}
+.tab:hover{color:var(--ink)}
+
+/* Alert / activity rows */
+.row-list{display:flex;flex-direction:column}
+.row-item{display:flex;gap:12px;padding:11px 16px;border-bottom:1px solid #EEF1F4;align-items:flex-start}
+.row-item:last-child{border-bottom:none}
+.row-item:hover{background:#F8FAFB}
+.sig{width:30px;height:30px;border-radius:8px;display:grid;place-items:center;flex:none;margin-top:1px}
+.sig svg{width:15px;height:15px}
+.sig.crit{background:var(--crit-soft);color:var(--crit)}
+.sig.warn{background:var(--warn-soft);color:#A86A0D}
+.sig.ok{background:var(--ok-soft);color:var(--ok)}
+.sig.teal{background:var(--teal-soft);color:var(--teal-dark)}
+.sig.ai{background:var(--ai-soft);color:var(--ai)}
+.row-item .t{font-weight:600;font-size:12.5px}
+.row-item .d{font-size:12px;color:var(--ink-2)}
+.row-item .meta{font-size:11px;color:var(--ink-3);margin-top:2px}
+.row-item .end{margin-left:auto;text-align:right;flex:none}
+
+/* Legend */
+.legend{display:flex;gap:14px;font-size:11px;color:var(--ink-2);flex-wrap:wrap}
+.legend i{width:9px;height:9px;border-radius:3px;display:inline-block;margin-right:5px;vertical-align:-1px}
+
+/* Heatmap */
+.heat{display:grid;gap:5px;font-size:11px}
+.heat .cell{border-radius:6px;height:42px;display:grid;place-items:center;font-weight:600;font-family:var(--mono);font-size:11px;cursor:pointer;transition:transform .1s}
+.heat .cell:hover{transform:scale(1.05);outline:2px solid var(--ink);outline-offset:1px;z-index:2}
+.heat .hl{color:var(--ink-3);display:flex;align-items:center;font-weight:600;font-family:var(--body)}
+.heat .ht{color:var(--ink-3);display:grid;place-items:end center;padding-bottom:4px;font-weight:600;font-family:var(--body)}
+
+/* Chat (analyst) */
+.chat-wrap{display:grid;grid-template-columns:1fr 280px;gap:16px;align-items:start}
+.chat{display:flex;flex-direction:column;height:calc(100vh - 210px);min-height:480px}
+.chat-scroll{flex:1;overflow-y:auto;padding:18px;display:flex;flex-direction:column;gap:16px}
+.msg{max-width:78%;display:flex;flex-direction:column;gap:8px}
+.msg.user{align-self:flex-end}
+.msg .bubble{padding:10px 14px;border-radius:12px;font-size:13px}
+.msg.user .bubble{background:var(--chrome);color:#E5ECF3;border-bottom-right-radius:4px}
+.msg.bot .bubble{background:#F6F4FE;border:1px solid #E5E0FA;border-bottom-left-radius:4px}
+.chat-input{display:flex;gap:9px;padding:13px 14px;border-top:1px solid var(--line)}
+.chat-input input{flex:1;border:1px solid var(--line);border-radius:9px;padding:9px 13px;outline:none;font-size:13px}
+.chat-input input:focus{border-color:var(--ai)}
+.suggest{display:flex;flex-direction:column;gap:7px}
+.suggest button{text-align:left;background:var(--card);border:1px solid var(--line);border-radius:8px;padding:9px 12px;font-size:12px;color:var(--ink-2);box-shadow:var(--shadow)}
+.suggest button:hover{border-color:var(--ai);color:var(--ai)}
+
+/* Agents */
+.agent-card .card-b{display:flex;flex-direction:column;gap:10px}
+.agent-top{display:flex;align-items:center;gap:11px}
+.agent-ic{width:38px;height:38px;border-radius:10px;display:grid;place-items:center;flex:none;background:var(--ai-soft);color:var(--ai)}
+.agent-ic svg{width:19px;height:19px}
+.agent-top .nm{font-weight:700;font-size:13.5px}
+.agent-top .sc{font-size:11.5px;color:var(--ink-3)}
+.agent-stats{display:flex;gap:0;border-top:1px solid var(--line);padding-top:10px}
+.agent-stats div{flex:1;font-size:11px;color:var(--ink-3)}
+.agent-stats b{display:block;font-family:var(--disp);font-size:16px;color:var(--ink);font-weight:600}
+.pulse{width:8px;height:8px;border-radius:50%;background:var(--ok);margin-left:auto;box-shadow:0 0 0 3px var(--ok-soft)}
+.pulse.idle{background:var(--ink-3);box-shadow:0 0 0 3px #EEF1F4}
+.pulse.busy{background:var(--warn);box-shadow:0 0 0 3px var(--warn-soft);animation:pl 1.4s infinite}
+@keyframes pl{50%{box-shadow:0 0 0 6px rgba(217,142,27,.12)}}
+
+/* Workflow / approvals */
+.steps{display:flex;align-items:center;gap:0;font-size:11px;color:var(--ink-3);font-weight:600}
+.steps .st{display:flex;align-items:center;gap:6px}
+.steps .st i{width:20px;height:20px;border-radius:50%;display:grid;place-items:center;border:1.5px solid var(--line);font-style:normal;font-size:10px;background:#fff}
+.steps .st.done i{background:var(--ok);border-color:var(--ok);color:#fff}
+.steps .st.now i{border-color:var(--teal);color:var(--teal-dark);background:var(--teal-soft)}
+.steps .ln{width:26px;height:1.5px;background:var(--line);margin:0 6px}
+.steps .st.done + .ln{background:var(--ok)}
+
+/* Donut + gauges via conic */
+.donut{width:120px;height:120px;border-radius:50%;display:grid;place-items:center;flex:none}
+.donut > div{width:84px;height:84px;border-radius:50%;background:var(--card);display:grid;place-items:center;text-align:center}
+.donut b{font-family:var(--disp);font-size:21px;font-weight:700;display:block;line-height:1.1}
+.donut span{font-size:10px;color:var(--ink-3);text-transform:uppercase;letter-spacing:.08em;font-weight:600}
+
+/* Report gallery */
+.tpl{border:1px solid var(--line);border-radius:var(--r);overflow:hidden;background:var(--card);box-shadow:var(--shadow);transition:transform .12s}
+.tpl:hover{transform:translateY(-2px)}
+.tpl .thumb{height:108px;background:linear-gradient(160deg,#F2F5F8,#E6ECF1);position:relative;overflow:hidden;border-bottom:1px solid var(--line)}
+.tpl .thumb .fake{position:absolute;background:#fff;border:1px solid var(--line);border-radius:4px}
+.tpl .body{padding:11px 13px}
+.tpl .body b{font-size:12.5px;display:block}
+.tpl .body span{font-size:11px;color:var(--ink-3)}
+
+/* Toggle */
+.tgl{width:34px;height:19px;background:#D6DDE4;border-radius:20px;position:relative;flex:none;transition:.15s}
+.tgl::after{content:"";position:absolute;width:15px;height:15px;background:#fff;border-radius:50%;top:2px;left:2px;transition:.15s;box-shadow:0 1px 2px rgba(0,0,0,.2)}
+.tgl.on{background:var(--teal)}
+.tgl.on::after{left:17px}
+
+/* Connectors */
+.conn{display:flex;align-items:center;gap:12px;padding:13px 16px;border-bottom:1px solid #EEF1F4}
+.conn:last-child{border:none}
+.conn .lg{width:36px;height:36px;border-radius:9px;display:grid;place-items:center;font-family:var(--disp);font-weight:700;font-size:12px;color:#fff;flex:none}
+.conn .nm{font-weight:600;font-size:13px}
+.conn .ds{font-size:11.5px;color:var(--ink-3)}
+
+footer.note{margin-top:34px;font-size:11px;color:var(--ink-3);text-align:center}
+@media (max-width:1180px){.cols-4{grid-template-columns:repeat(2,1fr)}.cols-3{grid-template-columns:repeat(2,1fr)}.chat-wrap{grid-template-columns:1fr}}
+@media (max-width:860px){.app{grid-template-columns:64px 1fr}.logo-name,.nav-label,.nav-item span,.side-foot .who{display:none}.nav-item{justify-content:center}.cols-2,.cols-3,.cols-4{grid-template-columns:1fr}.span-2,.span-3{grid-column:span 1}}
+:focus-visible{outline:2px solid var(--teal);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="app">
+<!-- ════════ SIDEBAR ════════ -->
+<aside class="sidebar">
+  <div class="logo">
+    <div class="logo-mark"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round"><path d="M4 17l5-5 4 4 7-8"/><path d="M15 8h5v5"/></svg></div>
+    <div class="logo-name">Smart<span>Inv</span></div>
+  </div>
+  <nav class="nav-group">
+    <div class="nav-label">Overview</div>
+    <button class="nav-item active" data-s="overview"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg><span>Executive Overview</span></button>
+  </nav>
+  <nav class="nav-group">
+    <div class="nav-label">Operate</div>
+    <button class="nav-item" data-s="health"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M22 12h-4l-3 8-4-16-3 8H2"/></svg><span>Inventory Health</span></button>
+    <button class="nav-item" data-s="forecast"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 17l5-6 4 3 6-8"/><circle cx="18" cy="6" r="2"/></svg><span>Demand Forecasting</span></button>
+    <button class="nav-item" data-s="optimize"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="6" cy="6" r="3"/><circle cx="18" cy="18" r="3"/><path d="M6 9v3a4 4 0 0 0 4 4h5"/><path d="M13 13l3 3-3 3"/></svg><span>Optimization</span><i class="pill">14</i></button>
+    <button class="nav-item" data-s="risk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l9 16H3z"/><path d="M12 10v4M12 17.5v.1"/></svg><span>Risk &amp; Criticality</span></button>
+    <button class="nav-item" data-s="procure"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="9" cy="20" r="1.6"/><circle cx="17" cy="20" r="1.6"/><path d="M3 4h2l2.5 12h11L21 8H7"/></svg><span>Procurement</span></button>
+  </nav>
+  <nav class="nav-group">
+    <div class="nav-label">Intelligence</div>
+    <button class="nav-item" data-s="analyst"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12a8 8 0 1 1-4-6.9"/><path d="M12 8v4l3 2"/></svg><span>Ask SmartInv</span><i class="pill ai">AI</i></button>
+    <button class="nav-item" data-s="agents"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="5" y="8" width="14" height="11" rx="2.5"/><path d="M12 8V4M8 4h8"/><circle cx="9.5" cy="13" r=".8"/><circle cx="14.5" cy="13" r=".8"/></svg><span>Agent Console</span></button>
+    <button class="nav-item" data-s="reports"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5M9 13h6M9 17h6"/></svg><span>Reports &amp; Stories</span></button>
+  </nav>
+  <nav class="nav-group">
+    <div class="nav-label">Govern</div>
+    <button class="nav-item" data-s="approvals"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 12l2 2 4-5"/><path d="M12 3l7 3v5c0 5-3.5 8-7 10-3.5-2-7-5-7-10V6z"/></svg><span>Approvals</span><i class="pill">6</i></button>
+    <button class="nav-item" data-s="quality"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><ellipse cx="12" cy="6" rx="7" ry="3"/><path d="M5 6v6c0 1.7 3.1 3 7 3s7-1.3 7-3V6"/><path d="M5 12v6c0 1.7 3.1 3 7 3s7-1.3 7-3v-6"/></svg><span>Data Quality</span></button>
+    <button class="nav-item" data-s="settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 0 0-.1-1.2l2-1.5-2-3.4-2.3 1a7 7 0 0 0-2-1.2L14.2 3h-4l-.4 2.7a7 7 0 0 0-2 1.2l-2.3-1-2 3.4 2 1.5a7 7 0 0 0 0 2.4l-2 1.5 2 3.4 2.3-1a7 7 0 0 0 2 1.2l.4 2.7h4l.4-2.7a7 7 0 0 0 2-1.2l2.3 1 2-3.4-2-1.5c.06-.4.1-.8.1-1.2z"/></svg><span>Admin &amp; Governance</span></button>
+  </nav>
+  <div class="side-foot">
+    <div class="avatar">RM</div>
+    <div class="who"><b>R. Marques</b>Inventory Planner · BR-South</div>
+  </div>
+</aside>
+
+<!-- ════════ TOPBAR ════════ -->
+<header class="topbar">
+  <div class="cmdbar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg>Search items, suppliers, assets — or ask anything…<kbd>⌘K</kbd></div>
+  <div class="top-actions">
+    <span class="env-chip">TENANT · ACME-INDUSTRIAL</span>
+    <button class="icon-btn" title="Notifications"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 9a6 6 0 1 0-12 0c0 6-2.5 7-2.5 7h17S18 15 18 9"/><path d="M10 20a2.2 2.2 0 0 0 4 0"/></svg><i class="dot"></i></button>
+    <button class="icon-btn" title="Help"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.4 2.3c-.8.3-.9 1-.9 1.7M12 17v.1"/></svg></button>
+  </div>
+</header>
+
+<main class="main">
+
+<!-- ════════════════ 1 · EXECUTIVE OVERVIEW ════════════════ -->
+<section class="screen on" id="s-overview">
+  <div class="page-head">
+    <div>
+      <div class="crumb">Overview · All sites · June 2026</div>
+      <h1>Executive Overview</h1>
+      <div class="sub">Working capital, risk and opportunity across 12 plants — every figure traceable to source records.</div>
+    </div>
+    <div class="head-actions">
+      <button class="btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3v12m0 0l-4-4m4 4l4-4M4 21h16"/></svg>Export board pack</button>
+      <button class="btn ai"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3l1.7 4.6L18 9.3l-4.3 1.7L12 16l-1.7-5L6 9.3l4.3-1.7z"/><path d="M19 14l.8 2.2L22 17l-2.2.8L19 20l-.8-2.2L16 17l2.2-.8z"/></svg>Generate monthly narrative</button>
+    </div>
+  </div>
+
+  <div class="grid cols-4" style="margin-bottom:16px">
+    <div class="card kpi">
+      <div class="lbl">Total MRO inventory</div>
+      <div class="val">$48.2M</div>
+      <span class="delta down">▼ 3.1%<span class="ctx">vs Q1</span></span>
+      <svg class="spark" width="100%" height="30" viewBox="0 0 160 30" preserveAspectRatio="none"><path d="M0 8 20 10 40 9 60 13 80 12 100 16 120 18 140 21 160 22" fill="none" stroke="#0E8C9C" stroke-width="2"/></svg>
+    </div>
+    <div class="card kpi">
+      <div class="lbl">Safely reducible</div>
+      <div class="val" style="color:var(--ok)">$6.7M</div>
+      <span class="delta up">▲ $410K<span class="ctx">newly identified</span></span>
+      <svg class="spark" width="100%" height="30" viewBox="0 0 160 30" preserveAspectRatio="none"><path d="M0 24 20 22 40 21 60 18 80 17 100 13 120 11 140 8 160 6" fill="none" stroke="#2E9E6B" stroke-width="2"/></svg>
+    </div>
+    <div class="card kpi">
+      <div class="lbl">Critical stockout exposure</div>
+      <div class="val" style="color:var(--crit)">23 items</div>
+      <span class="delta down">▼ 5<span class="ctx">est. downtime $1.9M</span></span>
+      <svg class="spark" width="100%" height="30" viewBox="0 0 160 30" preserveAspectRatio="none"><path d="M0 10 20 14 40 12 60 16 80 14 100 18 120 17 140 20 160 19" fill="none" stroke="#D64545" stroke-width="2"/></svg>
+    </div>
+    <div class="card kpi">
+      <div class="lbl">Service level (critical spares)</div>
+      <div class="val">97.4%</div>
+      <span class="delta up">▲ 0.6 pt<span class="ctx">target 97.0%</span></span>
+      <svg class="spark" width="100%" height="30" viewBox="0 0 160 30" preserveAspectRatio="none"><path d="M0 20 20 19 40 21 60 17 80 16 100 14 120 13 140 11 160 10" fill="none" stroke="#0E8C9C" stroke-width="2"/></svg>
+    </div>
+  </div>
+
+  <div class="grid cols-3">
+    <div class="card span-2">
+      <div class="card-h"><h3>Working capital trend</h3><span class="hint">Inventory value vs safely reducible, 12 months</span>
+        <div class="right legend"><span><i style="background:#0E8C9C"></i>Inventory value</span><span><i style="background:#2E9E6B"></i>Safely reducible</span><span><i style="background:#D6DDE4"></i>Plan</span></div>
+      </div>
+      <div class="card-b">
+        <svg width="100%" height="190" viewBox="0 0 640 190" preserveAspectRatio="none" role="img" aria-label="Working capital trend chart">
+          <g stroke="#EDF0F3"><line x1="0" y1="40" x2="640" y2="40"/><line x1="0" y1="85" x2="640" y2="85"/><line x1="0" y1="130" x2="640" y2="130"/><line x1="0" y1="175" x2="640" y2="175"/></g>
+          <path d="M0 60 58 64 116 62 174 70 232 68 290 76 348 74 406 82 464 88 522 92 580 97 640 100" fill="none" stroke="#D6DDE4" stroke-width="2" stroke-dasharray="5 5"/>
+          <path d="M0 55 58 60 116 58 174 66 232 63 290 74 348 71 406 80 464 87 522 90 580 96 640 102 L640 175 0 175Z" fill="rgba(14,140,156,.07)"/>
+          <path d="M0 55 58 60 116 58 174 66 232 63 290 74 348 71 406 80 464 87 522 90 580 96 640 102" fill="none" stroke="#0E8C9C" stroke-width="2.5"/>
+          <path d="M0 160 58 156 116 154 174 150 232 148 290 142 348 140 406 134 464 130 522 126 580 122 640 118" fill="none" stroke="#2E9E6B" stroke-width="2.5"/>
+          <circle cx="640" cy="102" r="4" fill="#0E8C9C"/><circle cx="640" cy="118" r="4" fill="#2E9E6B"/>
+          <g font-size="10" fill="#8B99A9" font-family="IBM Plex Mono"><text x="2" y="187">Jul</text><text x="116" y="187">Sep</text><text x="232" y="187">Nov</text><text x="348" y="187">Jan</text><text x="464" y="187">Mar</text><text x="580" y="187">May</text></g>
+        </svg>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-h"><h3>June executive narrative</h3><div class="right"><span class="badge b-ai nodot">AI-generated</span></div></div>
+      <div class="card-b" style="font-size:12.5px;color:var(--ink-2);display:flex;flex-direction:column;gap:10px">
+        <p><b style="color:var(--ink)">Working capital.</b> Inventory closed at $48.2M, down 3.1% quarter-over-quarter. The reduction came from excess drawdown at Joinville and Curitiba — no critical coverage was sacrificed.</p>
+        <p><b style="color:var(--ink)">Risk.</b> Critical stockout exposure fell from 28 to 23 items. Two single-source bearings (SKF-6310 family) remain the largest downtime exposure at $740K.</p>
+        <p><b style="color:var(--ink)">Opportunity.</b> $6.7M is safely reducible; $2.1M is executable this quarter through 9 approved excess-reduction plans.</p>
+        <div class="ai-strip">
+          <span class="ai-tag"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3l1.7 4.6L18 9.3l-4.3 1.7L12 16l-1.7-5L6 9.3l4.3-1.7z"/></svg>Evidence</span>
+          <span class="chip"><b>Confidence</b> 0.93</span>
+          <span class="chip link">Governed metrics <b>14</b></span>
+          <span class="chip link"><span class="mono">narrative-v3.2</span></span>
+          <span class="chip link">Source records</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card span-2">
+      <div class="card-h"><h3>Plant comparison — excess vs critical coverage</h3><div class="right"><button class="btn sm ghost">All plants ▾</button></div></div>
+      <div class="card-b">
+        <table>
+          <thead><tr><th>Plant</th><th class="num">Inventory</th><th class="num">Excess value</th><th>Excess ratio</th><th class="num">Critical coverage</th><th>Health</th></tr></thead>
+          <tbody>
+            <tr><td><span class="item-name">Joinville — BR South</span><span class="item-sub">3 storerooms · 14,210 SKUs</span></td><td class="num mono">$9.4M</td><td class="num mono">$1.21M</td><td><div class="meter warn" style="width:90px"><i style="width:46%"></i></div></td><td class="num">98.1%</td><td><span class="badge b-ok">Healthy</span></td></tr>
+            <tr><td><span class="item-name">Curitiba — BR South</span><span class="item-sub">2 storerooms · 9,860 SKUs</span></td><td class="num mono">$6.8M</td><td class="num mono">$0.92M</td><td><div class="meter warn" style="width:90px"><i style="width:41%"></i></div></td><td class="num">97.6%</td><td><span class="badge b-ok">Healthy</span></td></tr>
+            <tr><td><span class="item-name">Houston — US Gulf</span><span class="item-sub">4 storerooms · 21,540 SKUs</span></td><td class="num mono">$12.7M</td><td class="num mono">$2.34M</td><td><div class="meter crit" style="width:90px"><i style="width:72%"></i></div></td><td class="num">95.2%</td><td><span class="badge b-warn">Watch</span></td></tr>
+            <tr><td><span class="item-name">Rotterdam — EU West</span><span class="item-sub">2 storerooms · 11,030 SKUs</span></td><td class="num mono">$8.1M</td><td class="num mono">$0.64M</td><td><div class="meter ok" style="width:90px"><i style="width:24%"></i></div></td><td class="num">98.8%</td><td><span class="badge b-ok">Healthy</span></td></tr>
+            <tr><td><span class="item-name">Monterrey — MX North</span><span class="item-sub">1 storeroom · 6,420 SKUs</span></td><td class="num mono">$4.9M</td><td class="num mono">$1.08M</td><td><div class="meter crit" style="width:90px"><i style="width:81%"></i></div></td><td class="num">93.9%</td><td><span class="badge b-crit">At risk</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-h"><h3>Priority alerts</h3><div class="right"><button class="btn sm ghost">Alert center →</button></div></div>
+      <div class="row-list">
+        <div class="row-item"><div class="sig crit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3l9 16H3z"/><path d="M12 10v4M12 17.5v.1"/></svg></div><div><div class="t">Stockout predicted in 9 days</div><div class="d">Mechanical seal 80mm — Houston, asset CR-PUMP-114</div><div class="meta">Risk Agent · impact $310K downtime</div></div></div>
+        <div class="row-item"><div class="sig warn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="9" cy="20" r="1.6"/><circle cx="17" cy="20" r="1.6"/><path d="M3 4h2l2.5 12h11L21 8H7"/></svg></div><div><div class="t">PO 4500128821 likely late</div><div class="d">Supplier Vexel Hydraulics · 78% late probability</div><div class="meta">Procurement Agent · ETA slips 12 days</div></div></div>
+        <div class="row-item"><div class="sig ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20 6L9 17l-5-5"/></svg></div><div><div class="t">$184K transfer instead of buy</div><div class="d">14 items coverable from Rotterdam surplus</div><div class="meta">Optimization Agent · awaiting review</div></div></div>
+        <div class="row-item"><div class="sig ai"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3l1.7 4.6L18 9.3l-4.3 1.7L12 16l-1.7-5L6 9.3l4.3-1.7z"/></svg></div><div><div class="t">412 probable duplicate items</div><div class="d">$520K consolidation opportunity across item master</div><div class="meta">Master Data Agent · review queue ready</div></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════ 2 · INVENTORY HEALTH ════════════════ -->
+<section class="screen" id="s-health">
+  <div class="page-head">
+    <div>
+      <div class="crumb">Operate · Inventory visibility &amp; health</div>
+      <h1>Inventory Health</h1>
+      <div class="sub">Stock position, health scoring and item-master quality across every site and storeroom.</div>
+    </div>
+    <div class="head-actions">
+      <button class="btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3v12m0 0l-4-4m4 4l4-4M4 21h16"/></svg>Export</button>
+      <button class="btn primary">Run health scan</button>
+    </div>
+  </div>
+
+  <div class="filters">
+    <div class="search-inline"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg><input placeholder="Item, part number, description…"></div>
+    <span class="filter">Site <b>All (12)</b><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></span>
+    <span class="filter">Criticality <b>All</b><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></span>
+    <span class="filter">ABC class <b>A + B</b><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></span>
+    <span class="filter">Health <b>Needs attention</b><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></span>
+    <button class="btn sm ghost">Save view</button>
+  </div>
+
+  <div class="grid cols-4" style="margin-bottom:16px">
+    <div class="card card-b" style="display:flex;gap:14px;align-items:center">
+      <div class="donut" style="background:conic-gradient(#2E9E6B 0 62%,#D98E1B 62% 81%,#D64545 81% 91%,#E3E8EE 91% 100%)"><div><div><b>74</b><span>Health</span></div></div></div>
+      <div class="legend" style="flex-direction:column;gap:7px;align-items:flex-start">
+        <span><i style="background:#2E9E6B"></i>Healthy · 62%</span>
+        <span><i style="background:#D98E1B"></i>Excess / slow · 19%</span>
+        <span><i style="background:#D64545"></i>Obsolete / risk · 10%</span>
+        <span><i style="background:#E3E8EE"></i>Data-quality risk · 9%</span>
+      </div>
+    </div>
+    <div class="card kpi"><div class="lbl">Excess value</div><div class="val" style="color:#A86A0D">$6.2M</div><span class="delta down">▼ 4.8% <span class="ctx">30 days</span></span><div class="meter warn" style="margin-top:12px"><i style="width:38%"></i></div></div>
+    <div class="card kpi"><div class="lbl">Dead stock (no usage 24m+)</div><div class="val">$1.9M</div><span class="delta flat">2,114 items <span class="ctx">disposal candidates</span></span><div class="meter crit" style="margin-top:12px"><i style="width:22%"></i></div></div>
+    <div class="card kpi"><div class="lbl">Item master completeness</div><div class="val">86.4%</div><span class="delta up">▲ 2.1 pt <span class="ctx">after enrichment run</span></span><div class="meter" style="margin-top:12px"><i style="width:86%"></i></div></div>
+  </div>
+
+  <div class="grid cols-3">
+    <div class="card span-2">
+      <div class="card-h"><h3>Items needing attention</h3><span class="hint">1,318 results · sorted by business impact</span><div class="right"><button class="btn sm">Bulk actions ▾</button></div></div>
+      <table>
+        <thead><tr><th>Item</th><th>Site</th><th class="num">On hand</th><th class="num">Value</th><th>Health score</th><th>Flag</th><th></th></tr></thead>
+        <tbody>
+          <tr><td><span class="item-name">Bearing, spherical roller 22220-EK</span><span class="mono">ITM-004471 · SKF</span></td><td>Houston</td><td class="num">46</td><td class="num mono">$58,420</td><td><div class="conf"><div class="meter crit"><i style="width:31%"></i></div>31</div></td><td><span class="badge b-warn">Excess</span></td><td><button class="btn sm ghost">Review</button></td></tr>
+          <tr><td><span class="item-name">Valve, gate 6in CL300 SS316</span><span class="mono">ITM-009912 · Velan</span></td><td>Monterrey</td><td class="num">3</td><td class="num mono">$21,300</td><td><div class="conf"><div class="meter crit"><i style="width:24%"></i></div>24</div></td><td><span class="badge b-crit">Stockout risk</span></td><td><button class="btn sm ghost">Review</button></td></tr>
+          <tr><td><span class="item-name">Mech seal cartridge 80mm</span><span class="mono">ITM-002218 · John Crane</span></td><td>Houston</td><td class="num">1</td><td class="num mono">$9,840</td><td><div class="conf"><div class="meter crit"><i style="width:18%"></i></div>18</div></td><td><span class="badge b-crit">Critical · low</span></td><td><button class="btn sm ghost">Review</button></td></tr>
+          <tr><td><span class="item-name">Motor, 75kW 4-pole IE3</span><span class="mono">ITM-007733 · WEG</span></td><td>Joinville</td><td class="num">5</td><td class="num mono">$112,500</td><td><div class="conf"><div class="meter warn"><i style="width:52%"></i></div>52</div></td><td><span class="badge b-warn">Slow-moving</span></td><td><button class="btn sm ghost">Review</button></td></tr>
+          <tr><td><span class="item-name">Filter element, hydraulic 10µ</span><span class="mono">ITM-013307 · ?</span></td><td>Curitiba</td><td class="num">240</td><td class="num mono">$7,180</td><td><div class="conf"><div class="meter warn"><i style="width:44%"></i></div>44</div></td><td><span class="badge b-mute">Data quality</span></td><td><button class="btn sm ghost">Review</button></td></tr>
+          <tr><td><span class="item-name">Coupling, grid 1090T10</span><span class="mono">ITM-001856 · Falk</span></td><td>Rotterdam</td><td class="num">12</td><td class="num mono">$15,960</td><td><div class="conf"><div class="meter crit"><i style="width:27%"></i></div>27</div></td><td><span class="badge b-crit">Obsolete asset</span></td><td><button class="btn sm ghost">Review</button></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:16px">
+      <div class="card">
+        <div class="card-h"><h3>Duplicate detection</h3><div class="right"><span class="badge b-ai nodot">AI</span></div></div>
+        <div class="card-b" style="display:flex;flex-direction:column;gap:12px">
+          <div style="display:flex;gap:10px;align-items:baseline"><span style="font-family:var(--disp);font-size:26px;font-weight:700">412</span><span style="font-size:12px;color:var(--ink-2)">probable duplicate pairs · <b style="color:var(--ink)">$520K</b> consolidation value</span></div>
+          <div style="border:1px solid var(--line);border-radius:8px;padding:10px 12px;font-size:12px">
+            <div style="display:flex;justify-content:space-between;margin-bottom:6px"><span class="mono">ITM-004471</span><span class="badge b-ai nodot">97% match</span></div>
+            "BRG SPHER ROLLER 22220EK C3" <span style="color:var(--ink-3)">↔</span> "Bearing 22220 EK/C3 SKF spherical"
+            <div style="display:flex;gap:7px;margin-top:9px"><button class="btn sm primary">Merge</button><button class="btn sm">Not a duplicate</button></div>
+          </div>
+          <div class="ai-strip"><span class="ai-tag"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3l1.7 4.6L18 9.3l-4.3 1.7L12 16l-1.7-5L6 9.3l4.3-1.7z"/></svg>Evidence</span><span class="chip"><b>Model</b> <span class="mono">dup-match-v2.4</span></span><span class="chip">Embedding + blocking classifier</span></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-h"><h3>Anomalies — last 7 days</h3></div>
+        <div class="row-list">
+          <div class="row-item"><div class="sig warn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 17l5-6 4 3 6-8"/></svg></div><div><div class="t">Consumption spike ×6</div><div class="d">Gasket spiral-wound 4in — Joinville</div><div class="meta">Likely cause: turnaround WO-88123</div></div></div>
+          <div class="row-item"><div class="sig crit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3v10M12 17v.1"/></svg></div><div><div class="t">Unit price +41%</div><div class="d">Copper cable 35mm² — last receipt vs contract</div><div class="meta">Off-contract purchase detected</div></div></div>
+          <div class="row-item"><div class="sig teal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h10"/></svg></div><div><div class="t">Negative available balance</div><div class="d">Storeroom HOU-02 · 3 items over-committed</div><div class="meta">Reservation integrity check failed</div></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+<!-- ════════════════ 3 · DEMAND FORECASTING ════════════════ -->
+<section class="screen" id="s-forecast">
+  <div class="page-head">
+    <div>
+      <div class="crumb">Operate · Demand forecasting</div>
+      <h1>Demand Forecasting</h1>
+      <div class="sub">Probabilistic forecasts built for intermittent MRO demand — with confidence bands on every horizon.</div>
+    </div>
+    <div class="head-actions">
+      <button class="btn">Compare models</button>
+      <button class="btn primary">Re-run forecast</button>
+    </div>
+  </div>
+
+  <div class="filters">
+    <span class="filter">Item <b>Mech seal cartridge 80mm · ITM-002218</b><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></span>
+    <span class="filter">Site <b>Houston</b><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></span>
+    <span class="filter">Horizon <b>12 months</b><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></span>
+    <span class="filter">Demand type <b>Planned + corrective</b><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></span>
+  </div>
+
+  <div class="grid cols-3" style="margin-bottom:16px">
+    <div class="card span-2">
+      <div class="card-h"><h3>Forecast — units per month</h3>
+        <div class="right legend"><span><i style="background:#16212E"></i>Actual</span><span><i style="background:#6D5AE6"></i>P50 forecast</span><span><i style="background:#E5E0FA"></i>P80–P95 band</span><span><i style="background:#D98E1B"></i>Planner override</span></div>
+      </div>
+      <div class="card-b">
+        <svg width="100%" height="230" viewBox="0 0 640 230" preserveAspectRatio="none" role="img" aria-label="Demand forecast with confidence bands">
+          <g stroke="#EDF0F3"><line x1="0" y1="40" x2="640" y2="40"/><line x1="0" y1="90" x2="640" y2="90"/><line x1="0" y1="140" x2="640" y2="140"/><line x1="0" y1="190" x2="640" y2="190"/></g>
+          <line x1="340" y1="20" x2="340" y2="210" stroke="#C9D2DC" stroke-dasharray="4 4"/>
+          <text x="346" y="32" font-size="10" fill="#8B99A9" font-family="IBM Plex Mono">today</text>
+          <path d="M340 150 380 132 420 150 460 122 500 140 540 112 580 128 640 104 L640 168 580 178 540 162 500 184 460 170 420 190 380 178 340 172 Z" fill="rgba(109,90,230,.12)"/>
+          <path d="M340 158 380 146 420 162 460 140 500 156 540 132 580 146 640 126" fill="none" stroke="#6D5AE6" stroke-width="2.5"/>
+          <path d="M0 190 40 150 80 190 120 190 160 120 200 190 240 168 280 190 340 150" fill="none" stroke="#16212E" stroke-width="2"/>
+          <g fill="#16212E"><circle cx="40" cy="150" r="3"/><circle cx="160" cy="120" r="3"/><circle cx="240" cy="168" r="3"/><circle cx="0" cy="190" r="3"/><circle cx="340" cy="150" r="3"/></g>
+          <g fill="#D98E1B"><circle cx="460" cy="128" r="4"/><circle cx="540" cy="120" r="4"/></g>
+          <g font-size="10" fill="#8B99A9" font-family="IBM Plex Mono"><text x="2" y="224">Jan</text><text x="160" y="224">Mar</text><text x="320" y="224">Jun</text><text x="460" y="224">Sep</text><text x="600" y="224">Dec</text></g>
+        </svg>
+        <div class="ai-strip" style="margin-top:8px">
+          <span class="ai-tag"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3l1.7 4.6L18 9.3l-4.3 1.7L12 16l-1.7-5L6 9.3l4.3-1.7z"/></svg>Evidence</span>
+          <span class="chip"><b>Model</b> <span class="mono">TSB + LightGBM ens. v5.1</span></span>
+          <span class="chip"><b>MASE</b> 0.71</span>
+          <span class="chip"><b>Coverage P80</b> 82%</span>
+          <span class="chip link">Drivers: PM plan 7022, asset CR-PUMP-114 failures, seasonality</span>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:16px">
+      <div class="card">
+        <div class="card-h"><h3>Demand drivers</h3><div class="right"><span class="badge b-ai nodot">AI</span></div></div>
+        <div class="card-b" style="display:flex;flex-direction:column;gap:10px;font-size:12.5px">
+          <div style="display:flex;justify-content:space-between;align-items:center"><span>Preventive plan PM-7022</span><div class="conf"><div class="meter ai"><i style="width:54%"></i></div>54%</div></div>
+          <div style="display:flex;justify-content:space-between;align-items:center"><span>Corrective — seal failures</span><div class="conf"><div class="meter ai"><i style="width:28%"></i></div>28%</div></div>
+          <div style="display:flex;justify-content:space-between;align-items:center"><span>Turnaround projects</span><div class="conf"><div class="meter ai"><i style="width:12%"></i></div>12%</div></div>
+          <div style="display:flex;justify-content:space-between;align-items:center"><span>Other / unexplained</span><div class="conf"><div class="meter"><i style="width:6%;background:#C9D2DC"></i></div>6%</div></div>
+          <p style="color:var(--ink-2);font-size:12px;border-top:1px solid var(--line);padding-top:10px">Regime check: no asset retirement or strategy shift detected in the last 6 months.</p>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-h"><h3>Forecast quality</h3></div>
+        <div class="card-b grid cols-2" style="gap:10px">
+          <div><div class="kpi" style="padding:0"><div class="lbl">MASE (wtd)</div><div class="val" style="font-size:21px">0.71</div></div></div>
+          <div><div class="kpi" style="padding:0"><div class="lbl">Bias</div><div class="val" style="font-size:21px">+2.4%</div></div></div>
+          <div><div class="kpi" style="padding:0"><div class="lbl">P80 coverage</div><div class="val" style="font-size:21px">82%</div></div></div>
+          <div><div class="kpi" style="padding:0"><div class="lbl">Low-confidence items</div><div class="val" style="font-size:21px;color:#A86A0D">317</div></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-h"><h3>Model comparison — next 6 months, units</h3><span class="hint">Baseline vs ML vs planner override vs actual</span></div>
+    <table>
+      <thead><tr><th>Source</th><th class="num">Jul</th><th class="num">Aug</th><th class="num">Sep</th><th class="num">Oct</th><th class="num">Nov</th><th class="num">Dec</th><th class="num">Total</th><th>Status</th></tr></thead>
+      <tbody>
+        <tr><td><b>Historical baseline</b> <span class="mono">12m avg</span></td><td class="num">3</td><td class="num">3</td><td class="num">3</td><td class="num">3</td><td class="num">3</td><td class="num">3</td><td class="num"><b>18</b></td><td><span class="badge b-mute nodot">Reference</span></td></tr>
+        <tr><td><b>ML ensemble P50</b> <span class="mono">v5.1</span></td><td class="num">2</td><td class="num">4</td><td class="num">2</td><td class="num">5</td><td class="num">3</td><td class="num">6</td><td class="num"><b>22</b></td><td><span class="badge b-ai nodot">Recommended</span></td></tr>
+        <tr><td><b>Planner override</b> <span class="mono">R. Marques</span></td><td class="num">2</td><td class="num">4</td><td class="num">4</td><td class="num">5</td><td class="num">3</td><td class="num">6</td><td class="num"><b>24</b></td><td><span class="badge b-teal nodot">Active</span></td></tr>
+        <tr><td><b>Actual</b></td><td class="num">—</td><td class="num">—</td><td class="num">—</td><td class="num">—</td><td class="num">—</td><td class="num">—</td><td class="num">—</td><td><span class="badge b-mute nodot">Pending</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ════════════════ 4 · OPTIMIZATION ════════════════ -->
+<section class="screen" id="s-optimize">
+  <div class="page-head">
+    <div>
+      <div class="crumb">Operate · Inventory optimization · 14 pending</div>
+      <h1>Optimization Recommendations</h1>
+      <div class="sub">Min/max, safety stock and action recommendations — every one explainable, simulated and reversible.</div>
+    </div>
+    <div class="head-actions">
+      <button class="btn">Scenario builder</button>
+      <button class="btn primary">Accept selected (3)</button>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab on">Recommendations · 14</button>
+    <button class="tab">Excess reduction plans · 9</button>
+    <button class="tab">Transfers · 5</button>
+    <button class="tab">Scenarios</button>
+    <button class="tab">History</button>
+  </div>
+
+  <div class="grid cols-3" style="margin-bottom:16px">
+    <div class="card span-2">
+      <div class="card-b" style="display:flex;flex-direction:column;gap:14px">
+
+        <div style="border:1px solid var(--line);border-radius:var(--r);overflow:hidden">
+          <div style="padding:13px 16px;display:flex;gap:12px;align-items:flex-start">
+            <input type="checkbox" checked style="margin-top:4px;accent-color:var(--teal)">
+            <div style="flex:1">
+              <div style="display:flex;gap:9px;align-items:center;flex-wrap:wrap"><b style="font-size:13.5px">Raise min/max — Mech seal cartridge 80mm</b><span class="badge b-crit">Critical spare</span><span class="mono">ITM-002218 · Houston</span></div>
+              <div style="font-size:12.5px;color:var(--ink-2);margin:5px 0 9px">Change min/max <b style="color:var(--ink)">1 / 2 → 2 / 4</b> and reorder point <b style="color:var(--ink)">1 → 2</b>. Stockout probability falls <b style="color:var(--crit)">34%</b> → <b style="color:var(--ok)">4%</b>; avoided downtime exposure $310K against $19.7K added stock.</div>
+              <div class="ai-strip">
+                <span class="ai-tag"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3l1.7 4.6L18 9.3l-4.3 1.7L12 16l-1.7-5L6 9.3l4.3-1.7z"/></svg>Evidence</span>
+                <span class="chip"><b>Confidence</b> 0.91</span>
+                <span class="chip">Monte Carlo · 10K runs</span>
+                <span class="chip">Lead time 84d ±21</span>
+                <span class="chip link"><span class="mono">opt-engine v4.2</span></span>
+                <span class="chip link">3 assumptions</span>
+                <span class="chip link">Source: 212 transactions</span>
+              </div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:6px;flex:none">
+              <button class="btn sm primary">Accept</button><button class="btn sm">Adjust</button><button class="btn sm ghost">Override…</button>
+            </div>
+          </div>
+          <div style="background:#FAFBFC;border-top:1px solid var(--line);padding:8px 16px;display:flex;gap:14px;font-size:11.5px;color:var(--ink-3)">
+            Approval path: <span class="steps"><span class="st done"><i>✓</i>Optimization Agent</span><span class="ln"></span><span class="st now"><i>2</i>Planner</span><span class="ln"></span><span class="st"><i>3</i>Maintenance Mgr (critical)</span></span>
+          </div>
+        </div>
+
+        <div style="border:1px solid var(--line);border-radius:var(--r);overflow:hidden">
+          <div style="padding:13px 16px;display:flex;gap:12px;align-items:flex-start">
+            <input type="checkbox" checked style="margin-top:4px;accent-color:var(--teal)">
+            <div style="flex:1">
+              <div style="display:flex;gap:9px;align-items:center;flex-wrap:wrap"><b style="font-size:13.5px">Transfer before buying — 14 hydraulic items</b><span class="badge b-teal">Transfer</span><span class="mono">Rotterdam → Houston</span></div>
+              <div style="font-size:12.5px;color:var(--ink-2);margin:5px 0 9px">Cover Houston demand from Rotterdam surplus. Avoids <b style="color:var(--ink)">$184K</b> of new purchases; freight $6.2K; service level unchanged at both sites under P95 demand.</div>
+              <div class="ai-strip">
+                <span class="ai-tag"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3l1.7 4.6L18 9.3l-4.3 1.7L12 16l-1.7-5L6 9.3l4.3-1.7z"/></svg>Evidence</span>
+                <span class="chip"><b>Confidence</b> 0.88</span><span class="chip">Cross-site simulation</span><span class="chip link">14 item details</span><span class="chip link"><span class="mono">opt-engine v4.2</span></span>
+              </div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:6px;flex:none"><button class="btn sm primary">Accept</button><button class="btn sm">Adjust</button><button class="btn sm ghost">Override…</button></div>
+          </div>
+        </div>
+
+        <div style="border:1px solid var(--line);border-radius:var(--r);overflow:hidden">
+          <div style="padding:13px 16px;display:flex;gap:12px;align-items:flex-start">
+            <input type="checkbox" style="margin-top:4px;accent-color:var(--teal)">
+            <div style="flex:1">
+              <div style="display:flex;gap:9px;align-items:center;flex-wrap:wrap"><b style="font-size:13.5px">Reduce excess — Bearing 22220-EK family</b><span class="badge b-warn">Excess reduction</span><span class="mono">Houston · 3 SKUs</span></div>
+              <div style="font-size:12.5px;color:var(--ink-2);margin:5px 0 9px">On-hand covers 7.2 years of P95 demand. Release <b style="color:var(--ink)">$41.5K</b> via supplier return (28 units) and hold 18. Strategically necessary stock preserved for asset class CR-COMP.</div>
+              <div class="ai-strip">
+                <span class="ai-tag"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3l1.7 4.6L18 9.3l-4.3 1.7L12 16l-1.7-5L6 9.3l4.3-1.7z"/></svg>Evidence</span>
+                <span class="chip"><b>Confidence</b> 0.84</span><span class="chip">Safely reducible vs strategic split</span><span class="chip link">Before/after impact</span>
+              </div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:6px;flex:none"><button class="btn sm primary">Accept</button><button class="btn sm">Adjust</button><button class="btn sm ghost">Override…</button></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:16px">
+      <div class="card">
+        <div class="card-h"><h3>Portfolio impact if accepted</h3></div>
+        <div class="card-b" style="display:flex;flex-direction:column;gap:13px;font-size:12.5px">
+          <div style="display:flex;justify-content:space-between"><span style="color:var(--ink-2)">Working capital released</span><b style="font-family:var(--disp);font-size:16px;color:var(--ok)">−$226K</b></div>
+          <div style="display:flex;justify-content:space-between"><span style="color:var(--ink-2)">Stockout probability (critical)</span><b style="font-family:var(--disp);font-size:16px">8.1% → 3.2%</b></div>
+          <div style="display:flex;justify-content:space-between"><span style="color:var(--ink-2)">Service level</span><b style="font-family:var(--disp);font-size:16px">97.4% → 97.9%</b></div>
+          <div style="display:flex;justify-content:space-between"><span style="color:var(--ink-2)">Risk-adjusted savings</span><b style="font-family:var(--disp);font-size:16px;color:var(--ok)">$402K</b></div>
+          <div style="border-top:1px solid var(--line);padding-top:11px;color:var(--ink-3);font-size:11.5px">Planner acceptance rate this quarter: <b style="color:var(--ink)">81%</b> · overrides feed model retraining</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-h"><h3>Scenario frontier — cost vs risk</h3><span class="hint">Pareto</span></div>
+        <div class="card-b">
+          <svg width="100%" height="170" viewBox="0 0 280 170" role="img" aria-label="Pareto frontier scatter">
+            <g stroke="#EDF0F3"><line x1="34" y1="20" x2="34" y2="140"/><line x1="34" y1="140" x2="270" y2="140"/></g>
+            <path d="M50 36 90 58 130 80 170 98 210 114 250 126" fill="none" stroke="#C9D2DC" stroke-width="1.5" stroke-dasharray="3 4"/>
+            <circle cx="50" cy="36" r="6" fill="#D64545" opacity=".85"/><circle cx="90" cy="58" r="6" fill="#D98E1B" opacity=".85"/>
+            <circle cx="130" cy="80" r="8" fill="#0E8C9C" stroke="#16212E" stroke-width="2"/>
+            <circle cx="170" cy="98" r="6" fill="#2E9E6B" opacity=".85"/><circle cx="250" cy="126" r="6" fill="#2E9E6B" opacity=".5"/>
+            <text x="124" y="66" font-size="10" font-weight="600" fill="#16212E" font-family="IBM Plex Sans">Selected</text>
+            <text x="6" y="84" font-size="9" fill="#8B99A9" transform="rotate(-90 12 84)" font-family="IBM Plex Mono">RISK</text>
+            <text x="120" y="158" font-size="9" fill="#8B99A9" font-family="IBM Plex Mono">CAPITAL HELD →</text>
+          </svg>
+          <button class="btn sm" style="width:100%;justify-content:center;margin-top:6px">Open what-if builder</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════ 5 · RISK & CRITICALITY ════════════════ -->
+<section class="screen" id="s-risk">
+  <div class="page-head">
+    <div>
+      <div class="crumb">Operate · Criticality &amp; operational risk</div>
+      <h1>Risk &amp; Criticality</h1>
+      <div class="sub">Where missing parts hurt: downtime exposure, critical-spare coverage and supply concentration.</div>
+    </div>
+    <div class="head-actions"><button class="btn ai"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3l1.7 4.6L18 9.3l-4.3 1.7L12 16l-1.7-5L6 9.3l4.3-1.7z"/></svg>Summarize risk story</button></div>
+  </div>
+
+  <div class="grid cols-4" style="margin-bottom:16px">
+    <div class="card kpi"><div class="lbl">Downtime exposure</div><div class="val" style="color:var(--crit)">$1.9M</div><span class="delta down">▼ $260K <span class="ctx">30 days</span></span></div>
+    <div class="card kpi"><div class="lbl">Critical spare coverage</div><div class="val">94.6%</div><span class="delta up">▲ 1.2 pt <span class="ctx">target 96%</span></span></div>
+    <div class="card kpi"><div class="lbl">Single-source critical items</div><div class="val" style="color:#A86A0D">61</div><span class="delta flat">$3.4M exposure</span></div>
+    <div class="card kpi"><div class="lbl">Obsolescence candidates</div><div class="val">288</div><span class="delta flat">retired assets · superseded parts</span></div>
+  </div>
+
+  <div class="grid cols-3">
+    <div class="card span-2">
+      <div class="card-h"><h3>Stockout risk heatmap</h3><span class="hint">Plant × risk dimension · score 0–100</span></div>
+      <div class="card-b">
+        <div class="heat" style="grid-template-columns:110px repeat(5,1fr)">
+          <div></div><div class="ht">Critical spares</div><div class="ht">Lead time</div><div class="ht">Supplier</div><div class="ht">Demand vol.</div><div class="ht">Data quality</div>
+          <div class="hl">Joinville</div><div class="cell" style="background:#E5F5EE;color:#1F7A50">18</div><div class="cell" style="background:#E5F5EE;color:#1F7A50">22</div><div class="cell" style="background:#FCF2DF;color:#A86A0D">41</div><div class="cell" style="background:#E5F5EE;color:#1F7A50">25</div><div class="cell" style="background:#E5F5EE;color:#1F7A50">15</div>
+          <div class="hl">Curitiba</div><div class="cell" style="background:#E5F5EE;color:#1F7A50">21</div><div class="cell" style="background:#FCF2DF;color:#A86A0D">38</div><div class="cell" style="background:#E5F5EE;color:#1F7A50">27</div><div class="cell" style="background:#E5F5EE;color:#1F7A50">19</div><div class="cell" style="background:#FCF2DF;color:#A86A0D">36</div>
+          <div class="hl">Houston</div><div class="cell" style="background:#FBEAEA;color:#B33;font-weight:700">74</div><div class="cell" style="background:#FCF2DF;color:#A86A0D">52</div><div class="cell" style="background:#FBEAEA;color:#B33;font-weight:700">68</div><div class="cell" style="background:#FCF2DF;color:#A86A0D">44</div><div class="cell" style="background:#FCF2DF;color:#A86A0D">39</div>
+          <div class="hl">Rotterdam</div><div class="cell" style="background:#E5F5EE;color:#1F7A50">14</div><div class="cell" style="background:#E5F5EE;color:#1F7A50">20</div><div class="cell" style="background:#E5F5EE;color:#1F7A50">23</div><div class="cell" style="background:#E5F5EE;color:#1F7A50">17</div><div class="cell" style="background:#E5F5EE;color:#1F7A50">12</div>
+          <div class="hl">Monterrey</div><div class="cell" style="background:#FCF2DF;color:#A86A0D">49</div><div class="cell" style="background:#FBEAEA;color:#B33;font-weight:700">71</div><div class="cell" style="background:#FCF2DF;color:#A86A0D">55</div><div class="cell" style="background:#FCF2DF;color:#A86A0D">47</div><div class="cell" style="background:#FBEAEA;color:#B33;font-weight:700">63</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-h"><h3>Risk narrative</h3><div class="right"><span class="badge b-ai nodot">AI-generated</span></div></div>
+      <div class="card-b" style="font-size:12.5px;color:var(--ink-2);display:flex;flex-direction:column;gap:10px">
+        <p><b style="color:var(--ink)">Houston</b> carries the highest concentration of risk: 9 critical spares below reorder point combined with two single-source suppliers showing degraded lead-time reliability.</p>
+        <p><b style="color:var(--ink)">Monterrey</b> risk is driven by data, not stock — 63/100 data-quality risk means coverage estimates there carry low confidence.</p>
+        <div class="ai-strip"><span class="ai-tag"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3l1.7 4.6L18 9.3l-4.3 1.7L12 16l-1.7-5L6 9.3l4.3-1.7z"/></svg>Evidence</span><span class="chip"><b>Confidence</b> 0.89</span><span class="chip link">Graph model <span class="mono">risk-gnn v1.3</span></span></div>
+      </div>
+    </div>
+
+    <div class="card span-3">
+      <div class="card-h"><h3>Top critical-spare exposures</h3><div class="right"><button class="btn sm">Export</button></div></div>
+      <table>
+        <thead><tr><th>Item / asset</th><th>Plant</th><th class="num">On hand / min</th><th class="num">Lead time</th><th>Supplier risk</th><th class="num">Downtime exposure</th><th>Risk score</th><th></th></tr></thead>
+        <tbody>
+          <tr><td><span class="item-name">Mech seal cartridge 80mm</span><span class="item-sub">Asset CR-PUMP-114 · cooling loop</span></td><td>Houston</td><td class="num mono">1 / 2</td><td class="num">84d ±21</td><td><span class="badge b-crit">Single source</span></td><td class="num mono">$310K</td><td><div class="conf"><div class="meter crit"><i style="width:92%"></i></div>92</div></td><td><button class="btn sm primary">Mitigate</button></td></tr>
+          <tr><td><span class="item-name">Bearing SKF-6310-2RS1</span><span class="item-sub">Asset CMP-201 · main compressor</span></td><td>Houston</td><td class="num mono">2 / 4</td><td class="num">61d ±14</td><td><span class="badge b-crit">Single source</span></td><td class="num mono">$430K</td><td><div class="conf"><div class="meter crit"><i style="width:88%"></i></div>88</div></td><td><button class="btn sm primary">Mitigate</button></td></tr>
+          <tr><td><span class="item-name">VFD 110kW 480V</span><span class="item-sub">Asset LN3-DRV-07 · extruder line</span></td><td>Monterrey</td><td class="num mono">0 / 1</td><td class="num">112d ±30</td><td><span class="badge b-warn">2 suppliers</span></td><td class="num mono">$280K</td><td><div class="conf"><div class="meter crit"><i style="width:85%"></i></div>85</div></td><td><button class="btn sm primary">Mitigate</button></td></tr>
+          <tr><td><span class="item-name">Gearbox, planetary R97</span><span class="item-sub">Asset CNV-115 · ship loader</span></td><td>Rotterdam</td><td class="num mono">1 / 1</td><td class="num">96d ±18</td><td><span class="badge b-warn">2 suppliers</span></td><td class="num mono">$190K</td><td><div class="conf"><div class="meter warn"><i style="width:64%"></i></div>64</div></td><td><button class="btn sm ghost">Review</button></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+<!-- ════════════════ 6 · PROCUREMENT ════════════════ -->
+<section class="screen" id="s-procure">
+  <div class="page-head">
+    <div>
+      <div class="crumb">Operate · Procurement &amp; supplier intelligence</div>
+      <h1>Procurement &amp; Suppliers</h1>
+      <div class="sub">Act earlier on late POs, negotiate with price evidence, and reduce supply-side uncertainty.</div>
+    </div>
+    <div class="head-actions">
+      <button class="btn ai"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3l1.7 4.6L18 9.3l-4.3 1.7L12 16l-1.7-5L6 9.3l4.3-1.7z"/></svg>Draft RFQ</button>
+      <button class="btn primary">Create requisition</button>
+    </div>
+  </div>
+
+  <div class="grid cols-4" style="margin-bottom:16px">
+    <div class="card kpi"><div class="lbl">Open POs</div><div class="val">1,243</div><span class="delta flat">$8.6M committed</span></div>
+    <div class="card kpi"><div class="lbl">POs at late risk</div><div class="val" style="color:#A86A0D">87</div><span class="delta down">▼ 12 <span class="ctx">after expediting</span></span></div>
+    <div class="card kpi"><div class="lbl">Lead-time reliability</div><div class="val">88.2%</div><span class="delta up">▲ 1.4 pt <span class="ctx">90 days</span></span></div>
+    <div class="card kpi"><div class="lbl">Off-contract spend</div><div class="val" style="color:var(--crit)">$214K</div><span class="delta down">▼ $38K <span class="ctx">MTD</span></span></div>
+  </div>
+
+  <div class="grid cols-3">
+    <div class="card span-2">
+      <div class="card-h"><h3>Open POs — late delivery risk</h3><div class="right"><span class="badge b-ai nodot">Predicted</span><button class="btn sm">Expedite selected</button></div></div>
+      <table>
+        <thead><tr><th>PO / supplier</th><th>Items</th><th class="num">Value</th><th class="num">Promised</th><th>Late probability</th><th>Action</th></tr></thead>
+        <tbody>
+          <tr><td><span class="item-name mono">4500128821</span><span class="item-sub">Vexel Hydraulics</span></td><td>Seal kits ×6</td><td class="num mono">$24,300</td><td class="num">Jun 21</td><td><div class="conf"><div class="meter crit"><i style="width:78%"></i></div>78%</div></td><td><button class="btn sm primary">Expedite</button></td></tr>
+          <tr><td><span class="item-name mono">4500129104</span><span class="item-sub">Nordan Bearings GmbH</span></td><td>SKF-6310 ×8</td><td class="num mono">$11,840</td><td class="num">Jul 02</td><td><div class="conf"><div class="meter warn"><i style="width:54%"></i></div>54%</div></td><td><button class="btn sm">Watch</button></td></tr>
+          <tr><td><span class="item-name mono">4500127660</span><span class="item-sub">Petrov Valves LLC</span></td><td>Gate valves ×4</td><td class="num mono">$41,200</td><td class="num">Jun 18</td><td><div class="conf"><div class="meter warn"><i style="width:47%"></i></div>47%</div></td><td><button class="btn sm">Watch</button></td></tr>
+          <tr><td><span class="item-name mono">4500129377</span><span class="item-sub">Lumen Electric Co.</span></td><td>VFD 110kW ×1</td><td class="num mono">$28,750</td><td class="num">Aug 11</td><td><div class="conf"><div class="meter ok"><i style="width:12%"></i></div>12%</div></td><td><span class="badge b-ok">On track</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <div class="card-h"><h3>RFQ draft — alternative sourcing</h3><div class="right"><span class="badge b-ai nodot">AI draft</span></div></div>
+      <div class="card-b" style="font-size:12.5px;display:flex;flex-direction:column;gap:10px">
+        <div style="border:1px solid var(--line);border-radius:8px;padding:11px 13px;background:#FAFBFC">
+          <b>RFQ — Mechanical seal cartridge 80mm</b>
+          <div style="color:var(--ink-2);margin-top:5px">Qty 6 · delivery Houston TX by Aug 15 · spec John Crane T5610Q equivalent · last paid $1,640/un (Mar 2026) · 24-month volume: 22 units.</div>
+          <div style="margin-top:8px;font-size:11.5px;color:var(--ink-3)">Shortlist: Nordan Sealing (LT 94% reliable) · TecnoSeal BR (price −8%) · GulfPro Supply (local, LT 21d)</div>
+        </div>
+        <div class="ai-strip"><span class="ai-tag"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3l1.7 4.6L18 9.3l-4.3 1.7L12 16l-1.7-5L6 9.3l4.3-1.7z"/></svg>Evidence</span><span class="chip">Price history 24m</span><span class="chip">Supplier scorecards</span><span class="chip link"><span class="mono">rfq-gen v2.0</span></span></div>
+        <div style="display:flex;gap:8px"><button class="btn sm primary">Send to procurement</button><button class="btn sm">Edit draft</button></div>
+      </div>
+    </div>
+
+    <div class="card span-3">
+      <div class="card-h"><h3>Supplier scorecards</h3><span class="hint">Rolling 12 months</span><div class="right"><button class="btn sm ghost">All suppliers →</button></div></div>
+      <table>
+        <thead><tr><th>Supplier</th><th class="num">Spend</th><th>Lead-time adherence</th><th>Price trend</th><th class="num">Late deliveries</th><th class="num">Emergency buys</th><th>Risk</th></tr></thead>
+        <tbody>
+          <tr><td><span class="item-name">Nordan Bearings GmbH</span><span class="item-sub">Bearings · power transmission</span></td><td class="num mono">$1.42M</td><td><div class="conf"><div class="meter ok"><i style="width:94%"></i></div>94%</div></td><td><span class="badge b-ok nodot">−1.2%</span></td><td class="num">3</td><td class="num">1</td><td><span class="badge b-ok">Low</span></td></tr>
+          <tr><td><span class="item-name">Vexel Hydraulics</span><span class="item-sub">Hydraulic components</span></td><td class="num mono">$880K</td><td><div class="conf"><div class="meter crit"><i style="width:61%"></i></div>61%</div></td><td><span class="badge b-warn nodot">+6.8%</span></td><td class="num">19</td><td class="num">7</td><td><span class="badge b-crit">High</span></td></tr>
+          <tr><td><span class="item-name">Petrov Valves LLC</span><span class="item-sub">Valves · instrumentation</span></td><td class="num mono">$1.13M</td><td><div class="conf"><div class="meter warn"><i style="width:79%"></i></div>79%</div></td><td><span class="badge b-warn nodot">+3.1%</span></td><td class="num">11</td><td class="num">2</td><td><span class="badge b-warn">Medium</span></td></tr>
+          <tr><td><span class="item-name">Lumen Electric Co.</span><span class="item-sub">Motors · drives · electrical</span></td><td class="num mono">$2.05M</td><td><div class="conf"><div class="meter ok"><i style="width:91%"></i></div>91%</div></td><td><span class="badge b-ok nodot">−0.4%</span></td><td class="num">6</td><td class="num">0</td><td><span class="badge b-ok">Low</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════ 7 · ASK SMARTINV (CONVERSATIONAL ANALYST) ════════════════ -->
+<section class="screen" id="s-analyst">
+  <div class="page-head">
+    <div>
+      <div class="crumb">Intelligence · Conversational analyst</div>
+      <h1>Ask SmartInv</h1>
+      <div class="sub">Natural language over governed inventory, usage, work order and procurement data — answers carry their evidence.</div>
+    </div>
+    <div class="head-actions"><span class="badge b-ai nodot">Queries run on governed APIs only</span></div>
+  </div>
+
+  <div class="chat-wrap">
+    <div class="card chat">
+      <div class="chat-scroll">
+        <div class="msg user"><div class="bubble">Which critical items at Houston could stock out in the next 30 days, and what would it cost us?</div></div>
+        <div class="msg bot">
+          <div class="bubble">
+            <b>4 critical items at Houston have ≥25% stockout probability within 30 days.</b> Combined downtime exposure is <b>$1.02M</b>, concentrated on the cooling loop and main compressor.
+            <table style="margin-top:10px;font-size:11.5px;background:#fff;border:1px solid var(--line);border-radius:7px;overflow:hidden">
+              <thead><tr><th>Item</th><th class="num">P(stockout)</th><th class="num">Exposure</th></tr></thead>
+              <tbody>
+                <tr><td>Mech seal cartridge 80mm</td><td class="num">34%</td><td class="num mono">$310K</td></tr>
+                <tr><td>Bearing SKF-6310-2RS1</td><td class="num">29%</td><td class="num mono">$430K</td></tr>
+                <tr><td>Coupling element N-EUPEX 140</td><td class="num">27%</td><td class="num mono">$160K</td></tr>
+                <tr><td>PLC output module 16DO</td><td class="num">25%</td><td class="num mono">$120K</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="ai-strip">
+            <span class="ai-tag"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3l1.7 4.6L18 9.3l-4.3 1.7L12 16l-1.7-5L6 9.3l4.3-1.7z"/></svg>Evidence</span>
+            <span class="chip"><b>Confidence</b> 0.90</span>
+            <span class="chip link">Risk Agent + Forecast service</span>
+            <span class="chip link">Query plan</span>
+            <span class="chip link">312 source records</span>
+          </div>
+          <div style="display:flex;gap:7px"><button class="btn sm primary">Create mitigation plan</button><button class="btn sm">Pin to dashboard</button><button class="btn sm ghost">Challenge answer</button></div>
+        </div>
+        <div class="msg user"><div class="bubble">Build me a dashboard tracking these 4 items with stock, open POs and risk trend.</div></div>
+        <div class="msg bot">
+          <div class="bubble">Done — I created <b>“Houston critical watch”</b> with 4 widgets: live stock vs min, open PO status with late-risk, 90-day risk trend, and consuming work orders. It's saved to your workspace and shared with the Houston planner group.</div>
+          <div class="ai-strip"><span class="ai-tag"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3l1.7 4.6L18 9.3l-4.3 1.7L12 16l-1.7-5L6 9.3l4.3-1.7z"/></svg>Evidence</span><span class="chip">Intent → Dashboard builder</span><span class="chip link">Open dashboard</span></div>
+        </div>
+      </div>
+      <div class="chat-input">
+        <input placeholder="Ask about inventory, usage, suppliers, work orders…" aria-label="Ask SmartInv">
+        <button class="btn ai"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4z"/></svg>Send</button>
+      </div>
+    </div>
+    <div>
+      <div class="nav-label" style="color:var(--ink-3);padding:0 2px 8px">Try asking</div>
+      <div class="suggest">
+        <button>“Show excess value by plant and how much is safely reducible”</button>
+        <button>“Why did the model recommend raising min/max on ITM-002218?”</button>
+        <button>“Compare Vexel vs Nordan on lead time and price for bearings”</button>
+        <button>“Which preventive plans drive demand for seal kits next quarter?”</button>
+        <button>“Draft the monthly working capital story for the CFO”</button>
+      </div>
+      <div class="card" style="margin-top:14px">
+        <div class="card-h"><h3>Session quality</h3></div>
+        <div class="card-b" style="font-size:12px;color:var(--ink-2);display:flex;flex-direction:column;gap:8px">
+          <div style="display:flex;justify-content:space-between"><span>Prompt success rate</span><b>96%</b></div>
+          <div style="display:flex;justify-content:space-between"><span>Avg time to insight</span><b>11s</b></div>
+          <div style="display:flex;justify-content:space-between"><span>Answers grounded</span><b>100%</b></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════ 8 · AGENT CONSOLE ════════════════ -->
+<section class="screen" id="s-agents">
+  <div class="page-head">
+    <div>
+      <div class="crumb">Intelligence · Agentic orchestration</div>
+      <h1>Agent Console</h1>
+      <div class="sub">Seven specialized agents under human governance — scoped tools, full audit, no direct writes to source systems.</div>
+    </div>
+    <div class="head-actions">
+      <button class="btn">Audit log</button>
+      <button class="btn primary">Run orchestration</button>
+    </div>
+  </div>
+
+  <div class="grid cols-4" style="margin-bottom:16px">
+    <div class="card kpi"><div class="lbl">Task success rate</div><div class="val">97.2%</div><span class="delta up">▲ 0.8 pt</span></div>
+    <div class="card kpi"><div class="lbl">Recommendation acceptance</div><div class="val">81%</div><span class="delta up">▲ 3 pt</span></div>
+    <div class="card kpi"><div class="lbl">Human override rate</div><div class="val">12%</div><span class="delta down">▼ 2 pt <span class="ctx">feeds retraining</span></span></div>
+    <div class="card kpi"><div class="lbl">Audit completeness</div><div class="val" style="color:var(--ok)">100%</div><span class="delta flat">every step logged</span></div>
+  </div>
+
+  <div class="grid cols-3" style="margin-bottom:16px">
+    <div class="card agent-card"><div class="card-b">
+      <div class="agent-top"><div class="agent-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M22 12h-4l-3 8-4-16-3 8H2"/></svg></div><div><div class="nm">Inventory Health Agent</div><div class="sc">Excess · obsolete · duplicates · data quality</div></div><span class="pulse busy" title="Running"></span></div>
+      <div style="font-size:12px;color:var(--ink-2)">Running: portfolio health scan, 62,940 SKUs · ETA 4 min</div>
+      <div class="agent-stats"><div>Tasks 24h<b>38</b></div><div>Success<b>98%</b></div><div>Tools<b>3</b></div></div>
+    </div></div>
+    <div class="card agent-card"><div class="card-b">
+      <div class="agent-top"><div class="agent-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3l9 16H3z"/><path d="M12 10v4M12 17.5v.1"/></svg></div><div><div class="nm">Risk Agent</div><div class="sc">Stockout risk · criticality · downtime exposure</div></div><span class="pulse" title="Healthy"></span></div>
+      <div style="font-size:12px;color:var(--ink-2)">Last: Houston risk refresh · 23 critical exposures scored</div>
+      <div class="agent-stats"><div>Tasks 24h<b>21</b></div><div>Success<b>100%</b></div><div>Tools<b>3</b></div></div>
+    </div></div>
+    <div class="card agent-card"><div class="card-b">
+      <div class="agent-top"><div class="agent-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="6" cy="6" r="3"/><circle cx="18" cy="18" r="3"/><path d="M6 9v3a4 4 0 0 0 4 4h5"/></svg></div><div><div class="nm">Optimization Agent</div><div class="sc">Min/max · safety stock · transfers · policies</div></div><span class="pulse" title="Healthy"></span></div>
+      <div style="font-size:12px;color:var(--ink-2)">14 recommendations awaiting planner review</div>
+      <div class="agent-stats"><div>Tasks 24h<b>17</b></div><div>Success<b>94%</b></div><div>Tools<b>3</b></div></div>
+    </div></div>
+    <div class="card agent-card"><div class="card-b">
+      <div class="agent-top"><div class="agent-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="9" cy="20" r="1.6"/><circle cx="17" cy="20" r="1.6"/><path d="M3 4h2l2.5 12h11L21 8H7"/></svg></div><div><div class="nm">Procurement Agent</div><div class="sc">Suppliers · POs · prices · RFQ opportunities</div></div><span class="pulse" title="Healthy"></span></div>
+      <div style="font-size:12px;color:var(--ink-2)">Flagged 87 late-risk POs · 1 RFQ draft ready</div>
+      <div class="agent-stats"><div>Tasks 24h<b>29</b></div><div>Success<b>97%</b></div><div>Tools<b>3</b></div></div>
+    </div></div>
+    <div class="card agent-card"><div class="card-b">
+      <div class="agent-top"><div class="agent-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><ellipse cx="12" cy="6" rx="7" ry="3"/><path d="M5 6v12c0 1.7 3.1 3 7 3s7-1.3 7-3V6"/></svg></div><div><div class="nm">Master Data Agent</div><div class="sc">Descriptions · classification · enrichment</div></div><span class="pulse idle" title="Idle"></span></div>
+      <div style="font-size:12px;color:var(--ink-2)">412 duplicate pairs queued for human review</div>
+      <div class="agent-stats"><div>Tasks 24h<b>11</b></div><div>Success<b>96%</b></div><div>Tools<b>3</b></div></div>
+    </div></div>
+    <div class="card agent-card"><div class="card-b">
+      <div class="agent-top"><div class="agent-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 3h9l4 4v14H6z"/><path d="M9 13h6M9 17h6"/></svg></div><div><div class="nm">Executive Narrative Agent</div><div class="sc">C-level stories from governed metrics only</div></div><span class="pulse" title="Healthy"></span></div>
+      <div style="font-size:12px;color:var(--ink-2)">June brief generated · accuracy review 4.8/5</div>
+      <div class="agent-stats"><div>Tasks 24h<b>4</b></div><div>Success<b>100%</b></div><div>Tools<b>3</b></div></div>
+    </div></div>
+  </div>
+
+  <div class="grid cols-3">
+    <div class="card span-2">
+      <div class="card-h"><h3>Orchestration trace — “Houston stockout question”</h3><span class="hint">One question, three agents, one governed answer</span></div>
+      <div class="row-list">
+        <div class="row-item"><div class="sig ai"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v4l3 2"/></svg></div><div><div class="t">Orchestrator — intent classified</div><div class="d">Routed to Risk Agent (primary), Forecast service, Optimization Agent (mitigation)</div><div class="meta">14:02:11 · user context: planner / BR-South · tenant-scoped</div></div><div class="end"><span class="badge b-ok nodot">62ms</span></div></div>
+        <div class="row-item"><div class="sig ai"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3l9 16H3z"/></svg></div><div><div class="t">Risk Agent — claim returned</div><div class="d">4 items ≥25% stockout probability · evidence: 312 records · confidence 0.90</div><div class="meta">14:02:13 · tools: risk-scoring, asset-graph · model risk-gnn v1.3</div></div><div class="end"><span class="badge b-ok nodot">1.8s</span></div></div>
+        <div class="row-item"><div class="sig ai"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="6" cy="6" r="3"/><circle cx="18" cy="18" r="3"/><path d="M6 9v3a4 4 0 0 0 4 4h5"/></svg></div><div><div class="t">Optimization Agent — mitigation prepared</div><div class="d">Min/max change + expedite recommendation · conflict with Procurement budget rule → resolved by precedence policy</div><div class="meta">14:02:16 · approval path attached: planner → maintenance manager</div></div><div class="end"><span class="badge b-ok nodot">2.4s</span></div></div>
+        <div class="row-item"><div class="sig teal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 12l2 2 4-5"/><path d="M12 3l7 3v5c0 5-3.5 8-7 10-3.5-2-7-5-7-10V6z"/></svg></div><div><div class="t">Output validated &amp; presented</div><div class="d">Assumptions, evidence and approval path exposed · no source-system writes performed</div><div class="meta">14:02:17 · full step log retained</div></div><div class="end"><span class="badge b-ok nodot">Logged</span></div></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-h"><h3>Guardrails</h3></div>
+      <div class="card-b" style="display:flex;flex-direction:column;gap:11px;font-size:12.5px">
+        <div style="display:flex;gap:9px;align-items:center"><span class="tgl on"></span>Tool-based data access only</div>
+        <div style="display:flex;gap:9px;align-items:center"><span class="tgl on"></span>Writes via Workflow &amp; Approval layer</div>
+        <div style="display:flex;gap:9px;align-items:center"><span class="tgl on"></span>Agents inherit user permissions</div>
+        <div style="display:flex;gap:9px;align-items:center"><span class="tgl on"></span>Tenant- &amp; role-scoped memory</div>
+        <div style="display:flex;gap:9px;align-items:center"><span class="tgl on"></span>Output validation before display</div>
+        <div style="border-top:1px solid var(--line);padding-top:10px;color:var(--ink-3);font-size:11.5px">Locked by governance policy · changes require Admin + security review.</div>
+      </div>
+    </div>
+  </div>
+</section>
+<!-- ════════════════ 9 · REPORTS & STORIES ════════════════ -->
+<section class="screen" id="s-reports">
+  <div class="page-head">
+    <div>
+      <div class="crumb">Intelligence · Visualization, reporting &amp; storytelling</div>
+      <h1>Reports &amp; Stories</h1>
+      <div class="sub">Board-ready narratives and operational reviews — generated from governed metrics, linked back to source records.</div>
+    </div>
+    <div class="head-actions">
+      <button class="btn">Report designer</button>
+      <button class="btn ai"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3l1.7 4.6L18 9.3l-4.3 1.7L12 16l-1.7-5L6 9.3l4.3-1.7z"/></svg>New AI report</button>
+    </div>
+  </div>
+
+  <div class="grid cols-4" style="margin-bottom:18px">
+    <div class="tpl"><div class="thumb"><div class="fake" style="top:12px;left:12px;width:55%;height:10px"></div><div class="fake" style="top:30px;left:12px;width:75%;height:42px"></div><div class="fake" style="top:30px;right:12px;width:16%;height:42px"></div><div class="fake" style="bottom:12px;left:12px;right:12px;height:14px"></div></div><div class="body"><b>Executive brief</b><span>Monthly · CFO / COO / Board</span></div></div>
+    <div class="tpl"><div class="thumb"><div class="fake" style="top:12px;left:12px;width:30%;height:80px"></div><div class="fake" style="top:12px;left:38%;width:28%;height:80px"></div><div class="fake" style="top:12px;right:12px;width:26%;height:80px"></div></div><div class="body"><b>Plant review</b><span>Weekly · plant comparison</span></div></div>
+    <div class="tpl"><div class="thumb"><div class="fake" style="top:12px;left:12px;right:12px;height:12px"></div><div class="fake" style="top:32px;left:12px;right:12px;height:12px"></div><div class="fake" style="top:52px;left:12px;right:12px;height:12px"></div><div class="fake" style="top:72px;left:12px;right:60%;height:12px"></div></div><div class="body"><b>Planner worklist</b><span>Daily · exceptions &amp; actions</span></div></div>
+    <div class="tpl"><div class="thumb"><div class="fake" style="top:12px;left:12px;width:44%;height:80px"></div><div class="fake" style="top:12px;right:12px;width:44%;height:36px"></div><div class="fake" style="bottom:12px;right:12px;width:44%;height:36px"></div></div><div class="body"><b>Procurement review</b><span>Monthly · supplier performance</span></div></div>
+  </div>
+
+  <div class="grid cols-3">
+    <div class="card span-2">
+      <div class="card-h"><h3>June 2026 — Executive brief (preview)</h3><div class="right"><span class="badge b-ai nodot">AI-generated</span><button class="btn sm">PDF</button><button class="btn sm">PowerPoint</button><button class="btn sm primary">Share</button></div></div>
+      <div class="card-b" style="display:flex;flex-direction:column;gap:14px">
+        <div style="font-family:var(--disp);font-size:17px;font-weight:600">MRO inventory: capital down, risk down — three decisions requested</div>
+        <div style="font-size:12.8px;color:var(--ink-2);columns:2;column-gap:26px">
+          <p style="margin-bottom:10px"><b style="color:var(--ink)">1 · Working capital.</b> Inventory closed at $48.2M (−3.1% QoQ). Excess fell to $6.2M after nine reduction plans executed without any critical-coverage loss. A further $2.1M is executable in Q3 — approval requested for the Houston bearing return program.</p>
+          <p style="margin-bottom:10px"><b style="color:var(--ink)">2 · Risk.</b> Critical stockout exposure improved from 28 to 23 items ($1.9M downtime exposure). Two single-source items remain the dominant risk; dual-sourcing RFQs are drafted and awaiting procurement sign-off.</p>
+          <p><b style="color:var(--ink)">3 · Progress.</b> Forecast accuracy reached MASE 0.71 (target 0.80) and recommendation acceptance hit 81%. Data-quality risk at Monterrey is the main confidence limiter; a cleansing wave is scoped for July.</p>
+        </div>
+        <div class="ai-strip">
+          <span class="ai-tag"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3l1.7 4.6L18 9.3l-4.3 1.7L12 16l-1.7-5L6 9.3l4.3-1.7z"/></svg>Evidence</span>
+          <span class="chip"><b>Grounded on</b> 14 governed metrics</span>
+          <span class="chip link">Linked charts · 6</span>
+          <span class="chip link">Source records</span>
+          <span class="chip">Safe savings vs risk-bearing clearly split</span>
+          <span class="chip"><b>Review score</b> 4.8/5</span>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:16px">
+      <div class="card">
+        <div class="card-h"><h3>What-if scenario</h3><span class="hint">Interactive</span></div>
+        <div class="card-b" style="display:flex;flex-direction:column;gap:13px;font-size:12.5px">
+          <div><div style="display:flex;justify-content:space-between;margin-bottom:5px"><span style="color:var(--ink-2)">Target service level — critical</span><b>98%</b></div><input type="range" min="90" max="99" value="98" style="width:100%;accent-color:var(--teal)"></div>
+          <div><div style="display:flex;justify-content:space-between;margin-bottom:5px"><span style="color:var(--ink-2)">Lead-time stress</span><b>+15%</b></div><input type="range" min="0" max="50" value="15" style="width:100%;accent-color:var(--teal)"></div>
+          <div><div style="display:flex;justify-content:space-between;margin-bottom:5px"><span style="color:var(--ink-2)">Centralization — slow movers</span><b>2 hubs</b></div><input type="range" min="1" max="5" value="2" style="width:100%;accent-color:var(--teal)"></div>
+          <div style="background:#FAFBFC;border:1px solid var(--line);border-radius:8px;padding:10px 12px">
+            <div style="display:flex;justify-content:space-between"><span style="color:var(--ink-2)">Capital impact</span><b style="color:var(--ok)">−$1.34M</b></div>
+            <div style="display:flex;justify-content:space-between"><span style="color:var(--ink-2)">Stockout prob. (critical)</span><b>3.2% → 3.6%</b></div>
+            <div style="display:flex;justify-content:space-between"><span style="color:var(--ink-2)">Scenario runtime</span><b class="mono" style="font-weight:600">6.2s</b></div>
+          </div>
+          <button class="btn sm primary" style="justify-content:center">Save scenario</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-h"><h3>Scheduled deliveries</h3></div>
+        <div class="row-list">
+          <div class="row-item"><div class="sig teal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg></div><div><div class="t">Monthly executive narrative</div><div class="d">1st business day · CFO, COO, VP Ops</div></div><span class="tgl on" style="margin-left:auto"></span></div>
+          <div class="row-item"><div class="sig teal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18"/></svg></div><div><div class="t">Plant review pack</div><div class="d">Mondays 07:00 · plant managers</div></div><span class="tgl on" style="margin-left:auto"></span></div>
+          <div class="row-item"><div class="sig teal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18"/></svg></div><div><div class="t">Planner worklist</div><div class="d">Daily 06:30 · planner groups</div></div><span class="tgl" style="margin-left:auto"></span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════ 10 · APPROVALS ════════════════ -->
+<section class="screen" id="s-approvals">
+  <div class="page-head">
+    <div>
+      <div class="crumb">Govern · Human-in-the-loop workflows · 6 pending</div>
+      <h1>Approvals</h1>
+      <div class="sub">High-risk actions require explicit approval. Low-risk actions can be semi-automated within policy limits.</div>
+    </div>
+    <div class="head-actions"><button class="btn">Automation policy</button><button class="btn">Decision history</button></div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab on">My queue · 6</button>
+    <button class="tab">Semi-automated · 31</button>
+    <button class="tab">Completed</button>
+    <button class="tab">Overrides</button>
+  </div>
+
+  <div class="grid cols-3">
+    <div class="span-2" style="display:flex;flex-direction:column;gap:14px">
+      <div class="card">
+        <div class="card-b" style="display:flex;gap:13px;align-items:flex-start">
+          <div class="sig crit" style="margin-top:2px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3l9 16H3z"/><path d="M12 10v4M12 17.5v.1"/></svg></div>
+          <div style="flex:1">
+            <div style="display:flex;gap:9px;align-items:center;flex-wrap:wrap"><b style="font-size:13.5px">Critical spare min/max change — Mech seal 80mm</b><span class="badge b-crit">High risk</span></div>
+            <div style="font-size:12.5px;color:var(--ink-2);margin:4px 0 8px">Min/max 1/2 → 2/4 · capital +$19.7K · stockout risk −30 pt · requested by Optimization Agent, accepted by R. Marques (Planner).</div>
+            <div class="steps" style="margin-bottom:9px"><span class="st done"><i>✓</i>Agent</span><span class="ln"></span><span class="st done"><i>✓</i>Planner</span><span class="ln"></span><span class="st now"><i>3</i>Maintenance Manager — you</span></div>
+            <div class="ai-strip"><span class="ai-tag"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3l1.7 4.6L18 9.3l-4.3 1.7L12 16l-1.7-5L6 9.3l4.3-1.7z"/></svg>Evidence</span><span class="chip"><b>Confidence</b> 0.91</span><span class="chip link">Full explanation</span><span class="chip link">Before/after impact</span><span class="chip">Explanation present ✓ — required for critical execution</span></div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:6px;flex:none"><button class="btn sm primary">Approve</button><button class="btn sm">Request changes</button><button class="btn sm ghost">Reject…</button></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-b" style="display:flex;gap:13px;align-items:flex-start">
+          <div class="sig warn" style="margin-top:2px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3v18M3 12h18"/></svg></div>
+          <div style="flex:1">
+            <div style="display:flex;gap:9px;align-items:center;flex-wrap:wrap"><b style="font-size:13.5px">Working capital action — Houston bearing return $41.5K</b><span class="badge b-warn">Finance review</span></div>
+            <div style="font-size:12.5px;color:var(--ink-2);margin:4px 0 8px">Supplier return of 28 excess units · restocking fee 12% · net release $36.5K · strategically necessary stock preserved.</div>
+            <div class="steps" style="margin-bottom:9px"><span class="st done"><i>✓</i>Agent</span><span class="ln"></span><span class="st done"><i>✓</i>Planner</span><span class="ln"></span><span class="st now"><i>3</i>Finance</span></div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:6px;flex:none"><button class="btn sm primary">Approve</button><button class="btn sm ghost">Reject…</button></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-b" style="display:flex;gap:13px;align-items:flex-start">
+          <div class="sig teal" style="margin-top:2px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 12h16M14 6l6 6-6 6"/></svg></div>
+          <div style="flex:1">
+            <div style="display:flex;gap:9px;align-items:center;flex-wrap:wrap"><b style="font-size:13.5px">Override review — planner rejected forecast for ITM-007733</b><span class="badge b-teal">Feedback loop</span></div>
+            <div style="font-size:12.5px;color:var(--ink-2);margin:4px 0 4px">Reason captured: <i>“Motor standardization program retires this frame size in Q4 — model unaware.”</i> Override routed to model improvement backlog.</div>
+            <div style="font-size:11.5px;color:var(--ink-3)">Regime-change signal created · forecast service notified</div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:6px;flex:none"><button class="btn sm primary">Acknowledge</button></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-h"><h3>Automation policy limits</h3></div>
+      <div class="card-b" style="font-size:12.5px;display:flex;flex-direction:column;gap:12px">
+        <div style="display:flex;justify-content:space-between;align-items:center"><div>Non-critical min/max, &lt; $2K impact<div style="font-size:11px;color:var(--ink-3)">Semi-automated · daily digest</div></div><span class="badge b-ok nodot">Auto</span></div>
+        <div style="display:flex;justify-content:space-between;align-items:center"><div>Transfers &lt; $10K, same region<div style="font-size:11px;color:var(--ink-3)">Planner one-click</div></div><span class="badge b-ok nodot">Auto</span></div>
+        <div style="display:flex;justify-content:space-between;align-items:center"><div>Critical spare policy changes<div style="font-size:11px;color:var(--ink-3)">Planner + Maintenance Manager</div></div><span class="badge b-warn nodot">2-step</span></div>
+        <div style="display:flex;justify-content:space-between;align-items:center"><div>Working capital &gt; $25K<div style="font-size:11px;color:var(--ink-3)">+ Finance review</div></div><span class="badge b-crit nodot">3-step</span></div>
+        <div style="display:flex;justify-content:space-between;align-items:center"><div>Source-system writes<div style="font-size:11px;color:var(--ink-3)">Always via Workflow &amp; Approval layer</div></div><span class="badge b-mute nodot">Locked</span></div>
+        <div style="border-top:1px solid var(--line);padding-top:11px;color:var(--ink-3);font-size:11.5px">Approval compliance this quarter: <b style="color:var(--ok)">100%</b></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════ 11 · DATA QUALITY ════════════════ -->
+<section class="screen" id="s-quality">
+  <div class="page-head">
+    <div>
+      <div class="crumb">Govern · Data quality intelligence</div>
+      <h1>Data Quality</h1>
+      <div class="sub">Is the data good enough to trust the recommendations? Confidence limits are surfaced, never hidden.</div>
+    </div>
+    <div class="head-actions"><button class="btn primary">Start cleansing wave</button></div>
+  </div>
+
+  <div class="grid cols-4" style="margin-bottom:16px">
+    <div class="card card-b" style="display:flex;gap:14px;align-items:center">
+      <div class="donut" style="width:100px;height:100px;background:conic-gradient(#0E8C9C 0 86%,#E3E8EE 86% 100%)"><div style="width:70px;height:70px"><div><b style="font-size:18px">86</b><span>DQ score</span></div></div></div>
+      <div style="font-size:12px;color:var(--ink-2)">Tenant-wide item master quality<br><b style="color:var(--ok)">▲ 2.1 pt</b> after last enrichment run</div>
+    </div>
+    <div class="card kpi"><div class="lbl">Items below DQ threshold</div><div class="val" style="color:#A86A0D">5,610</div><span class="delta down">▼ 740 <span class="ctx">recommendations show DQ warning</span></span></div>
+    <div class="card kpi"><div class="lbl">Lead-time completeness</div><div class="val">79.3%</div><span class="delta up">▲ 4.0 pt</span><div class="meter" style="margin-top:11px"><i style="width:79%"></i></div></div>
+    <div class="card kpi"><div class="lbl">Asset–spare link coverage</div><div class="val">71.8%</div><span class="delta up">▲ 1.6 pt</span><div class="meter warn" style="margin-top:11px"><i style="width:72%"></i></div></div>
+  </div>
+
+  <div class="grid cols-3">
+    <div class="card span-2">
+      <div class="card-h"><h3>Issue backlog by category</h3><div class="right"><button class="btn sm">Assign</button></div></div>
+      <table>
+        <thead><tr><th>Issue</th><th class="num">Items</th><th>Impact on recommendations</th><th>Detection</th><th>Suggested fix</th><th></th></tr></thead>
+        <tbody>
+          <tr><td><b>Missing manufacturer part number</b></td><td class="num mono">2,431</td><td><span class="badge b-warn">Duplicate risk ↑</span></td><td class="mono">Rule + NER</td><td>LLM extraction from descriptions</td><td><button class="btn sm primary">Run fix</button></td></tr>
+          <tr><td><b>Weak / non-standard descriptions</b></td><td class="num mono">1,876</td><td><span class="badge b-warn">Search &amp; match ↓</span></td><td class="mono">NLP scorer</td><td>Normalize to noun-modifier template</td><td><button class="btn sm primary">Run fix</button></td></tr>
+          <tr><td><b>Inconsistent unit of measure</b></td><td class="num mono">644</td><td><span class="badge b-crit">Forecast distortion</span></td><td class="mono">Rule</td><td>UoM harmonization proposal</td><td><button class="btn sm primary">Run fix</button></td></tr>
+          <tr><td><b>Missing commodity code</b></td><td class="num mono">512</td><td><span class="badge b-mute">Reporting gaps</span></td><td class="mono">Classifier</td><td>Auto-classify, 0.9+ confidence only</td><td><button class="btn sm primary">Run fix</button></td></tr>
+          <tr><td><b>Missing asset relationship</b></td><td class="num mono">147 critical</td><td><span class="badge b-crit">Criticality blind spot</span></td><td class="mono">Graph gap</td><td>Reliability engineer review list</td><td><button class="btn sm">Assign</button></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="card">
+      <div class="card-h"><h3>DQ → recommendation confidence</h3></div>
+      <div class="card-b" style="font-size:12.5px;color:var(--ink-2);display:flex;flex-direction:column;gap:12px">
+        <p>Measured effect: items above DQ 80 reach mean recommendation confidence <b style="color:var(--ink)">0.90</b>; items below 60 reach only <b style="color:var(--ink)">0.64</b> and are flagged.</p>
+        <svg width="100%" height="120" viewBox="0 0 260 120" role="img" aria-label="DQ vs confidence bars">
+          <g font-size="9" fill="#8B99A9" font-family="IBM Plex Mono">
+            <rect x="20" y="78" width="40" height="32" rx="3" fill="#D64545" opacity=".8"/><text x="24" y="118">DQ&lt;60</text>
+            <rect x="80" y="52" width="40" height="58" rx="3" fill="#D98E1B" opacity=".85"/><text x="84" y="118">60–80</text>
+            <rect x="140" y="26" width="40" height="84" rx="3" fill="#0E8C9C"/><text x="142" y="118">80–90</text>
+            <rect x="200" y="18" width="40" height="92" rx="3" fill="#2E9E6B"/><text x="206" y="118">90+</text>
+          </g>
+        </svg>
+        <p style="font-size:11.5px;color:var(--ink-3);border-top:1px solid var(--line);padding-top:10px">Monterrey is the lowest-confidence site — July cleansing wave scoped at 2,140 items.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════ 12 · ADMIN & GOVERNANCE ════════════════ -->
+<section class="screen" id="s-settings">
+  <div class="page-head">
+    <div>
+      <div class="crumb">Govern · Administration</div>
+      <h1>Admin &amp; Governance</h1>
+      <div class="sub">Connectors, identity, model registry and audit — the controls under everything else.</div>
+    </div>
+    <div class="head-actions"><button class="btn">Audit export</button><button class="btn primary">Add connector</button></div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab on">Connectors</button>
+    <button class="tab">Roles &amp; access</button>
+    <button class="tab">Model registry</button>
+    <button class="tab">Tenants</button>
+    <button class="tab">Security</button>
+  </div>
+
+  <div class="grid cols-3">
+    <div class="card span-2">
+      <div class="card-h"><h3>Source connectors</h3><span class="hint">Integration contracts versioned · failures observable &amp; recoverable</span></div>
+      <div class="row-list">
+        <div class="conn"><div class="lg" style="background:#0F62FE">Mx</div><div><div class="nm">IBM Maximo — EAM</div><div class="ds">Items, balances, transactions, work orders, assets · streaming + nightly batch</div></div><div style="margin-left:auto;text-align:right"><span class="badge b-ok">Healthy</span><div style="font-size:10.5px;color:var(--ink-3);margin-top:3px" class="mono">sync 4 min ago · v2.3</div></div></div>
+        <div class="conn"><div class="lg" style="background:#1B6CA8">SAP</div><div><div class="nm">SAP S/4HANA — MM / PM</div><div class="ds">POs, suppliers, contracts, plant maintenance · webhook + batch</div></div><div style="margin-left:auto;text-align:right"><span class="badge b-ok">Healthy</span><div style="font-size:10.5px;color:var(--ink-3);margin-top:3px" class="mono">sync 11 min ago · v3.1</div></div></div>
+        <div class="conn"><div class="lg" style="background:#C74634">Or</div><div><div class="nm">Oracle Procurement Cloud</div><div class="ds">Requisitions, RFQs, supplier registry · REST batch</div></div><div style="margin-left:auto;text-align:right"><span class="badge b-warn">Retrying</span><div style="font-size:10.5px;color:var(--ink-3);margin-top:3px" class="mono">2 failed pulls · auto-recovery</div></div></div>
+        <div class="conn"><div class="lg" style="background:#5A6B7E">Lk</div><div><div class="nm">Lakehouse — Databricks</div><div class="ds">Historian downtime events, reliability data · Delta share</div></div><div style="margin-left:auto;text-align:right"><span class="badge b-ok">Healthy</span><div style="font-size:10.5px;color:var(--ink-3);margin-top:3px" class="mono">sync 1 h ago · v1.8</div></div></div>
+        <div class="conn"><div class="lg" style="background:#10161F">BI</div><div><div class="nm">BI export — Power BI / Tableau</div><div class="ds">Governed semantic layer, read-only</div></div><div style="margin-left:auto;text-align:right"><span class="badge b-ok">Enabled</span></div></div>
+      </div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:16px">
+      <div class="card">
+        <div class="card-h"><h3>Model registry</h3><div class="right"><span class="badge b-mute nodot">12 active</span></div></div>
+        <div class="row-list" style="font-size:12px">
+          <div class="row-item"><div><div class="t mono" style="font-family:var(--mono)">forecast-ens v5.1</div><div class="d">MASE 0.71 · drift OK · deployed May 28</div></div><div class="end"><button class="btn sm ghost">Rollback</button></div></div>
+          <div class="row-item"><div><div class="t mono" style="font-family:var(--mono)">opt-engine v4.2</div><div class="d">Acceptance 81% · A/B vs v4.1 won (+4 pt)</div></div><div class="end"><button class="btn sm ghost">Rollback</button></div></div>
+          <div class="row-item"><div><div class="t mono" style="font-family:var(--mono)">risk-gnn v1.3</div><div class="d">AUC 0.91 · <span style="color:#A86A0D;font-weight:600">drift watch — supplier features</span></div></div><div class="end"><button class="btn sm ghost">Rollback</button></div></div>
+          <div class="row-item"><div><div class="t mono" style="font-family:var(--mono)">narrative-v3.2</div><div class="d">Grounded-only generation · review 4.8/5</div></div><div class="end"><button class="btn sm ghost">Rollback</button></div></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-h"><h3>Security posture</h3></div>
+        <div class="card-b" style="font-size:12.5px;display:flex;flex-direction:column;gap:10px">
+          <div style="display:flex;justify-content:space-between"><span style="color:var(--ink-2)">SSO / SAML</span><span class="badge b-ok nodot">Enforced</span></div>
+          <div style="display:flex;justify-content:space-between"><span style="color:var(--ink-2)">RBAC + ABAC</span><span class="badge b-ok nodot">Active · 7 role profiles</span></div>
+          <div style="display:flex;justify-content:space-between"><span style="color:var(--ink-2)">Encryption</span><span class="badge b-ok nodot">At rest + in transit</span></div>
+          <div style="display:flex;justify-content:space-between"><span style="color:var(--ink-2)">Audit logging</span><span class="badge b-ok nodot">100% coverage</span></div>
+          <div style="display:flex;justify-content:space-between"><span style="color:var(--ink-2)">SOC 2 / ISO 27001</span><span class="badge b-teal nodot">Readiness 92%</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer class="note">SmartInv · Confidential UI concept v1.0 · All figures illustrative · Every recommendation explainable, traceable, challengeable</footer>
+</main>
+</div>
+
+<script>
+const items=document.querySelectorAll('.nav-item');
+items.forEach(b=>b.addEventListener('click',()=>{
+  items.forEach(x=>x.classList.remove('active'));
+  b.classList.add('active');
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('on'));
+  document.getElementById('s-'+b.dataset.s).classList.add('on');
+  document.querySelector('.main').scrollTo({top:0});
+}));
+// Tabs are visual-only in this concept
+document.querySelectorAll('.tabs').forEach(g=>g.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>{g.querySelectorAll('.tab').forEach(x=>x.classList.remove('on'));t.classList.add('on');})));
+document.querySelectorAll('.tgl').forEach(t=>t.addEventListener('click',()=>t.classList.toggle('on')));
+</script>
+</body>
+</html>

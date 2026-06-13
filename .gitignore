@@ -1,0 +1,60 @@
+# --- OS / editor ---
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*~
+
+# --- Logs ---
+*.log
+logs/
+
+# --- Environments / secrets ---
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+
+# --- Node / JS ---
+node_modules/
+.next/
+out/
+dist/
+build/
+.turbo/
+.pnpm-store/
+coverage/
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.venv/
+venv/
+.python-version
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+.tox/
+
+# --- Data / artefacts (local) ---
+data/local/
+models/local/
+*.sqlite
+*.db
+docker/volumes/
+
+# --- Word/Office lock files ---
+~$*.docx
+~$*.xlsx
+~$*.pptx
+*:Zone.Identifier
+
+# --- Misc ---
+.cache/
+tmp/
