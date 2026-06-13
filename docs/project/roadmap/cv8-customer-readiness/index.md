@@ -21,11 +21,11 @@ CV8 does not invent new features. It hardens, polishes, and packages what CV1–
 
 | Code | Epic | User-visible outcome | Status |
 |------|------|----------------------|--------|
-| CV8.E1 | Tenant Onboarding Wizard | Authorized admin can create a tenant, connect a Maximo source, invite users with roles, and see "first data flowing" within a single guided flow | ⚪ Planned |
-| CV8.E2 | UX Polish | Every page has empty states, loading skeletons, error states, and keyboard-navigable affordances | ⚪ Planned |
-| CV8.E3 | Accessibility Audit | The four MVP screens pass a WCAG 2.1 AA audit on color contrast, keyboard nav, focus rings, screen-reader semantics | ⚪ Planned |
-| CV8.E4 | Performance Budget | Dashboard pages load in < 2s TTI on a mid-range laptop; long jobs surface progress, never freeze the UI | ⚪ Planned |
-| CV8.E5 | Deployment & Support Runbook | A reproducible pilot deployment runbook (Fly / Hetzner / small K8s) and a one-page-per-question support handover | ⚪ Planned |
+| [CV8.E1](cv8-e1-tenant-onboarding-wizard/index.md) | Tenant Onboarding Wizard | Authorized admin can create a tenant, connect a Maximo source, invite users with roles, and see "first data flowing" within a single guided flow | ⚪ Planned |
+| [CV8.E2](cv8-e2-ux-polish/index.md) | UX Polish | Every page has empty states, loading skeletons, error states, and keyboard-navigable affordances | ⚪ Planned |
+| [CV8.E3](cv8-e3-accessibility-audit/index.md) | Accessibility Audit | The four MVP screens pass a WCAG 2.1 AA audit on color contrast, keyboard nav, focus rings, screen-reader semantics | ⚪ Planned |
+| [CV8.E4](cv8-e4-performance-budget/index.md) | Performance Budget | Dashboard pages load in < 2s TTI on a mid-range laptop; long jobs surface progress, never freeze the UI | ⚪ Planned |
+| [CV8.E5](cv8-e5-deployment-support-runbook/index.md) | Deployment & Support Runbook | A reproducible pilot deployment runbook (Fly / Hetzner / small K8s) and a one-page-per-question support handover | ⚪ Planned |
 
 ---
 

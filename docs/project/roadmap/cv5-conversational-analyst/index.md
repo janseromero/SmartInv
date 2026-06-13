@@ -21,10 +21,10 @@ The trust contract is enforced in code, not in the prompt. A grounding validator
 
 | Code | Epic | User-visible outcome | Status |
 |------|------|----------------------|--------|
-| CV5.E1 | LLM Gateway & Tool Catalog | LiteLLM-backed gateway with a versioned tool catalog (Pydantic-validated input/output, per-scope ACLs) | ⚪ Planned |
-| CV5.E2 | Read-Only Q&A with Tool Invocation | Planner asks a question; SmartInv routes to tools and composes a grounded answer over governed metrics only | ⚪ Planned |
-| CV5.E3 | Evidence Strip & Source Links | Every answer renders confidence, model_version, tool calls, governed-metric chips, and clickable source records | ⚪ Planned |
-| CV5.E4 | Grounding Validator & Eval Suite | Deterministic validator rejects ungrounded numbers; golden eval set in `tests/evals/` runs in CI | ⚪ Planned |
+| [CV5.E1](cv5-e1-llm-gateway-tool-catalog/index.md) | LLM Gateway & Tool Catalog | LiteLLM-backed gateway with a versioned tool catalog (Pydantic-validated input/output, per-scope ACLs) | ⚪ Planned |
+| [CV5.E2](cv5-e2-qa-tool-invocation/index.md) | Read-Only Q&A with Tool Invocation | Planner asks a question; SmartInv routes to tools and composes a grounded answer over governed metrics only | ⚪ Planned |
+| [CV5.E3](cv5-e3-evidence-strip-source-links/index.md) | Evidence Strip & Source Links | Every answer renders confidence, model_version, tool calls, governed-metric chips, and clickable source records | ⚪ Planned |
+| [CV5.E4](cv5-e4-grounding-validator-evals/index.md) | Grounding Validator & Eval Suite | Deterministic validator rejects ungrounded numbers; golden eval set in `tests/evals/` runs in CI | ⚪ Planned |
 
 ---
 

@@ -23,9 +23,9 @@ CV0 is **not a product feature** — its outputs are reports and conversations w
 
 | Code | Epic | User-visible outcome | Status |
 |------|------|----------------------|--------|
-| CV0.E1 | DQ Assessment Methodology | A repeatable framework that scores a customer's MRO data across 10 dimensions | ⚪ Planned |
-| CV0.E2 | DQ Assessment Tooling | A CLI / notebook that runs the methodology against a customer's data extract | ⚪ Planned |
-| CV0.E3 | Assessment Report Template | A polished, executive-grade report customers can act on | ⚪ Planned |
+| [CV0.E1](cv0-e1-dq-assessment-methodology/index.md) | DQ Assessment Methodology | A repeatable framework that scores a customer's MRO data across 10 dimensions | ⚪ Planned |
+| [CV0.E2](cv0-e2-dq-assessment-tooling/index.md) | DQ Assessment Tooling | A CLI / notebook that runs the methodology against a customer's data extract | ⚪ Planned |
+| [CV0.E3](cv0-e3-assessment-report-template/index.md) | Assessment Report Template | A polished, executive-grade report customers can act on | ⚪ Planned |
 
 ---
 

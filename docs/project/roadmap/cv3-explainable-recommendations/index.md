@@ -21,11 +21,11 @@ The architectural rule that protects this promise is non-negotiable ([AGENTS.md]
 
 | Code | Epic | User-visible outcome | Status |
 |------|------|----------------------|--------|
-| CV3.E1 | Demand Forecasting Baseline | Intermittent-demand forecast per item × site × horizon, with P50/P80/P95 bands and pinned `model_version` | ⚪ Planned |
-| CV3.E2 | Inventory Optimization Engine | Pyomo / Monte Carlo engine produces min/max, safety stock, and reorder point with stockout-probability deltas | ⚪ Planned |
-| CV3.E3 | Recommendation Envelope | Every recommendation persists as a versioned envelope (claim, evidence, confidence, assumptions, model_version, approval_path) | ⚪ Planned |
-| CV3.E4 | Recommendations UI | Planner sees recommendation cards with evidence strip, accept / adjust / override actions, and portfolio impact preview | ⚪ Planned |
-| CV3.E5 | Override & Feedback Loop | Planner overrides are captured with reason, routed to model-improvement backlog, and surfaced as regime-change signals | ⚪ Planned |
+| [CV3.E1](cv3-e1-forecasting-baseline/index.md) | Demand Forecasting Baseline | Intermittent-demand forecast per item × site × horizon, with P50/P80/P95 bands and pinned `model_version` | ⚪ Planned |
+| [CV3.E2](cv3-e2-optimization-engine/index.md) | Inventory Optimization Engine | Pyomo / Monte Carlo engine produces min/max, safety stock, and reorder point with stockout-probability deltas | ⚪ Planned |
+| [CV3.E3](cv3-e3-recommendation-envelope/index.md) | Recommendation Envelope | Every recommendation persists as a versioned envelope (claim, evidence, confidence, assumptions, model_version, approval_path) | ⚪ Planned |
+| [CV3.E4](cv3-e4-recommendations-ui/index.md) | Recommendations UI | Planner sees recommendation cards with evidence strip, accept / adjust / override actions, and portfolio impact preview | ⚪ Planned |
+| [CV3.E5](cv3-e5-override-feedback-loop/index.md) | Override & Feedback Loop | Planner overrides are captured with reason, routed to model-improvement backlog, and surfaced as regime-change signals | ⚪ Planned |
 
 ---
 

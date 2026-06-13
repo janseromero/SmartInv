@@ -21,10 +21,10 @@ Risk is computed deterministically at MVP (item criticality × asset criticality
 
 | Code | Epic | User-visible outcome | Status |
 |------|------|----------------------|--------|
-| CV4.E1 | Risk Scoring (Deterministic) | Every item gets a 0–100 risk score combining criticality, lead-time, supplier reliability, and consumption probability | ⚪ Planned |
-| CV4.E2 | Critical Spare Identification | Items whose absence causes major downtime/safety impact are surfaced and flagged | ⚪ Planned |
-| CV4.E3 | Risk Dashboard UI | KPI cards, plant × risk dimension heatmap, top critical-spare exposures table | ⚪ Planned |
-| CV4.E4 | Mitigation Workflows | "Mitigate" action on any high-risk item routes to optimization or procurement workflows | ⚪ Planned |
+| [CV4.E1](cv4-e1-risk-scoring/index.md) | Risk Scoring (Deterministic) | Every item gets a 0–100 risk score combining criticality, lead-time, supplier reliability, and consumption probability | ⚪ Planned |
+| [CV4.E2](cv4-e2-critical-spare-identification/index.md) | Critical Spare Identification | Items whose absence causes major downtime/safety impact are surfaced and flagged | ⚪ Planned |
+| [CV4.E3](cv4-e3-risk-dashboard-ui/index.md) | Risk Dashboard UI | KPI cards, plant × risk dimension heatmap, top critical-spare exposures table | ⚪ Planned |
+| [CV4.E4](cv4-e4-mitigation-workflows/index.md) | Mitigation Workflows | "Mitigate" action on any high-risk item routes to optimization or procurement workflows | ⚪ Planned |
 
 ---
 

@@ -21,10 +21,10 @@ CV7 is the in-product complement to CV0 (Pilot DQ Assessment). CV0 happens once 
 
 | Code | Epic | User-visible outcome | Status |
 |------|------|----------------------|--------|
-| CV7.E1 | DQ Scoring | Deterministic DQ score per item across 10 dimensions (MPN, UoM, description, commodity code, asset link, etc.) | ⚪ Planned |
-| CV7.E2 | Issue Backlog UI | Planner / data steward sees DQ donut, KPIs, and the issue backlog with detection method and suggested fix per category | ⚪ Planned |
-| CV7.E3 | LLM-Powered Cleansing | Constrained-generation LLM extraction for missing MPNs, UoM normalization, and item description rewriting (high-confidence outputs only) | ⚪ Planned |
-| CV7.E4 | DQ → Confidence Linkage | Recommendations carry a DQ warning when the underlying item's DQ < threshold; confidence is explicitly reduced | ⚪ Planned |
+| [CV7.E1](cv7-e1-dq-scoring/index.md) | DQ Scoring | Deterministic DQ score per item across 10 dimensions (MPN, UoM, description, commodity code, asset link, etc.) | ⚪ Planned |
+| [CV7.E2](cv7-e2-issue-backlog-ui/index.md) | Issue Backlog UI | Planner / data steward sees DQ donut, KPIs, and the issue backlog with detection method and suggested fix per category | ⚪ Planned |
+| [CV7.E3](cv7-e3-llm-powered-cleansing/index.md) | LLM-Powered Cleansing | Constrained-generation LLM extraction for missing MPNs, UoM normalization, and item description rewriting (high-confidence outputs only) | ⚪ Planned |
+| [CV7.E4](cv7-e4-dq-confidence-linkage/index.md) | DQ → Confidence Linkage | Recommendations carry a DQ warning when the underlying item's DQ < threshold; confidence is explicitly reduced | ⚪ Planned |
 
 ---
 

@@ -23,14 +23,14 @@ Three principles guide every decision in CV1:
 
 | Code | Epic | User-visible outcome | Status |
 |------|------|----------------------|--------|
-| CV1.E1 | Monorepo & Tooling | A runnable `pnpm + uv + turbo` workspace with FastAPI `/health` and a Next.js shell, validated by CI | ✅ Done |
-| CV1.E2 | Design Tokens & Tailwind Wiring | Tailwind reads from `@smartinv/tokens`; raw hex codes banned in lint | ⚪ Planned |
-| CV1.E3 | UI Shell | Sidebar + topbar + screen routing matching the high-fidelity UI mock | ⚪ Planned |
-| CV1.E4 | Local Infrastructure | Docker Compose for Postgres + Redis + object store + Langfuse | ⚪ Planned |
-| CV1.E5 | Database Foundations | Alembic + initial schemas: `core`, `inventory`, `agent`, `workflow`, `audit`, `rag`, `ml`, `sources` | ⚪ Planned |
-| CV1.E6 | Auth & Tenancy | SSO / OIDC sign-in, JWT with tenant_id, Postgres Row-Level Security | ⚪ Planned |
-| CV1.E7 | Core Service Contracts | `WorkflowEngine`, `ObjectStore`, `LLMGateway`, `SearchIndex` interfaces with MVP implementations | ⚪ Planned |
-| CV1.E8 | Component Contracts & Web Implementations | `KpiCard`, `EvidenceStrip`, `Badge`, `ApprovalStep`, `ConfidenceMeter` contracts + web implementations + Storybook | ⚪ Planned |
+| [CV1.E1](cv1-e1-monorepo-tooling/index.md) | Monorepo & Tooling | A runnable `pnpm + uv + turbo` workspace with FastAPI `/health` and a Next.js shell, validated by CI | ✅ Done |
+| [CV1.E2](cv1-e2-design-tokens-tailwind/index.md) | Design Tokens & Tailwind Wiring | Tailwind reads from `@smartinv/tokens`; raw hex codes banned in lint | ⚪ Planned |
+| [CV1.E3](cv1-e3-ui-shell/index.md) | UI Shell | Sidebar + topbar + screen routing matching the high-fidelity UI mock | ⚪ Planned |
+| [CV1.E4](cv1-e4-local-infrastructure/index.md) | Local Infrastructure | Docker Compose for Postgres + Redis + object store + Langfuse | ⚪ Planned |
+| [CV1.E5](cv1-e5-database-foundations/index.md) | Database Foundations | Alembic + initial schemas: `core`, `inventory`, `agent`, `workflow`, `audit`, `rag`, `ml`, `sources` | ⚪ Planned |
+| [CV1.E6](cv1-e6-auth-tenancy/index.md) | Auth & Tenancy | SSO / OIDC sign-in, JWT with tenant_id, Postgres Row-Level Security | ⚪ Planned |
+| [CV1.E7](cv1-e7-core-service-contracts/index.md) | Core Service Contracts | `WorkflowEngine`, `ObjectStore`, `LLMGateway`, `SearchIndex` interfaces with MVP implementations | ⚪ Planned |
+| [CV1.E8](cv1-e8-component-contracts-storybook/index.md) | Component Contracts & Web Implementations | `KpiCard`, `EvidenceStrip`, `Badge`, `ApprovalStep`, `ConfidenceMeter` contracts + web implementations + Storybook | ⚪ Planned |
 
 ---
 
