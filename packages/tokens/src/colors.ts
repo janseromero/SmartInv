@@ -14,6 +14,20 @@ export const chrome = {
   DEFAULT: '#10161F',
   '2': '#161E2A',
   line: '#243040',
+  /** Default body text on chrome surfaces (sidebar nav inactive). */
+  ink: '#9DACBC',
+  /** Muted labels on chrome (nav group labels). */
+  muted: '#5E7187',
+  /** Hover text on chrome. */
+  hover: '#DCE5EE',
+  /** Strong text on chrome (user name, KPI labels). */
+  strong: '#E2EAF2',
+  /** Topbar body text. */
+  topbar: '#C7D2DE',
+  /** Command bar placeholder text. */
+  cmd: '#7B8CA0',
+  /** Keyboard chip background. */
+  kbd: '#0C1119',
 } as const;
 
 export const surface = {
@@ -34,6 +48,8 @@ export const teal = {
   DEFAULT: '#0E8C9C',
   dark: '#0A6B78',
   soft: '#E3F4F6',
+  /** Brightened teal used for active highlights on dark chrome. */
+  bright: '#5FD3E0',
 } as const;
 
 /** AI accent — RESERVED for AI-generated content. Do not use for status. */
