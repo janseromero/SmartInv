@@ -55,6 +55,55 @@ importers:
         specifier: ^2.1.8
         version: 2.1.9(@types/node@22.19.21)
 
+  packages/tokens:
+    devDependencies:
+      typescript:
+        specifier: ^5.7.2
+        version: 5.9.3
+
+  packages/types:
+    devDependencies:
+      typescript:
+        specifier: ^5.7.2
+        version: 5.9.3
+
+  packages/ui-contracts:
+    devDependencies:
+      typescript:
+        specifier: ^5.7.2
+        version: 5.9.3
+
+  packages/ui-web:
+    dependencies:
+      '@smartinv/tokens':
+        specifier: workspace:*
+        version: link:../tokens
+      '@smartinv/ui-contracts':
+        specifier: workspace:*
+        version: link:../ui-contracts
+    devDependencies:
+      '@types/react':
+        specifier: ^18.3.12
+        version: 18.3.31
+      '@types/react-dom':
+        specifier: ^18.3.1
+        version: 18.3.7(@types/react@18.3.31)
+      react:
+        specifier: ^18.3.1
+        version: 18.3.1
+      react-dom:
+        specifier: ^18.3.1
+        version: 18.3.1(react@18.3.1)
+      typescript:
+        specifier: ^5.7.2
+        version: 5.9.3
+
+  packages/utils:
+    devDependencies:
+      typescript:
+        specifier: ^5.7.2
+        version: 5.9.3
+
 packages:
 
   '@alloc/quick-lru@5.2.0':
