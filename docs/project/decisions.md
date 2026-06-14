@@ -395,4 +395,23 @@ Story-level work uses a **5-column Kanban**: Backlog · Doing · Blocked · Revi
 
 ---
 
+## ADR-024 — Source ingestion: connector seam, fixtures-first, secret-manager credentials
+
+**Context.** CV2 needs real inventory data from IBM Maximo (ADR-013), but a real Maximo integration is a hard external dependency (access, auth, OSLC quirks, volume) that would gate every other CV2 epic if built first. We also must decide where source credentials live.
+
+**Decision.**
+- **Ingestion is a source-agnostic pipeline behind a `SourceConnector` seam** (`api/ingestion`): a connector yields canonical records per entity in dependency order; an `IngestionService` upserts them idempotently (INSERT … ON CONFLICT on the natural key) with **per-record failure isolation** via SAVEPOINTs (a bad row lands in `sources.error_log`; the rest commit) and per-entity `sources.sync_runs` tracking.
+- **Data-first with fixtures (Option B).** Ship a deliberately-messy `FixtureConnector` (missing/duplicate descriptions, null costs, odd UOMs, excess/stockout balances, obsolete items) now, so the catalog, scoring, and dedup epics are built and tested against realistic mess. The real `MaximoConnector` implements the **same seam** later — it is the only remaining piece, bounded to a REST client (auth/paging/retry) + field mapping; everything around it (idempotency, tracking, errors, status, scheduling) is already built.
+- **Credentials via secret manager (Pattern A), not a DB form.** `sources.connectors.config` holds **non-secret** config only (endpoint, object structures, schedule). Maximo API keys live in the secret manager / env, never in a plaintext column or a web form. The `/admin/connectors` surface is **read-only status** (connectors + recent runs); self-serve encrypted credential entry (Pattern B) is deferred to multi-tenant onboarding (CV8/CV15).
+
+**Consequences.**
+- Visible value (catalog, health, dedup) ships without waiting on Maximo access; integration risk is isolated to one epic.
+- The fixture loader is permanent value: test fixtures, demo data, and the scoring eval baseline.
+- The natural-key seam from [ADR-019](#adr-019--persistence-stack-sqlalchemy-20--alembic--psycopg-3-rls-default-deny) (`source_system`+`source_id`) makes the live-connector swap mechanical.
+- The real Maximo connector and the scheduled (Dramatiq) sync remain to be built before CV2 is fully done.
+
+**Alternatives considered.** Connector-first (rejected — gates all of CV2 on the hardest, most uncertain task); credentials in a DB config form (rejected — plaintext secrets in DB/backups/logs, violates S2/S4); per-record commits instead of savepoints (rejected — weaker atomicity, more round-trips).
+
+---
+
 > **Adding a new ADR?** Number sequentially, follow the same format, include the trade-off honestly. ADRs are immutable — supersede with a new ADR rather than editing an old one.

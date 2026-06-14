@@ -184,9 +184,10 @@ The schema (8 schemas, 28 tables, Row-Level Security) is managed with SQLAlchemy
 2.0 + Alembic over psycopg 3 ([ADR-019](docs/project/decisions.md#adr-019--persistence-stack-sqlalchemy-20--alembic--psycopg-3-rls-default-deny)).
 
 ```bash
-make migrate        # alembic upgrade head
-make migrate-down   # downgrade one revision
-make seed           # seed a dev tenant + admin user (idempotent)
+make migrate          # alembic upgrade head
+make migrate-down     # downgrade one revision
+make seed             # seed a dev tenant + admin user (idempotent)
+make sync-fixtures    # load ~1,050 messy synthetic items into the dev tenant (CV2.E1)
 ```
 
 Every tenant-scoped table has a default-deny RLS policy keyed on the

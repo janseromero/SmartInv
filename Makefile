@@ -1,7 +1,7 @@
 # SmartInv — developer shortcuts.
 # The local stack (Postgres, Redis, SeaweedFS) is defined in docker-compose.yml.
 
-.PHONY: dev-up dev-down dev-restart dev-logs bootstrap-buckets check-infra migrate migrate-down seed token api
+.PHONY: dev-up dev-down dev-restart dev-logs bootstrap-buckets check-infra migrate migrate-down seed token api sync-fixtures
 
 # Boot the local infrastructure and ensure the object-store bucket exists.
 dev-up:
@@ -48,3 +48,7 @@ token:
 # Run the API dev server (foreground, auto-reload) on http://localhost:8000.
 api:
 	uv run uvicorn api.main:app --reload --app-dir services/api/src --port 8000
+
+# Ingest the synthetic fixture inventory dataset for the dev tenant (CV2.E1).
+sync-fixtures:
+	uv run python scripts/sync_fixtures.py

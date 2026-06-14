@@ -35,7 +35,7 @@ discipline ([Engineering Principles · PR1](../../process/engineering-principles
 |------|-----------------|--------|
 | [CV0](cv0-pilot-dq-assessment/index.md) | Pilot Data-Quality Assessment | ⚪ Planned |
 | [CV1](cv1-foundations/index.md) | Foundations | ✅ Done · 8 of 8 epics |
-| [CV2](cv2-inventory-health/index.md) | Inventory Health & Visibility | ⚪ Planned |
+| [CV2](cv2-inventory-health/index.md) | Inventory Health & Visibility | 🟢 In Progress |
 | [CV3](cv3-explainable-recommendations/index.md) | Explainable Inventory Recommendations | ⚪ Planned |
 | [CV4](cv4-operational-risk/index.md) | Operational Risk Intelligence | ⚪ Planned |
 | [CV5](cv5-conversational-analyst/index.md) | Governed Conversational Analyst | ⚪ Planned |

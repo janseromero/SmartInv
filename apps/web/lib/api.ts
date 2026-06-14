@@ -49,3 +49,32 @@ export async function devLogin(tenantSlug: string, roles: string[]): Promise<str
 export function fetchMe(): Promise<Me> {
   return apiFetch<Me>('/me');
 }
+
+// --- Connectors (CV2.E1) -------------------------------------------------
+
+export interface SyncRun {
+  object_type: string;
+  status: string;
+  records_read: number;
+  records_upserted: number;
+  records_failed: number;
+  finished_at: string | null;
+}
+
+export interface Connector {
+  id: string;
+  source_system: string;
+  name: string;
+  status: string;
+  runs: SyncRun[];
+}
+
+export function fetchConnectors(): Promise<Connector[]> {
+  return apiFetch<Connector[]>('/admin/connectors');
+}
+
+export function triggerFixtureSync(): Promise<Record<string, Record<string, number>>> {
+  return apiFetch<Record<string, Record<string, number>>>('/admin/connectors/sync', {
+    method: 'POST',
+  });
+}
