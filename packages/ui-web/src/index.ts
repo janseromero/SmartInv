@@ -1,11 +1,14 @@
 /**
- * SmartInv web UI implementations.
+ * SmartInv web UI implementations (CV1.E8).
  *
- * Concrete React components implementing the contracts from
- * @smartinv/ui-contracts, styled with Tailwind tokens from
- * @smartinv/tokens.
- *
- * Real components are added in task E1.12.
+ * Plain token-styled React components implementing the contracts from
+ * @smartinv/ui-contracts. No Radix/shadcn — these primitives are
+ * presentational; interactive Radix-based widgets are introduced when a
+ * component actually needs them (ADR-023).
  */
 
-export const UI_WEB_READY = false as const;
+export { ApprovalStep } from './ApprovalStep.js';
+export { Badge } from './Badge.js';
+export { ConfidenceMeter } from './ConfidenceMeter.js';
+export { EvidenceStrip } from './EvidenceStrip.js';
+export { KpiCard } from './KpiCard.js';

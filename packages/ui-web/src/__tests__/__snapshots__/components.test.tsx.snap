@@ -1,0 +1,215 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`ApprovalStep > renders each state 1`] = `
+<DocumentFragment>
+  <div>
+    <div
+      class="flex items-center gap-2"
+    >
+      <span
+        class="grid place-items-center w-5 h-5 rounded-pill text-[10px] text-card bg-ok"
+      >
+        ✓
+      </span>
+      <div
+        class="flex flex-col"
+      >
+        <span
+          class="text-sm text-ink"
+        >
+          Approved
+        </span>
+        <span
+          class="text-xs text-ink-3"
+        >
+          Agent
+        </span>
+      </div>
+    </div>
+    <div
+      class="flex items-center gap-2"
+    >
+      <span
+        class="grid place-items-center w-5 h-5 rounded-pill text-[10px] text-card bg-crit"
+      >
+        ✕
+      </span>
+      <div
+        class="flex flex-col"
+      >
+        <span
+          class="text-sm text-crit"
+        >
+          Rejected
+        </span>
+      </div>
+    </div>
+  </div>
+</DocumentFragment>
+`;
+
+exports[`Badge > renders status and ai variants 1`] = `
+<DocumentFragment>
+  <div>
+    <span
+      class="inline-flex items-center rounded-pill px-2 py-0.5 text-xs font-medium bg-ok-soft text-ok"
+    >
+      Healthy
+    </span>
+    <span
+      class="inline-flex items-center rounded-pill px-2 py-0.5 text-xs font-medium bg-ai-soft text-ai"
+    >
+      AI
+    </span>
+  </div>
+</DocumentFragment>
+`;
+
+exports[`ConfidenceMeter > clamps and renders bands 1`] = `
+<DocumentFragment>
+  <div
+    class="w-full"
+  >
+    <div
+      class="flex items-center justify-between mb-1"
+    >
+      <span
+        class="text-xs text-ink-3"
+      >
+        Confidence
+      </span>
+      <span
+        class="font-mono text-xs text-ink-2"
+      >
+        100%
+      </span>
+    </div>
+    <div
+      class="relative h-2 w-full rounded-pill bg-line overflow-hidden"
+    >
+      <div
+        class="h-full rounded-pill bg-ok"
+        style="width: 100%;"
+      />
+      <span
+        class="absolute top-0 h-full w-px bg-surface"
+        style="left: 40%;"
+      />
+      <span
+        class="absolute top-0 h-full w-px bg-surface"
+        style="left: 75%;"
+      />
+    </div>
+  </div>
+</DocumentFragment>
+`;
+
+exports[`EvidenceStrip > renders chips with confidence 1`] = `
+<DocumentFragment>
+  <div
+    class="bg-card border border-line rounded-lg p-md flex flex-col gap-3"
+  >
+    <div
+      class="flex flex-wrap gap-2"
+    >
+      <a
+        class="no-underline"
+        href="#"
+      >
+        <span
+          class="inline-flex items-center gap-1 rounded-md bg-surface border border-line px-2 py-1 text-xs"
+        >
+          <span
+            class="text-ink-3"
+          >
+            On hand
+          </span>
+          <span
+            class="font-mono text-ink"
+          >
+            1,240
+          </span>
+        </span>
+      </a>
+    </div>
+    <div
+      class="w-full"
+    >
+      <div
+        class="flex items-center justify-between mb-1"
+      >
+        <span
+          class="text-xs text-ink-3"
+        >
+          Confidence
+        </span>
+        <span
+          class="font-mono text-xs text-ink-2"
+        >
+          82%
+        </span>
+      </div>
+      <div
+        class="relative h-2 w-full rounded-pill bg-line overflow-hidden"
+      >
+        <div
+          class="h-full rounded-pill bg-ok"
+          style="width: 82%;"
+        />
+      </div>
+    </div>
+    <span
+      class="font-mono text-[10px] text-ink-3"
+    >
+      model minmax-v3
+    </span>
+  </div>
+</DocumentFragment>
+`;
+
+exports[`KpiCard > renders value, delta and loading states 1`] = `
+<DocumentFragment>
+  <div>
+    <div
+      class="bg-card border border-line rounded-lg p-lg"
+    >
+      <div
+        class="flex items-center justify-between"
+      >
+        <span
+          class="font-mono text-[11px] uppercase tracking-wide text-ink-3"
+        >
+          Excess
+        </span>
+        <span
+          class="w-2 h-2 rounded-pill bg-warn"
+        />
+      </div>
+      <div
+        class="mt-2 flex items-baseline gap-1"
+      >
+        <span
+          class="font-display text-2xl text-ink"
+        >
+          $812K
+        </span>
+      </div>
+      <div
+        class="mt-1 text-xs text-crit"
+      >
+        ▼ 6.4%
+      </div>
+    </div>
+    <div
+      class="bg-card border border-line rounded-lg p-lg animate-pulse"
+    >
+      <div
+        class="h-3 w-20 bg-line rounded"
+      />
+      <div
+        class="mt-3 h-6 w-28 bg-line rounded"
+      />
+    </div>
+  </div>
+</DocumentFragment>
+`;

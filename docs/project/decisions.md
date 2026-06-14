@@ -375,4 +375,24 @@ Story-level work uses a **5-column Kanban**: Backlog · Doing · Blocked · Revi
 
 ---
 
+## ADR-023 — Component primitives: plain token-styled React (no Radix until needed)
+
+**Context.** CV1.E8 fills `@smartinv/ui-contracts` + `@smartinv/ui-web` with the five shared primitives (`KpiCard`, `EvidenceStrip`, `Badge`, `ApprovalStep`, `ConfidenceMeter`) and a component explorer. The original plan said "shadcn/ui primitives" and a `@radix-ui` import-ban lint rule — but all five primitives are **presentational**; none need Radix's accessibility machinery (dialogs, menus, selects).
+
+**Decision.**
+- **Contracts in `@smartinv/ui-contracts`** (pure TS interfaces); **implementations in `@smartinv/ui-web`** as **plain token-styled React** — no Radix/shadcn. Radix is adopted *inside `ui-web`* only when an interactive, accessibility-critical widget needs it.
+- **Explorer: Ladle** (Vite-based, light) rather than Storybook (heavy). Builds to a static site for design review.
+- **Snapshot tests with Vitest + @testing-library/react + jsdom**, run in CI via `pnpm test`.
+- **Defer the `@radix-ui` import-ban Biome rule** until Radix is actually introduced (it guards code that doesn't exist yet).
+- Components use **tokens only** (no raw hex — `pnpm lint:hex`); the consuming app and Ladle both map `@smartinv/tokens` into their Tailwind theme and scan `packages/ui-web/src`.
+
+**Consequences.**
+- The five primitives ship with stories + snapshot regression tests; the cross-platform port stays a re-skin (ADR-002).
+- No Radix/shadcn weight is paid before a component needs it.
+- pnpm 11's build-script approval (`allowBuilds`) and pre-run check (`verifyDepsBeforeRun: false`) are configured in `pnpm-workspace.yaml` so the new dev tooling (Ladle/Vitest/swc) doesn't break CI.
+
+**Alternatives considered.** shadcn/Radix now (rejected — weight without a consumer for presentational primitives); Storybook (rejected — heavier than Ladle for the MVP); skipping the explorer entirely (rejected — the Done Condition wants isolated design review, and Ladle is cheap).
+
+---
+
 > **Adding a new ADR?** Number sequentially, follow the same format, include the trade-off honestly. ADRs are immutable — supersede with a new ADR rather than editing an old one.

@@ -2,7 +2,7 @@
 
 # CV1 — Foundations
 
-**Status:** 🟢 In Progress · 7 of 8 epics done
+**Status:** ✅ Done · 8 of 8 epics done
 **Goal:** Make every later CV cheap to start. A runnable monorepo, a token-based design system, infra you can boot with `docker compose up`, governed schemas, auth with tenant context, swappable interfaces, and a UI shell that matches the design language of the mock.
 
 ---
@@ -30,7 +30,7 @@ Three principles guide every decision in CV1:
 | [CV1.E5](cv1-e5-database-foundations/index.md) | Database Foundations | Alembic + initial schemas: `core`, `inventory`, `agent`, `workflow`, `audit`, `rag`, `ml`, `sources` + RLS | ✅ Done |
 | [CV1.E6](cv1-e6-auth-tenancy/index.md) | Auth & Tenancy | JWT with tenant_id, least-privilege role, RLS enforced per request (real IdP deferred) | ✅ Done |
 | [CV1.E7](cv1-e7-core-service-contracts/index.md) | Core Service Contracts | `WorkflowEngine`, `ObjectStore`, `LLMGateway`, `SearchIndex` protocols + impls/fakes | ✅ Done |
-| [CV1.E8](cv1-e8-component-contracts-storybook/index.md) | Component Contracts & Web Implementations | `KpiCard`, `EvidenceStrip`, `Badge`, `ApprovalStep`, `ConfidenceMeter` contracts + web implementations + Storybook | ⚪ Planned |
+| [CV1.E8](cv1-e8-component-contracts-storybook/index.md) | Component Contracts & Web Implementations | 5 primitive contracts + token-styled web impls + Ladle explorer + snapshots | ✅ Done |
 
 ---
 

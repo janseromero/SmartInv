@@ -2,13 +2,16 @@ packages:
   - "apps/*"
   - "packages/*"
 
-# Allow these packages' build scripts to run. Required by pnpm 11+ for any
-# dependency that performs a postinstall/build step (native binaries, etc.).
+# Dev-tooling dependencies that carry postinstall/build scripts. We do NOT run
+# them — every one ships working prebuilt binaries and none run at production
+# runtime — so they are explicitly set to false. Explicit booleans stop pnpm 11
+# from re-prompting (otherwise it rewrites this block with placeholders).
 allowBuilds:
-  "@biomejs/biome": true
-  esbuild: true
+  "@biomejs/biome": false
+  "@swc/core": false
+  esbuild: false
+  msw: false
 
-# A non-zero exit code on ignored builds breaks CI on hosts where these
-# binaries aren't strictly required (none of our tooling needs them at
-# runtime). Keep the warning, drop the failure.
-ignoredBuildsExitCode: 0
+# Skip pnpm 11's pre-script "verify deps" check, which otherwise hard-fails on
+# the ignored builds above even though every tool works from its prebuilt binary.
+verifyDepsBeforeRun: false
