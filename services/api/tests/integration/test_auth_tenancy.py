@@ -80,7 +80,7 @@ def test_requires_bearer_token(client: TestClient) -> None:
 
 def test_rejects_role_without_permission(client: TestClient, two_tenants: tuple[str, str]) -> None:
     tenant_a, _ = two_tenants
-    token = _token(tenant_a, roles=["finance"])  # not an inventory-read role
+    token = _token(tenant_a, roles=["guest"])  # not an inventory-read role
     resp = client.get("/inventory/items", headers={"Authorization": f"Bearer {token}"})
     assert resp.status_code == 403
 
@@ -99,8 +99,8 @@ def test_items_are_isolated_per_tenant(client: TestClient, two_tenants: tuple[st
     assert resp_a.status_code == 200
     assert resp_b.status_code == 200
 
-    numbers_a = {i["item_number"] for i in resp_a.json()}
-    numbers_b = {i["item_number"] for i in resp_b.json()}
+    numbers_a = {i["item_number"] for i in resp_a.json()["items"]}
+    numbers_b = {i["item_number"] for i in resp_b.json()["items"]}
 
     assert "ITEM-e6-1" in numbers_a
     assert "ITEM-e6-2" not in numbers_a  # tenant A cannot see tenant B's item
