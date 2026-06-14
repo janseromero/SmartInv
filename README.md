@@ -219,7 +219,7 @@ pnpm --filter=@smartinv/web dev
 ### Run the API
 
 ```bash
-uv run uvicorn api.main:app --reload --app-dir services/api/src
+make api   # uv run uvicorn api.main:app --reload --app-dir services/api/src --port 8000
 # http://localhost:8000/health
 # http://localhost:8000/docs
 ```

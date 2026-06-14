@@ -1,7 +1,7 @@
 # SmartInv — developer shortcuts.
 # The local stack (Postgres, Redis, SeaweedFS) is defined in docker-compose.yml.
 
-.PHONY: dev-up dev-down dev-restart dev-logs bootstrap-buckets check-infra migrate migrate-down seed token
+.PHONY: dev-up dev-down dev-restart dev-logs bootstrap-buckets check-infra migrate migrate-down seed token api
 
 # Boot the local infrastructure and ensure the object-store bucket exists.
 dev-up:
@@ -44,3 +44,7 @@ TENANT ?= smartinv-dev
 ROLES ?= admin
 token:
 	uv run python scripts/dev_token.py --tenant $(TENANT) --roles $(ROLES)
+
+# Run the API dev server (foreground, auto-reload) on http://localhost:8000.
+api:
+	uv run uvicorn api.main:app --reload --app-dir services/api/src --port 8000
