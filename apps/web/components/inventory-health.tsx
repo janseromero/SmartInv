@@ -7,6 +7,7 @@ import {
   fetchItems,
   fetchLocations,
 } from '@/lib/api';
+import { crit, ink, ok, warn } from '@smartinv/tokens';
 import { Badge, KpiCard } from '@smartinv/ui-web';
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
@@ -45,29 +46,47 @@ const BADGE_TONE: Record<string, 'ok' | 'warn' | 'crit'> = {
 };
 
 const DIST_META = [
-  { key: 'healthy', label: 'Healthy', cls: 'bg-ok' },
-  { key: 'excess_slow', label: 'Excess / slow', cls: 'bg-warn' },
-  { key: 'obsolete_risk', label: 'Obsolete / risk', cls: 'bg-crit' },
-  { key: 'dq_risk', label: 'DQ risk', cls: 'bg-ink-3' },
+  { key: 'healthy', label: 'Healthy', cls: 'bg-ok', color: ok.DEFAULT },
+  { key: 'excess_slow', label: 'Excess / slow', cls: 'bg-warn', color: warn.DEFAULT },
+  { key: 'obsolete_risk', label: 'Obsolete / risk', cls: 'bg-crit', color: crit.DEFAULT },
+  { key: 'dq_risk', label: 'DQ risk', cls: 'bg-ink-3', color: ink['3'] },
 ];
 
-function HealthBar({ distribution }: { distribution: Record<string, number> }) {
+function HealthDonut({ distribution }: { distribution: Record<string, number> }) {
   const total = Object.values(distribution).reduce((a, b) => a + b, 0) || 1;
+
+  let cursor = 0;
+  const stops = DIST_META.map((d) => {
+    const start = (cursor / total) * 100;
+    cursor += distribution[d.key] ?? 0;
+    const end = (cursor / total) * 100;
+    return `${d.color} ${start}% ${end}%`;
+  });
+  const gradient = `conic-gradient(${stops.join(', ')})`;
+
   return (
-    <div className="rounded-md border border-line bg-card p-md shadow-card">
-      <div className="flex h-3 w-full overflow-hidden rounded-pill">
-        {DIST_META.map((d) => {
-          const pct = ((distribution[d.key] ?? 0) / total) * 100;
-          return <div key={d.key} className={d.cls} style={{ width: `${pct}%` }} />;
-        })}
+    <div className="rounded-md border border-line bg-card p-md shadow-card flex items-center gap-lg">
+      <div className="relative w-[124px] h-[124px] flex-none">
+        <div className="w-full h-full rounded-full" style={{ background: gradient }} />
+        <div className="absolute inset-0 m-auto w-[74px] h-[74px] rounded-full bg-card grid place-items-center">
+          <div className="text-center">
+            <div className="font-display text-lg text-ink">{integer.format(total)}</div>
+            <div className="text-[10px] text-ink-3">items</div>
+          </div>
+        </div>
       </div>
-      <div className="mt-2 flex flex-wrap gap-4 text-xs text-ink-2">
-        {DIST_META.map((d) => (
-          <span key={d.key} className="flex items-center gap-1">
-            <span className={`inline-block w-2 h-2 rounded-pill ${d.cls}`} />
-            {d.label} · {Math.round(((distribution[d.key] ?? 0) / total) * 100)}%
-          </span>
-        ))}
+      <div className="flex flex-col gap-1.5 text-xs text-ink-2">
+        {DIST_META.map((d) => {
+          const count = distribution[d.key] ?? 0;
+          return (
+            <span key={d.key} className="flex items-center gap-2">
+              <span className={`inline-block w-2.5 h-2.5 rounded-full ${d.cls}`} />
+              <span className="w-24">{d.label}</span>
+              <span className="font-mono text-ink">{integer.format(count)}</span>
+              <span className="text-ink-3">({Math.round((count / total) * 100)}%)</span>
+            </span>
+          );
+        })}
       </div>
     </div>
   );
@@ -130,7 +149,7 @@ export function InventoryHealth() {
         />
       </div>
 
-      {s ? <HealthBar distribution={s.health_distribution} /> : null}
+      {s ? <HealthDonut distribution={s.health_distribution} /> : null}
 
       {/* Filter bar */}
       <div className="flex flex-wrap items-center gap-2">
