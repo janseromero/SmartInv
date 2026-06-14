@@ -178,6 +178,21 @@ Langfuse service ([ADR-018](docs/project/decisions.md#adr-018--langfuse-cloud-fr
 Set `LANGFUSE_*` in your local `.env` only; never commit real keys. The SDK is
 wired into the LLM gateway in CV5.
 
+### Database (migrations + seed)
+
+The schema (8 schemas, 28 tables, Row-Level Security) is managed with SQLAlchemy
+2.0 + Alembic over psycopg 3 ([ADR-019](docs/project/decisions.md#adr-019--persistence-stack-sqlalchemy-20--alembic--psycopg-3-rls-default-deny)).
+
+```bash
+make migrate        # alembic upgrade head
+make migrate-down   # downgrade one revision
+make seed           # seed a dev tenant + admin user (idempotent)
+```
+
+Every tenant-scoped table has a default-deny RLS policy keyed on the
+`app.current_tenant_id` GUC. Note: RLS is bypassed by Postgres superusers — the
+least-privilege runtime role the API connects with is wired in CV1.E6.
+
 ### Run the web app
 
 ```bash

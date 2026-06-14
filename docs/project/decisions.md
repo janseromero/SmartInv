@@ -290,4 +290,27 @@ Story-level work uses a **5-column Kanban**: Backlog · Doing · Blocked · Revi
 
 ---
 
+## ADR-019 — Persistence stack: SQLAlchemy 2.0 + Alembic + psycopg 3, RLS default-deny
+
+**Context.** CV1.E5 lays the database foundation: eight schemas, ~28 tables, migrations, and tenant isolation. We needed to commit to an ORM, a migration tool, a driver, and a concrete Row-Level Security pattern — consistent with ADR-007 (Python everywhere) and AR3 (tenant_id is first-class).
+
+**Decision.**
+- **ORM:** SQLAlchemy 2.0 declarative with `Mapped[...]` typing. (Rejected SQLModel — couples ORM to Pydantic in ways that bite later.)
+- **Migrations:** Alembic, autogenerate against the declarative metadata. Schemas and extensions are created in the baseline migration (autogenerate does not manage them). Every up-migration has a down-migration.
+- **Driver:** **psycopg 3** as the single driver for the app, Alembic, and dev scripts (sync for the MVP). One driver, less surface.
+- **IDs / conventions:** UUID PKs via `gen_random_uuid()` (PG16 core); `tenant_id uuid` on every tenant-scoped table; `timestamptz` created/updated; `bigserial` for append-only event tables; deterministic constraint/index naming for stable autogenerate.
+- **RLS:** every tenant-scoped table gets `ENABLE` + `FORCE ROW LEVEL SECURITY` and a `tenant_isolation` policy `USING (tenant_id = current_setting('app.current_tenant_id', true)::uuid)` with the same `WITH CHECK`. When the GUC is unset, `current_setting` returns NULL and the predicate denies — **default-deny**.
+- **Migrations split:** one baseline migration (schemas + extensions + tables) and a separate RLS migration, so the security-sensitive diff is reviewed in isolation (AGENTS.md slow lane).
+
+**Consequences.**
+- `alembic upgrade head` builds the full schema on an empty DB; `downgrade base` removes it cleanly — both verified in CI against a real Postgres (with pgvector).
+- **RLS only bites for a non-superuser role.** Postgres superusers (and `BYPASSRLS` roles) ignore RLS even with FORCE. The dev `smartinv` role is a superuser, so it is used for migrations/admin only. The **least-privilege runtime login role** that the API connects with — and the per-request GUC wiring — are delivered in **CV1.E6 (Auth & Tenancy)**. E5 proves the policy semantics by testing against a dedicated non-superuser role.
+- The `ml.model_registry` and `agent.tool_catalog` catalogs and `core.tenants`/`core.roles` are platform-level (no `tenant_id`, no RLS).
+- LangGraph's checkpoint tables are intentionally not modeled here — the PostgresSaver owns them in CV5.
+- Embedding dimension `vector(1536)` is provisional; revisited when CV5 picks the embedding model.
+
+**Alternatives considered.** Raw SQL migrations (rejected — lose autogenerate + model parity); asyncpg + separate sync driver for Alembic (rejected — two drivers); application-only tenancy without RLS (rejected — violates S5 "two layers").
+
+---
+
 > **Adding a new ADR?** Number sequentially, follow the same format, include the trade-off honestly. ADRs are immutable — supersede with a new ADR rather than editing an old one.

@@ -1,7 +1,7 @@
 # SmartInv — developer shortcuts.
 # The local stack (Postgres, Redis, SeaweedFS) is defined in docker-compose.yml.
 
-.PHONY: dev-up dev-down dev-restart dev-logs bootstrap-buckets check-infra
+.PHONY: dev-up dev-down dev-restart dev-logs bootstrap-buckets check-infra migrate migrate-down seed
 
 # Boot the local infrastructure and ensure the object-store bucket exists.
 dev-up:
@@ -26,3 +26,15 @@ bootstrap-buckets:
 # Verify the API can reach Postgres, Redis, and the object store.
 check-infra:
 	uv run python scripts/check_infra.py
+
+# Apply all database migrations.
+migrate:
+	uv run alembic -c services/api/alembic.ini upgrade head
+
+# Roll back the most recent migration.
+migrate-down:
+	uv run alembic -c services/api/alembic.ini downgrade -1
+
+# Seed local-dev fixture data (one tenant + admin user).
+seed:
+	uv run python scripts/seed_dev.py

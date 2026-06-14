@@ -181,8 +181,8 @@ inventory.assets, inventory.locations, inventory.work_orders
 inventory.purchase_orders, inventory.suppliers
 sources.connectors, sources.sync_runs, sources.error_log
 ml.model_registry, ml.predictions, ml.recommendations
-agent.conversations, agent.runs, agent.checkpoints, agent.events
-agent.tool_catalog
+agent.conversations, agent.runs, agent.events, agent.tool_catalog
+-- agent.checkpoints owned by LangGraph PostgresSaver (CV5)
 workflow.approvals, workflow.approval_events
 rag.documents, rag.chunks
 audit.events
