@@ -14,10 +14,9 @@ dev = [
     "pytest>=8.3.0",
     "pytest-asyncio>=0.24.0",
     "httpx>=0.27.0",
-    # Infra connectivity tooling for CV1.E4 dev scripts. psycopg is provided
-    # by the api service (CV1.E5); boto3/redis stay here for the object-store
-    # and cache smoke-test scripts.
-    "boto3>=1.35.0",
+    # Infra connectivity tooling for CV1.E4 dev scripts. psycopg and boto3 are
+    # provided by the api service (CV1.E5/E7); redis stays here for the cache
+    # smoke-test script.
     "redis>=5.2.0",
 ]
 
@@ -68,6 +67,11 @@ disallow_untyped_defs = false
 [[tool.mypy.overrides]]
 # pgvector ships no type stubs / py.typed marker.
 module = "pgvector.*"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+# boto3 / botocore ship no bundled stubs.
+module = ["boto3.*", "botocore.*"]
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]

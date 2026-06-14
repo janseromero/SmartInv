@@ -17,6 +17,8 @@ dependencies = [
     # Identity (CV1.E6): JWT verification. MVP signs HS256 dev tokens; the
     # same library verifies RS256/JWKS when a real IdP is wired later.
     "pyjwt>=2.10.0",
+    # Object store (CV1.E7): S3 client for the SeaweedFS-backed ObjectStore.
+    "boto3>=1.35.0",
 ]
 
 [build-system]

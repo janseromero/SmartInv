@@ -353,4 +353,26 @@ Story-level work uses a **5-column Kanban**: Backlog · Doing · Blocked · Revi
 
 ---
 
+## ADR-022 — Core service contracts: `typing.Protocol` seams + contract-test-against-fakes
+
+**Context.** CV1.E7 defines the four interfaces that keep domain code independent of infrastructure (AR2, ADR-003): `WorkflowEngine`, `ObjectStore`, `LLMGateway`, `SearchIndex`. Two of the four have no live consumer yet (LLMGateway's is CV5, SearchIndex's is CV2), so building full real implementations of those now would be speculative.
+
+**Decision.**
+- **Protocols as `typing.Protocol`** (structural, `@runtime_checkable`) in **`api/contracts/`** — a module in the modular monolith, not a separate `packages/` member (AR1; `packages/*` stays TS-only). Value objects are frozen dataclasses.
+- **Implementations in `api/infra/`**, wired by a single composition root (`api/infra/providers.py`). Domain code imports only `api.contracts`.
+- **Ship real impls where there is an immediate consumer or it is trivially real:** `S3ObjectStore` (boto3/SeaweedFS, ADR-017) and `PostgresWorkflowEngine` (over the E5 `workflow.*` tables).
+- **Ship in-memory fakes now, real impls deferred to the owning CV:** `EchoLLMGateway` (real LiteLLM → CV5.E1), `InMemorySearchIndex` (real `pg_trgm` → CV2).
+- **Contract tests run each protocol against its implementation(s)** — the real impl *and* an in-memory fake. This pattern *is* the Done Condition's "a second implementation substitutes without code changes."
+- **`WorkflowEngine` uses Temporal-shaped verbs** (`start`/`signal`/`query`/`cancel`) so the future Temporal swap stays mechanical (ADR-003). **Sync** for the MVP (matches the psycopg stack); CV5 may give `LLMGateway` an async variant.
+
+**Consequences.**
+- All four seams exist today; later CVs depend on abstractions from day one.
+- No speculative code: LLMGateway/SearchIndex ship the smallest real-enough thing (a fake) until a caller exists.
+- Swapping an implementation (Echo → LiteLLM, in-memory → pg_trgm, Postgres → Temporal) changes only `api/infra` + `providers.py`.
+- `boto3` is promoted to an api runtime dependency.
+
+**Alternatives considered.** A separate `packages/contracts` Python package (rejected — premature split for a modular monolith); `abc.ABC` base classes (rejected — inheritance coupling vs structural typing); building all four real impls now (rejected — speculative for LLMGateway/SearchIndex); approval-domain verbs for `WorkflowEngine` (rejected — would make the Temporal swap leak into domain code).
+
+---
+
 > **Adding a new ADR?** Number sequentially, follow the same format, include the trade-off honestly. ADRs are immutable — supersede with a new ADR rather than editing an old one.

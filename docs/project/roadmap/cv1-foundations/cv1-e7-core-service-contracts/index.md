@@ -3,16 +3,18 @@
 # CV1.E7 — Core Service Contracts
 
 **CV:** [CV1 — Foundations](../index.md)
-**Status:** ⚪ Planned
+**Status:** ✅ Done
 **Depends on:** CV1.E5, CV1.E6
 
 ---
 
 ## What This Is
 
-Defines the four interfaces that protect every later CV from infrastructure choice changes: `WorkflowEngine`, `ObjectStore`, `LLMGateway`, `SearchIndex`. Each ships with exactly one MVP implementation. The interfaces live in `packages/contracts`; the implementations live in `services/api/<domain>`.
+Defines the four `typing.Protocol` interfaces that protect every later CV from infrastructure choice changes: `WorkflowEngine`, `ObjectStore`, `LLMGateway`, `SearchIndex`. The protocols live in **`api/contracts/`**; implementations in **`api/infra/`**, wired by `api/infra/providers.py` (the composition root). Domain code imports only the protocols ([ADR-022](../../../decisions.md#adr-022--core-service-contracts-typingprotocol-seams--contract-test-against-fakes)).
 
 This is the structural commitment behind [ADR-003 (no Temporal)](../../../decisions.md#adr-003--no-temporal-in-mvp): we never need to write Temporal code if we never write code against Temporal — only against `WorkflowEngine`.
+
+**What ships real vs faked (ADR-022):** `ObjectStore` (S3/SeaweedFS) and `WorkflowEngine` (Postgres state machine) have real MVP impls now; `LLMGateway` (echo) and `SearchIndex` (in-memory) ship fakes, with their real impls deferred to their first consumers (CV5, CV2). Every protocol is exercised by a contract suite against its impl(s) + an in-memory fake.
 
 ---
 
@@ -20,20 +22,26 @@ This is the structural commitment behind [ADR-003 (no Temporal)](../../../decisi
 
 | Code | Story | Status |
 |------|-------|--------|
-| CV1.E7.S1 | Define `WorkflowEngine` protocol (start, signal, query, cancel) + `PostgresWorkflowEngine` implementation | 📥 Backlog |
-| CV1.E7.S2 | Define `ObjectStore` protocol (put, get, url, list, delete) + `GarageObjectStore` implementation | 📥 Backlog |
-| CV1.E7.S3 | Define `LLMGateway` protocol + `LiteLLMGateway` implementation pointing to LiteLLM proxy | 📥 Backlog |
-| CV1.E7.S4 | Define `SearchIndex` protocol + `PostgresSearchIndex` implementation using `pg_trgm` + `tsvector` | 📥 Backlog |
-| CV1.E7.S5 | Contract tests for every interface (one suite, both implementations swap-compliant) | 📥 Backlog |
+| CV1.E7.S1 | `WorkflowEngine` protocol (start/signal/query/cancel) + `PostgresWorkflowEngine` impl | ✅ Done |
+| CV1.E7.S2 | `ObjectStore` protocol (put/get/url/list/delete/exists) + `S3ObjectStore` (SeaweedFS) impl | ✅ Done |
+| CV1.E7.S3 | `LLMGateway` protocol + `EchoLLMGateway` fake (real `LiteLLMGateway` → CV5.E1) | ✅ Done (fake) |
+| CV1.E7.S4 | `SearchIndex` protocol + `InMemorySearchIndex` fake (real `PostgresSearchIndex` pg_trgm → CV2) | ✅ Done (fake) |
+| CV1.E7.S5 | Contract tests per protocol against real impl + in-memory fake (swap-compliant) | ✅ Done |
 
 ---
 
 ## Done Condition
 
-- All four interfaces compile against their MVP implementation.
-- A contract test suite runs against each implementation and asserts protocol compliance.
-- Domain code never imports a concrete implementation — only the protocol.
-- A second implementation of any interface (mocked) can be substituted in tests without code changes.
+- ✅ All four protocols compile against an MVP implementation (2 real, 2 fake).
+- ✅ A contract suite asserts protocol compliance against each implementation; `ObjectStore` and `WorkflowEngine` run against both a real impl and an in-memory fake.
+- ✅ Domain code imports only `api.contracts`; concrete impls are named only in `api/infra/providers.py`.
+- ✅ A second (in-memory) implementation substitutes in the contract tests without code changes.
+
+## Deferred to owning CVs (ADR-022)
+
+- Real `LiteLLMGateway` → **CV5.E1** (its first consumer).
+- Real `PostgresSearchIndex` (`pg_trgm`) → **CV2** (item search).
+- Temporal `WorkflowEngine` → Phase 2.
 
 ---
 
