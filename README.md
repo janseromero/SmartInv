@@ -188,6 +188,7 @@ make migrate          # alembic upgrade head
 make migrate-down     # downgrade one revision
 make seed             # seed a dev tenant + admin user (idempotent)
 make sync-fixtures    # load ~1,050 messy synthetic items into the dev tenant (CV2.E1)
+make score            # recompute inventory health scores (CV2.E3)
 ```
 
 Every tenant-scoped table has a default-deny RLS policy keyed on the

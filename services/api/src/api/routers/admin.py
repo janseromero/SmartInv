@@ -20,6 +20,7 @@ from api.auth.dependencies import get_current_user, get_tenant_session, require_
 from api.auth.models import CurrentUser
 from api.db.models.sources import Connector, SyncRun
 from api.ingestion.fixture_sync import run_fixture_sync
+from api.scoring.service import run_scoring
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 
@@ -86,3 +87,12 @@ def trigger_fixture_sync(
     _admin: Annotated[CurrentUser, Depends(require_role("admin"))],
 ) -> dict[str, dict[str, int]]:
     return run_fixture_sync(session, user.tenant_id)
+
+
+@router.post("/score", summary="Recompute inventory health scores")
+def trigger_scoring(
+    user: Annotated[CurrentUser, Depends(get_current_user)],
+    session: Annotated[Session, Depends(get_tenant_session)],
+    _admin: Annotated[CurrentUser, Depends(require_role("admin"))],
+) -> dict[str, int]:
+    return run_scoring(session, user.tenant_id)

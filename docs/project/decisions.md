@@ -414,4 +414,26 @@ Story-level work uses a **5-column Kanban**: Backlog · Doing · Blocked · Revi
 
 ---
 
+## ADR-025 — Health scoring: deterministic weighted-penalty engine, versioned
+
+**Context.** CV2.E3 needs a 0–100 inventory health score per item combining excess, slow-moving, obsolete (dead stock), stockout risk, and data-quality flags. It must be **deterministic and reproducible** (no LLM — AGENTS non-negotiable #3; T1 model-deterministic) and it owns the "disposal candidate" definition the UI surfaces.
+
+**Decision.**
+- **Pure function** `score_item(ScoreInput) -> ScoreResult` (`api/scoring/engine.py`): no I/O, no clock, no randomness — `days_since_movement` is passed in. Fully unit-tested.
+- **Score = `100 − min(1, Σ weightᵢ·severityᵢ) × 100`**, clamped [0,100]. Five dimensions with severities in [0,1] and weights: obsolete 0.6, stockout 0.4, excess 0.3, slow-moving 0.2, dq 0.15.
+- **Obsolete (= dead stock / disposal candidate)** = `on_hand > 0` AND no usage in **24 months** (or a retired status). This replaces the provisional 12-month dead-stock proxy from CV2.E2.
+- **Versioned** (`SCORE_VERSION = "health-v1"`); registered in `ml.model_registry` (name+version+weights) on every run for reproducibility.
+- **Persisted** on `inventory.items` (`health_score`, `health_class`, `score_version`, `score_dimensions` jsonb, `scored_at`). Recompute is **on-demand** (`make score` / `POST /admin/score`); a nightly Dramatiq schedule is deferred (no worker yet).
+- Classification (for the portfolio donut): `obsolete_risk` → `excess_slow` → `dq_risk` → `healthy`.
+
+**Consequences.**
+- The same inputs + version always yield the same score; a recommendation can be reproduced months later.
+- The catalog now exposes `health_score`, badges, a Health filter, a portfolio donut, and the Dead-stock KPI (value + disposal-candidate count) — all from one rule, no competing "obsolete" definitions.
+- Weights/thresholds are explicit constants, easy to tune; a tuning change is a new `score_version`.
+- Full risk score (operational impact, CV4) and the full DQ score (CV7) are separate — E3 carries only a lightweight DQ *flag* dimension.
+
+**Alternatives considered.** LLM-assisted scoring (forbidden — non-negotiable #3); computing on read instead of persisting (rejected — not reproducible, slow for filters/donut); a single hard-coded threshold per dimension without weights (rejected — no graceful severity blending).
+
+---
+
 > **Adding a new ADR?** Number sequentially, follow the same format, include the trade-off honestly. ADRs are immutable — supersede with a new ADR rather than editing an old one.

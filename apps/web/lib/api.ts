@@ -92,6 +92,9 @@ export interface ItemRow {
   on_hand: number;
   inventory_value: number;
   locations: number;
+  health_score: number | null;
+  health_class: string | null;
+  badges: string[];
 }
 
 export interface ItemsPage {
@@ -106,7 +109,9 @@ export interface InventorySummary {
   inventory_value: number;
   excess_value: number;
   dead_stock_value: number;
+  disposal_candidates: number;
   completeness_pct: number;
+  health_distribution: Record<string, number>;
 }
 
 export interface LocationRow {
@@ -138,6 +143,10 @@ export interface ItemDetail {
   item_type: string | null;
   status: string | null;
   unit_cost: number | null;
+  health_score: number | null;
+  health_class: string | null;
+  badges: string[];
+  dimensions: Record<string, number>;
   balances: BalanceRow[];
   recent_transactions: TransactionRow[];
 }
@@ -149,6 +158,7 @@ export interface ItemQuery {
   item_type?: string;
   location_id?: string;
   missing_data?: boolean;
+  health_class?: string;
   sort?: 'item_number' | 'value' | 'on_hand';
 }
 

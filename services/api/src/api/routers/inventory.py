@@ -20,6 +20,7 @@ from sqlalchemy.orm import Session
 from api.auth.dependencies import get_tenant_session, require_role
 from api.auth.models import CurrentUser
 from api.db.models.inventory import Balance, Item, Location, Transaction
+from api.scoring.engine import badges_from_dimensions
 
 router = APIRouter(tags=["inventory"], prefix="/inventory")
 
@@ -38,6 +39,9 @@ class ItemRow(BaseModel):
     on_hand: float
     inventory_value: float
     locations: int
+    health_score: int | None = None
+    health_class: str | None = None
+    badges: list[str] = []
 
 
 class ItemsPage(BaseModel):
@@ -52,7 +56,9 @@ class InventorySummary(BaseModel):
     inventory_value: float
     excess_value: float
     dead_stock_value: float
+    disposal_candidates: int
     completeness_pct: float
+    health_distribution: dict[str, int]
 
 
 class LocationRow(BaseModel):
@@ -84,6 +90,10 @@ class ItemDetail(BaseModel):
     item_type: str | None = None
     status: str | None = None
     unit_cost: float | None = None
+    health_score: int | None = None
+    health_class: str | None = None
+    badges: list[str] = []
+    dimensions: dict[str, float] = {}
     balances: list[BalanceRow]
     recent_transactions: list[TransactionRow]
 
@@ -129,18 +139,21 @@ def inventory_summary(
         or 0
     )
 
-    # Dead stock: on-hand value of items with no transactions in the last 365 days.
-    moved_items = select(distinct(Transaction.item_id)).where(
-        Transaction.txn_date >= func.now() - func.make_interval(0, 0, 0, 365)
-    )
+    # Dead stock = disposal candidates: the obsolete dimension of the health
+    # score (on-hand > 0, no usage in 24 months, per CV2.E3).
+    is_disposal = Item.score_dimensions["obsolete"].as_float() > 0
+
     dead_stock_value = (
         session.scalar(
             select(func.coalesce(func.sum(Balance.on_hand * Item.unit_cost), 0))
             .select_from(Balance)
             .join(Item, Item.id == Balance.item_id)
-            .where(Balance.on_hand > 0, Item.id.notin_(moved_items), *bal_filter)
+            .where(is_disposal, *bal_filter)
         )
         or 0
+    )
+    disposal_candidates = (
+        session.scalar(select(func.count()).select_from(Item).where(is_disposal)) or 0
     )
 
     with_desc = (
@@ -149,12 +162,21 @@ def inventory_summary(
     )
     completeness = (with_desc / total_items * 100.0) if total_items else 0.0
 
+    distribution = dict.fromkeys(("healthy", "excess_slow", "obsolete_risk", "dq_risk"), 0)
+    for health_class, count in session.execute(
+        select(Item.health_class, func.count()).group_by(Item.health_class)
+    ).all():
+        if health_class in distribution:
+            distribution[health_class] = count
+
     return InventorySummary(
         total_items=total_items,
         inventory_value=float(inventory_value),
         excess_value=float(excess_value),
         dead_stock_value=float(dead_stock_value),
+        disposal_candidates=disposal_candidates,
         completeness_pct=round(completeness, 1),
+        health_distribution=distribution,
     )
 
 
@@ -168,6 +190,7 @@ def list_items(
     item_type: str | None = None,
     location_id: uuid.UUID | None = None,
     missing_data: bool = False,
+    health_class: str | None = None,
     sort: SortKey = "item_number",
 ) -> ItemsPage:
     outer = location_id is None
@@ -183,6 +206,8 @@ def list_items(
         conditions.append(Item.item_type == item_type)
     if missing_data:
         conditions.append(Item.description.is_(None))
+    if health_class:
+        conditions.append(Item.health_class == health_class)
 
     on_hand = func.coalesce(func.sum(Balance.on_hand), 0)
     value = func.coalesce(func.sum(Balance.on_hand * Item.unit_cost), 0)
@@ -215,6 +240,9 @@ def list_items(
             Item.item_type,
             Item.status,
             Item.unit_cost,
+            Item.health_score,
+            Item.health_class,
+            Item.score_dimensions,
             on_hand.label("on_hand"),
             value.label("inventory_value"),
             locations.label("locations"),
@@ -240,6 +268,9 @@ def list_items(
             on_hand=float(r.on_hand),
             inventory_value=float(r.inventory_value),
             locations=r.locations,
+            health_score=r.health_score,
+            health_class=r.health_class,
+            badges=badges_from_dimensions(r.score_dimensions or {}),
         )
         for r in rows
     ]
@@ -290,6 +321,10 @@ def item_detail(
         item_type=item.item_type,
         status=item.status,
         unit_cost=float(item.unit_cost) if item.unit_cost is not None else None,
+        health_score=item.health_score,
+        health_class=item.health_class,
+        badges=badges_from_dimensions(item.score_dimensions or {}),
+        dimensions=item.score_dimensions or {},
         balances=[
             BalanceRow(
                 location_code=b.location_code,

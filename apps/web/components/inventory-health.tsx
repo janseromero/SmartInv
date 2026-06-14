@@ -28,11 +28,57 @@ function completenessStatus(pct: number): 'ok' | 'warn' | 'crit' {
   return 'crit';
 }
 
+const HEALTH_CLASSES = [
+  { value: '', label: 'All health' },
+  { value: 'healthy', label: 'Healthy' },
+  { value: 'excess_slow', label: 'Excess / slow' },
+  { value: 'obsolete_risk', label: 'Obsolete / risk' },
+  { value: 'dq_risk', label: 'DQ risk' },
+];
+
+const BADGE_TONE: Record<string, 'ok' | 'warn' | 'crit'> = {
+  Excess: 'warn',
+  'Slow-moving': 'warn',
+  Obsolete: 'crit',
+  'Stockout risk': 'crit',
+  'DQ risk': 'warn',
+};
+
+const DIST_META = [
+  { key: 'healthy', label: 'Healthy', cls: 'bg-ok' },
+  { key: 'excess_slow', label: 'Excess / slow', cls: 'bg-warn' },
+  { key: 'obsolete_risk', label: 'Obsolete / risk', cls: 'bg-crit' },
+  { key: 'dq_risk', label: 'DQ risk', cls: 'bg-ink-3' },
+];
+
+function HealthBar({ distribution }: { distribution: Record<string, number> }) {
+  const total = Object.values(distribution).reduce((a, b) => a + b, 0) || 1;
+  return (
+    <div className="rounded-md border border-line bg-card p-md shadow-card">
+      <div className="flex h-3 w-full overflow-hidden rounded-pill">
+        {DIST_META.map((d) => {
+          const pct = ((distribution[d.key] ?? 0) / total) * 100;
+          return <div key={d.key} className={d.cls} style={{ width: `${pct}%` }} />;
+        })}
+      </div>
+      <div className="mt-2 flex flex-wrap gap-4 text-xs text-ink-2">
+        {DIST_META.map((d) => (
+          <span key={d.key} className="flex items-center gap-1">
+            <span className={`inline-block w-2 h-2 rounded-pill ${d.cls}`} />
+            {d.label} · {Math.round(((distribution[d.key] ?? 0) / total) * 100)}%
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export function InventoryHealth() {
   const [search, setSearch] = useState('');
   const [locationId, setLocationId] = useState('');
   const [itemType, setItemType] = useState('');
   const [missingData, setMissingData] = useState(false);
+  const [healthClass, setHealthClass] = useState('');
   const [sort, setSort] = useState<'item_number' | 'value' | 'on_hand'>('item_number');
   const [page, setPage] = useState(1);
   const [selected, setSelected] = useState<string | null>(null);
@@ -43,7 +89,7 @@ export function InventoryHealth() {
     queryFn: () => fetchInventorySummary(locationId || undefined),
   });
   const items = useQuery({
-    queryKey: ['items', { search, locationId, itemType, missingData, sort, page }],
+    queryKey: ['items', { search, locationId, itemType, missingData, healthClass, sort, page }],
     queryFn: () =>
       fetchItems({
         page,
@@ -52,6 +98,7 @@ export function InventoryHealth() {
         item_type: itemType || undefined,
         location_id: locationId || undefined,
         missing_data: missingData || undefined,
+        health_class: healthClass || undefined,
         sort,
       }),
   });
@@ -62,7 +109,7 @@ export function InventoryHealth() {
   return (
     <div className="flex flex-col gap-4">
       {/* KPI cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
         <KpiCard label="Items" value={s ? integer.format(s.total_items) : '—'} />
         <KpiCard label="Inventory Value" value={s ? currency.format(s.inventory_value) : '—'} />
         <KpiCard
@@ -71,11 +118,19 @@ export function InventoryHealth() {
           status={s && s.excess_value > 0 ? 'warn' : 'ok'}
         />
         <KpiCard
+          label="Dead stock (24m+)"
+          value={s ? currency.format(s.dead_stock_value) : '—'}
+          delta={s ? `${integer.format(s.disposal_candidates)} disposal candidates` : undefined}
+          status={s && s.disposal_candidates > 0 ? 'crit' : 'ok'}
+        />
+        <KpiCard
           label="Item-master Completeness"
           value={s ? `${s.completeness_pct}%` : '—'}
           status={s ? completenessStatus(s.completeness_pct) : undefined}
         />
       </div>
+
+      {s ? <HealthBar distribution={s.health_distribution} /> : null}
 
       {/* Filter bar */}
       <div className="flex flex-wrap items-center gap-2">
@@ -119,6 +174,20 @@ export function InventoryHealth() {
           ))}
         </select>
         <select
+          value={healthClass}
+          onChange={(e) => {
+            setHealthClass(e.target.value);
+            setPage(1);
+          }}
+          className="bg-card border border-line rounded-md px-md py-1.5 text-sm text-ink"
+        >
+          {HEALTH_CLASSES.map((h) => (
+            <option key={h.value} value={h.value}>
+              {h.label}
+            </option>
+          ))}
+        </select>
+        <select
           value={sort}
           onChange={(e) => setSort(e.target.value as 'item_number' | 'value' | 'on_hand')}
           className="bg-card border border-line rounded-md px-md py-1.5 text-sm text-ink"
@@ -149,7 +218,7 @@ export function InventoryHealth() {
               <th className="font-normal px-md py-2">Type</th>
               <th className="font-normal px-md py-2 text-right">On hand</th>
               <th className="font-normal px-md py-2 text-right">Value</th>
-              <th className="font-normal px-md py-2 text-right">Sites</th>
+              <th className="font-normal px-md py-2 text-right">Health</th>
               <th className="font-normal px-md py-2">Flags</th>
             </tr>
           </thead>
@@ -173,11 +242,15 @@ export function InventoryHealth() {
                 <td className="px-md py-2 text-right text-ink">
                   {currency.format(item.inventory_value)}
                 </td>
-                <td className="px-md py-2 text-right text-ink-2">{item.locations}</td>
+                <td className="px-md py-2 text-right font-mono text-ink">
+                  {item.health_score ?? '—'}
+                </td>
                 <td className="px-md py-2">
-                  {item.description === null ? (
-                    <Badge label="No description" variant="status" tone="warn" />
-                  ) : null}
+                  <div className="flex flex-wrap gap-1">
+                    {item.badges.slice(0, 2).map((b) => (
+                      <Badge key={b} label={b} variant="status" tone={BADGE_TONE[b] ?? 'warn'} />
+                    ))}
+                  </div>
                 </td>
               </tr>
             ))}
@@ -239,6 +312,35 @@ function ItemDrawer({ itemId, onClose }: { itemId: string; onClose: () => void }
                 {d.item_type ?? '—'} · {d.uom ?? '—'} ·{' '}
                 {d.unit_cost !== null ? currency.format(d.unit_cost) : 'no cost'}
               </div>
+            </div>
+
+            <div>
+              <div className="flex items-baseline gap-2">
+                <span className="font-display text-2xl text-ink">{d.health_score ?? '—'}</span>
+                <span className="text-sm text-ink-3">health score</span>
+              </div>
+              <div className="mt-1 flex flex-wrap gap-1">
+                {d.badges.map((b) => (
+                  <Badge key={b} label={b} variant="status" tone={BADGE_TONE[b] ?? 'warn'} />
+                ))}
+              </div>
+              {Object.entries(d.dimensions).filter(([, v]) => v > 0).length > 0 ? (
+                <div className="mt-2 flex flex-col gap-1">
+                  {Object.entries(d.dimensions)
+                    .filter(([, v]) => v > 0)
+                    .map(([k, v]) => (
+                      <div key={k} className="flex items-center gap-2 text-xs">
+                        <span className="w-24 text-ink-3">{k}</span>
+                        <span className="flex-1 h-1.5 rounded-pill bg-line overflow-hidden">
+                          <span
+                            className="block h-full bg-crit"
+                            style={{ width: `${Math.round(v * 100)}%` }}
+                          />
+                        </span>
+                      </div>
+                    ))}
+                </div>
+              ) : null}
             </div>
 
             <div>
