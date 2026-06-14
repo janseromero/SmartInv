@@ -8,9 +8,11 @@ from datetime import UTC, datetime
 from typing import Literal
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
 from api.config import get_settings
+from api.routers import dev_auth, identity, inventory
 
 settings = get_settings()
 
@@ -22,6 +24,18 @@ app = FastAPI(
     redoc_url="/redoc",
     openapi_url="/openapi.json",
 )
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.cors_origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+app.include_router(dev_auth.router)
+app.include_router(identity.router)
+app.include_router(inventory.router)
 
 
 class HealthResponse(BaseModel):

@@ -74,7 +74,10 @@ jobs:
           --health-timeout 3s
           --health-retries 10
     env:
-      SMARTINV_DATABASE_URL: postgresql://smartinv:smartinv@localhost:5432/smartinv
+      # Runtime/app role (subject to RLS) and admin role (migrations). The
+      # app role is created by the migration that runs with the admin URL.
+      SMARTINV_DATABASE_URL: postgresql://smartinv_app:smartinv_app@localhost:5432/smartinv
+      SMARTINV_ADMIN_DATABASE_URL: postgresql://smartinv:smartinv@localhost:5432/smartinv
     steps:
       - name: Checkout
         uses: actions/checkout@v4

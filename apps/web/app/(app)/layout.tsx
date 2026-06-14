@@ -1,3 +1,4 @@
+import { AuthGuard } from '@/components/auth-guard';
 import { Sidebar } from '@/components/sidebar';
 import { Topbar } from '@/components/topbar';
 import type { ReactNode } from 'react';
@@ -11,14 +12,16 @@ import type { ReactNode } from 'react';
  */
 export default function AppLayout({ children }: { children: ReactNode }) {
   return (
-    <div className="h-screen flex bg-surface">
-      <div className="w-[236px] flex-none">
-        <Sidebar />
+    <AuthGuard>
+      <div className="h-screen flex bg-surface">
+        <div className="w-[236px] flex-none">
+          <Sidebar />
+        </div>
+        <div className="flex-1 flex flex-col min-w-0">
+          <Topbar />
+          <main className="flex-1 overflow-y-auto">{children}</main>
+        </div>
       </div>
-      <div className="flex-1 flex flex-col min-w-0">
-        <Topbar />
-        <main className="flex-1 overflow-y-auto">{children}</main>
-      </div>
-    </div>
+    </AuthGuard>
   );
 }

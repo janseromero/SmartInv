@@ -23,7 +23,11 @@ from api.db.base import Base
 from api.db.session import _to_psycopg_url
 
 config = context.config
-config.set_main_option("sqlalchemy.url", _to_psycopg_url(get_settings().database_url))
+# Migrations run with the admin/superuser role (it creates schemas, extensions,
+# the app role, and RLS policies). See ADR-020.
+config.set_main_option(
+    "sqlalchemy.url", _to_psycopg_url(get_settings().effective_admin_database_url)
+)
 
 target_metadata = Base.metadata
 

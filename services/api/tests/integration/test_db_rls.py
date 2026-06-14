@@ -23,7 +23,8 @@ ROLE = "rls_test_role"
 
 @pytest.fixture(scope="module")
 def db_url() -> str:
-    url = get_settings().database_url
+    # Uses the admin (superuser) URL: this test creates roles and SET ROLEs.
+    url = get_settings().effective_admin_database_url
     try:
         with psycopg.connect(url, connect_timeout=3):
             pass

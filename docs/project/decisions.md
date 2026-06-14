@@ -313,4 +313,44 @@ Story-level work uses a **5-column Kanban**: Backlog · Doing · Blocked · Revi
 
 ---
 
+## ADR-020 — Tenant-context enforcement: least-privilege role + per-request GUC
+
+**Context.** CV1.E5 added RLS policies, but a critical fact surfaced: **Postgres superusers (and `BYPASSRLS` roles) ignore RLS even with FORCE.** The dev `smartinv` role is a superuser, so RLS never filtered for it. For isolation to be real, the application must connect as a least-privilege role and set the tenant context per request.
+
+**Decision.**
+- **Two roles, two URLs.** Migrations/admin use the superuser role (`SMARTINV_ADMIN_DATABASE_URL`); the application runtime connects as **`smartinv_app`** (`NOSUPERUSER NOBYPASSRLS`, `SMARTINV_DATABASE_URL`). The app role is created and granted in a migration; future tables are covered via `ALTER DEFAULT PRIVILEGES`.
+- **Per-request GUC.** A request-scoped SQLAlchemy session opens a transaction and runs `SELECT set_config('app.current_tenant_id', :tid, true)` from the authenticated `CurrentUser`. `is_local => true` scopes it to the transaction, so it never leaks across pooled connections; RLS then filters every query.
+- **Enforcement, not filtering.** Endpoints do **not** add `WHERE tenant_id = …`; the database enforces isolation. The capstone test proves a tenant cannot see another's rows through a real endpoint that never filters.
+
+**Consequences.**
+- Tenant isolation holds even when application code forgets to filter — the moat is structural.
+- Dev/CI app-role password is a fixed default; **production manages it out of band** (secret manager + `ALTER ROLE ... PASSWORD`).
+- Migrations require the admin URL; the app requires the app URL — both are documented in `.env.example`.
+
+**Alternatives considered.** Single superuser role (rejected — RLS never applies); application-only `WHERE tenant_id` filtering (rejected — one forgotten clause leaks data, violates S5 "two layers"); `SET ROLE` per request instead of a dedicated login role (rejected — more moving parts than a least-privilege connection).
+
+---
+
+## ADR-021 — MVP identity: dev token-issuer behind an OIDC-shaped seam
+
+> Adjusts the wording of [ADR-012](#adr-012--auth0-or-keycloak-for-identity-at-mvp): the real IdP is deferred, but the app still only knows OIDC.
+
+**Context.** Full Auth0/Keycloak integration needs an external account or a heavy self-hosted service, and its login/callback flow is hard to test hermetically in CI. The agent runtime that needs *real* SSO is not the MVP's first blocker; the **tenant-isolation loop** (ADR-020) is. We want to build and prove that loop now without standing up an IdP.
+
+**Decision.**
+- Build to **generic OIDC-shaped JWTs**. The IdP lives behind one function, `verify_token(raw) -> CurrentUser`.
+- **MVP:** a local **HS256 dev token-issuer** (`mint_dev_token`, `POST /auth/dev-login`, `make token`) signed with `SMARTINV_JWT_SECRET`. Claims mirror a real token: `sub`, `tenant_id`, `roles`, `email`, `iss`, `aud`, `exp`.
+- **Roles travel in the JWT `roles` claim** (keeps ADR-012). The `core.roles`/`role_bindings` tables remain the future management surface, not wired now.
+- **Web:** a minimal dev sign-in page + token storage + `Authorization` header; protected routes via a client guard. Full Auth.js + TanStack Query deferred.
+- **Production swap:** replace HS256+secret with RS256+JWKS inside `verify_token`, and the dev login page with an Auth.js OIDC flow. Nothing downstream changes.
+
+**Consequences.**
+- Hermetic, CI-friendly auth; the full tenant-isolation chain (JWT → GUC → RLS → least-privilege role) is provable today.
+- **The dev issuer is insecure by design** — anyone with the secret can mint any tenant's token. `dev-login` returns 404 outside `dev`/`test`. **A real IdP must be wired before any customer data lands.**
+- Deferred to a follow-up story (CV8 Customer Readiness or an E6 follow-up): real Auth0/Keycloak OIDC, full web Auth.js, optional RBAC-from-DB.
+
+**Alternatives considered.** Auth0 now (rejected — external dependency, CI can't run the flow); Keycloak self-host now (rejected — heavy service for zero current SSO need); no auth until the real IdP (rejected — leaves the RLS loop unproven and every endpoint unguarded).
+
+---
+
 > **Adding a new ADR?** Number sequentially, follow the same format, include the trade-off honestly. ADRs are immutable — supersede with a new ADR rather than editing an old one.

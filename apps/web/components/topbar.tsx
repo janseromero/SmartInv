@@ -1,4 +1,5 @@
 import { BellIcon, HelpIcon, SearchIcon } from './icons';
+import { SessionChip } from './session-chip';
 
 /**
  * Persistent topbar with command bar, tenant chip, notification dot, and
@@ -17,9 +18,7 @@ export function Topbar() {
       </div>
 
       <div className="ml-auto flex items-center gap-1.5">
-        <span className="font-mono text-[10px] text-teal-bright border border-teal/[0.4] rounded px-2 py-0.5 tracking-wide">
-          TENANT · ACME-INDUSTRIAL
-        </span>
+        <SessionChip />
 
         <button
           type="button"

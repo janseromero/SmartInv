@@ -190,8 +190,24 @@ make seed           # seed a dev tenant + admin user (idempotent)
 ```
 
 Every tenant-scoped table has a default-deny RLS policy keyed on the
-`app.current_tenant_id` GUC. Note: RLS is bypassed by Postgres superusers — the
-least-privilege runtime role the API connects with is wired in CV1.E6.
+`app.current_tenant_id` GUC. The API connects as the least-privilege
+`smartinv_app` role (migrations use the admin role) so RLS actually filters
+([ADR-020](docs/project/decisions.md#adr-020--tenant-context-enforcement-least-privilege-role--per-request-guc)).
+
+### Authentication (dev)
+
+The MVP uses a local HS256 **dev token-issuer** behind an OIDC-shaped seam
+([ADR-021](docs/project/decisions.md#adr-021--mvp-identity-dev-token-issuer-behind-an-oidc-shaped-seam)).
+Real Auth0/Keycloak SSO is deferred and swaps into `verify_token` only.
+
+```bash
+make token TENANT=smartinv-dev ROLES=admin,planner   # mint a dev JWT
+curl -H "Authorization: Bearer <token>" localhost:8000/me
+```
+
+The web app has a dev sign-in page (`/login`) that mints a token via
+`POST /auth/dev-login`. **The dev issuer is insecure by design — never use it
+with real data; a real IdP must be wired first.**
 
 ### Run the web app
 
