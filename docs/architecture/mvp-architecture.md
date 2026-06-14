@@ -60,7 +60,7 @@ Each is backed by **explainable AI, governed agents, and a human-approval workfl
 │  DATA PLATFORM (3 components)                               │
 │  PostgreSQL 16 (+ pgvector + pg_trgm + RLS)                 │
 │  Redis (cache + Dramatiq broker + rate limit)               │
-│  Garage / MinIO / S3 (reports, uploads, artifacts)          │
+│  SeaweedFS / S3 (reports, uploads, artifacts)               │
 └─────────────────────────────────────────────────────────────┘
                            │
                            ▼
@@ -141,7 +141,7 @@ This is the core of SmartInv. See deeper detail below.
 | Framework | **LangGraph** with `PostgresSaver` checkpointer |
 | LLM gateway | **LiteLLM** — single entrypoint to OpenAI / Anthropic / Azure / Bedrock |
 | Vector store | **pgvector** in the main Postgres |
-| Tracing | **Langfuse** (self-host or cloud) |
+| Tracing | **Langfuse Cloud** (free tier at MVP; self-host deferred to Phase 2 — [ADR-018](../project/decisions.md#adr-018--langfuse-cloud-free-tier-for-mvp-llm-observability)) |
 | Guardrails | Schema validation (Pydantic) + grounding check in code |
 
 ### Agents at MVP (3 + 1)
@@ -170,7 +170,7 @@ Same LangGraph graph runs in both modes. PostgresSaver allows runs to resume aft
 |---|---|
 | **PostgreSQL 16** with `pgvector`, `pg_trgm`, `tsvector`, RLS | Holds 95% of state: items, balances, transactions, recommendations, agent runs, RAG memory, audit |
 | **Redis** | Dramatiq broker, sessions, hot KPI cache, rate limits |
-| **Garage** (or MinIO / S3) | Reports, uploads, model artifacts, exports, backups |
+| **SeaweedFS** (or AWS S3 / R2) | Reports, uploads, model artifacts, exports, backups ([ADR-017](../project/decisions.md#adr-017--seaweedfs-supersedes-garage-as-the-mvp-object-store)) |
 
 ### Postgres schema layout
 
@@ -275,14 +275,14 @@ When a second source is needed (SAP, Oracle), add a second worker — same shape
 
 | Concern | Choice |
 |---|---|
-| Local dev | **Docker Compose** (Postgres, Redis, Garage, Langfuse) |
+| Local dev | **Docker Compose** (Postgres, Redis, SeaweedFS) · Langfuse Cloud, not local |
 | Production (MVP) | Single VM (Hetzner / DigitalOcean / Fly.io) or small K8s (DOKS / GKE Autopilot) |
 | CI | **GitHub Actions** |
 | CD | `docker compose pull && up` or simple `flyctl deploy` initially |
 | Observability | **OpenTelemetry** SDK → **Grafana Cloud** (free tier) |
 | LLM observability | **Langfuse** |
 | Errors | **Sentry** |
-| Backups | Nightly `pg_dump` → S3; Garage metadata snapshot |
+| Backups | Nightly `pg_dump` → S3; SeaweedFS volume snapshot |
 
 ---
 
@@ -316,7 +316,7 @@ smartinv/
 │  ├─ types/                     # Zod schemas → TS + Pydantic
 │  └─ utils/
 ├─ infra/
-│  ├─ docker/                    # docker-compose, Garage config
+│  ├─ docker/                    # service configs (postgres init, seaweedfs s3.json)
 │  └─ deploy/                    # production scripts (Fly / Hetzner / DOKS)
 ├─ docs/
 └─ tests/

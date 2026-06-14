@@ -14,6 +14,12 @@ dev = [
     "pytest>=8.3.0",
     "pytest-asyncio>=0.24.0",
     "httpx>=0.27.0",
+    # Infra connectivity tooling (CV1.E4 scripts). The production DB/cache/
+    # object-store drivers are chosen in CV1.E5/E7; these power the dev-only
+    # bootstrap and smoke-test scripts.
+    "boto3>=1.35.0",
+    "psycopg[binary]>=3.2.0",
+    "redis>=5.2.0",
 ]
 
 [tool.ruff]
@@ -37,6 +43,8 @@ ignore = []
 
 [tool.ruff.lint.per-file-ignores]
 "**/tests/**" = ["S101"]  # allow asserts in tests
+# Dev scripts: imports follow a sys.path bootstrap (E402) and print to stdout (T20).
+"scripts/**" = ["E402", "T201", "T203"]
 
 [tool.ruff.format]
 quote-style = "double"

@@ -146,8 +146,37 @@ SmartInv serves an entire decision chain — from the planner reviewing daily ex
 pnpm install
 
 # Python workspace (creates .venv and resolves all members)
-uv sync --all-packages
+uv sync --all-packages --group dev
+
+# Environment file (copy template, then fill secrets locally)
+cp .env.example .env
 ```
+
+### Local infrastructure
+
+The local data platform — **PostgreSQL 16** (`pgvector` + `pg_trgm`), **Redis 7**,
+and **SeaweedFS** (S3-compatible object store) — runs via Docker Compose
+([ADR-004](docs/project/decisions.md#adr-004--data-platform--postgres--redis--s3-compatible),
+[ADR-017](docs/project/decisions.md#adr-017--seaweedfs-supersedes-garage-as-the-mvp-object-store)).
+Service config files live under `infra/docker/`.
+
+```bash
+make dev-up        # boot Postgres + Redis + SeaweedFS and bootstrap the bucket
+make check-infra   # verify the API can reach all three services
+make dev-logs      # tail logs
+make dev-down      # stop the stack (data volumes are kept)
+```
+
+| Service | URL |
+|---|---|
+| Postgres | `postgresql://smartinv:smartinv@localhost:5432/smartinv` |
+| Redis | `redis://localhost:6379/0` |
+| SeaweedFS S3 | `http://localhost:8333` (dashboard: `http://localhost:9333`) |
+
+**LLM observability** uses **Langfuse Cloud (free tier)** — there is no local
+Langfuse service ([ADR-018](docs/project/decisions.md#adr-018--langfuse-cloud-free-tier-for-mvp-llm-observability)).
+Set `LANGFUSE_*` in your local `.env` only; never commit real keys. The SDK is
+wired into the LLM gateway in CV5.
 
 ### Run the web app
 

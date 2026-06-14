@@ -1,0 +1,68 @@
+# SmartInv — local development stack (CV1.E4).
+#
+# Boots the three MVP data-platform components (ADR-004, ADR-017):
+#   - Postgres 16 with pgvector + pg_trgm
+#   - Redis 7
+#   - SeaweedFS (S3-compatible object store)
+#
+# Langfuse uses the Cloud free tier (ADR-018) — there is no local Langfuse
+# service. Its credentials live in `.env` (see `.env.example`).
+#
+# Bring the stack up with `make dev-up` and tear it down with `make dev-down`.
+# Service configuration files live under `infra/docker/`.
+
+name: smartinv
+
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: smartinv-postgres
+    environment:
+      POSTGRES_USER: smartinv
+      POSTGRES_PASSWORD: smartinv
+      POSTGRES_DB: smartinv
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./infra/docker/postgres/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U smartinv -d smartinv"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    container_name: smartinv-redis
+    command: ["redis-server", "--appendonly", "yes"]
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  seaweedfs:
+    image: chrislusf/seaweedfs:3.68
+    container_name: smartinv-seaweedfs
+    command: >
+      server -dir=/data
+      -master.volumeSizeLimitMB=256
+      -volume.max=0
+      -s3 -s3.config=/etc/seaweedfs/s3.json
+    ports:
+      - "8333:8333"   # S3 API
+      - "8888:8888"   # Filer
+      - "9333:9333"   # Master dashboard
+    volumes:
+      - seaweedfs-data:/data
+      - ./infra/docker/seaweedfs/s3.json:/etc/seaweedfs/s3.json:ro
+
+volumes:
+  postgres-data:
+  redis-data:
+  seaweedfs-data:

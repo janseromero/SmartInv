@@ -34,7 +34,7 @@ For full context, see [README.md](README.md).
 | Web | Next.js 14 + Tailwind + shadcn/ui |
 | Mobile | Deferred — but contracts pattern keeps the door open |
 | Services | Python 3.12 + FastAPI (modular monolith) |
-| Data | PostgreSQL 16 (+ pgvector, pg_trgm, RLS) · Redis · Garage/MinIO/S3 |
+| Data | PostgreSQL 16 (+ pgvector, pg_trgm, RLS) · Redis · SeaweedFS (S3-compatible) |
 | Agents | LangGraph + LiteLLM + Langfuse |
 | Workflow | Postgres-backed state machine (Temporal deferred) |
 | Background jobs | Dramatiq + Redis |
@@ -148,7 +148,7 @@ Slow lane (human reviews the actual diff — not just the plan):
   the Workflow & Approval Service; the writing code gets reviewed.
 - **DB schema:** only via Alembic migration, never an ad-hoc ALTER.
 - **Dependencies & licenses:** no AGPL/copyleft additions without approval
-  (the MinIO/Garage lesson). A dependency choice is an architecture choice — ask.
+  (the MinIO/Garage/SeaweedFS lesson). A dependency choice is an architecture choice — ask.
 
 ---  
 

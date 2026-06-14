@@ -2,7 +2,7 @@
 
 # CV1 — Foundations
 
-**Status:** 🟢 In Progress · 3 of 8 epics done
+**Status:** 🟢 In Progress · 4 of 8 epics done
 **Goal:** Make every later CV cheap to start. A runnable monorepo, a token-based design system, infra you can boot with `docker compose up`, governed schemas, auth with tenant context, swappable interfaces, and a UI shell that matches the design language of the mock.
 
 ---
@@ -26,7 +26,7 @@ Three principles guide every decision in CV1:
 | [CV1.E1](cv1-e1-monorepo-tooling/index.md) | Monorepo & Tooling | A runnable `pnpm + uv + turbo` workspace with FastAPI `/health` and a Next.js shell, validated by CI | ✅ Done |
 | [CV1.E2](cv1-e2-design-tokens-tailwind/index.md) | Design Tokens & Tailwind Wiring | Tailwind reads from `@smartinv/tokens`; raw hex codes banned in lint | ✅ Done |
 | [CV1.E3](cv1-e3-ui-shell/index.md) | UI Shell | Sidebar + topbar + screen routing matching the high-fidelity UI mock | ✅ Done |
-| [CV1.E4](cv1-e4-local-infrastructure/index.md) | Local Infrastructure | Docker Compose for Postgres + Redis + object store + Langfuse | ⚪ Planned |
+| [CV1.E4](cv1-e4-local-infrastructure/index.md) | Local Infrastructure | Docker Compose for Postgres + Redis + SeaweedFS (Langfuse Cloud config) | ✅ Done |
 | [CV1.E5](cv1-e5-database-foundations/index.md) | Database Foundations | Alembic + initial schemas: `core`, `inventory`, `agent`, `workflow`, `audit`, `rag`, `ml`, `sources` | ⚪ Planned |
 | [CV1.E6](cv1-e6-auth-tenancy/index.md) | Auth & Tenancy | SSO / OIDC sign-in, JWT with tenant_id, Postgres Row-Level Security | ⚪ Planned |
 | [CV1.E7](cv1-e7-core-service-contracts/index.md) | Core Service Contracts | `WorkflowEngine`, `ObjectStore`, `LLMGateway`, `SearchIndex` interfaces with MVP implementations | ⚪ Planned |

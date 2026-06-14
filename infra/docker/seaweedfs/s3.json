@@ -1,0 +1,14 @@
+{
+  "identities": [
+    {
+      "name": "smartinv-dev",
+      "credentials": [
+        {
+          "accessKey": "smartinv",
+          "secretKey": "smartinvsecret"
+        }
+      ],
+      "actions": ["Admin", "Read", "Write", "List", "Tagging"]
+    }
+  ]
+}

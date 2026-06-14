@@ -76,6 +76,8 @@
 
 ## ADR-005 — Garage as the MVP S3-compatible store
 
+> **Superseded by [ADR-017](#adr-017--seaweedfs-supersedes-garage-as-the-mvp-object-store).** Retained for history; the active object store is SeaweedFS.
+
 **Context.** We need an S3-compatible object store for reports, uploads, and artifacts. Choices include AWS S3 (cloud), MinIO (self-host), and Garage (self-host).
 
 **Decision.** Use **Garage** as the default self-hosted S3-compatible store for dev and on-prem deployments. AWS S3 / Cloudflare R2 are acceptable cloud alternatives behind the same `ObjectStore` interface.
@@ -248,6 +250,43 @@ Story-level work uses a **5-column Kanban**: Backlog · Doing · Blocked · Revi
 **Consequences.**
 - Onboarding new contributors is friction-free.
 - Search and tooling work consistently.
+
+---
+
+## ADR-017 — SeaweedFS supersedes Garage as the MVP object store
+
+> **Supersedes [ADR-005](#adr-005--garage-as-the-mvp-s3-compatible-store).**
+
+**Context.** [ADR-005](#adr-005--garage-as-the-mvp-s3-compatible-store) selected Garage as the default S3-compatible store and flagged SeaweedFS as "less S3-faithful." On revisiting the choice for CV1.E4, SeaweedFS was preferred for its single-binary `server` mode (master + volume + filer + S3 in one process), its scale-out volume model, and operational familiarity. The object store is consumed exclusively through a future `ObjectStore` interface backed by `boto3` (path-style addressing), so the application only depends on the S3 API surface, not the engine.
+
+**Decision.** Use **SeaweedFS** as the default self-hosted S3-compatible store for dev and on-prem deployments. AWS S3 / Cloudflare R2 remain acceptable cloud alternatives behind the same `ObjectStore` interface.
+
+**Consequences.**
+- Local dev runs SeaweedFS via `docker compose` (`server -s3`), S3 API on `:8333`, credentials in `infra/docker/seaweedfs/s3.json`.
+- All code talks to it via `boto3` with **path-style addressing** — the same code targets AWS S3 in cloud.
+- **Trade-off (honest):** SeaweedFS's S3 gateway is historically less complete than MinIO's. We mitigate by (a) using only core operations (put/get/list/delete/multipart/presign) and (b) keeping access behind the `ObjectStore` interface so swapping engines is a config change. If an S3 feature gap blocks us, switching to MinIO or AWS S3 is mechanical.
+
+**Triggers to revisit.** A required S3 feature is missing or buggy in SeaweedFS; multi-region replication needs outgrow the single-binary mode; a managed cloud store becomes cheaper to operate than self-hosting.
+
+**Alternatives considered.** Garage ([ADR-005](#adr-005--garage-as-the-mvp-s3-compatible-store), now superseded); MinIO (viable, larger community, AGPL considerations); AWS S3 (cloud-only, not self-host friendly for on-prem industrial customers).
+
+---
+
+## ADR-018 — Langfuse Cloud (free tier) for MVP LLM observability
+
+**Context.** SmartInv's agentic features (CV5) need LLM/agent observability — prompt, tool-call, token-cost, and latency tracing ([Engineering Principles A6/A7](../process/engineering-principles.md#a6--observability-is-a-feature)). Self-hosted Langfuse v3 pulls in its own Postgres + ClickHouse + worker, which is heavy for a laptop and adds operational cost. Critically, **no LLM call exists in the codebase until CV5** — the agent runtime is explicitly out of scope for CV1 ([CV1 Foundations](roadmap/cv1-foundations/index.md)).
+
+**Decision.** Use **Langfuse Cloud (free tier)** for the MVP. There is **no local Langfuse service** in `docker-compose.yml`. CV1.E4 ships only the configuration scaffolding (`LANGFUSE_*` env vars in `config.py` and `.env.example`); the actual SDK wiring lands in **[CV5.E1](roadmap/cv5-conversational-analyst/cv5-e1-llm-gateway-tool-catalog/index.md)** alongside the LLM gateway that produces traces. Self-hosting Langfuse is a Phase 2 concern.
+
+**Consequences.**
+- The local stack stays light — three services (Postgres, Redis, SeaweedFS), preserving the "boots in under 30 seconds" target.
+- Langfuse keys are read from the SDK's conventional unprefixed `LANGFUSE_*` env vars; real keys live only in the gitignored `.env`, never in `.env.example`.
+- Deferring carries **no retrofit cost**: Langfuse is edge observability (a callback in the LLM gateway), so adding it in CV5 is additive, not a rewrite. It is validated against real traces when it arrives — not stood up empty.
+- **Trade-off:** trace data lives in Langfuse's cloud during the MVP. Acceptable for pre-pilot development; revisited for customers with data-residency constraints.
+
+**Triggers to revisit.** Data-residency or on-prem requirements from a pilot customer; free-tier limits exceeded; need to retain traces beyond the cloud retention window.
+
+**Alternatives considered.** Self-host Langfuse now (rejected — heavy stack, zero consumers until CV5); OpenTelemetry-only for LLM spans (rejected — loses prompt/cost-native LLM views); defer all observability config to CV5 (rejected — cheap to scaffold the env contract now).
 
 ---
 
