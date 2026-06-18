@@ -10,12 +10,13 @@ import pytest
 from api.anomaly.model import ANOMALY_VERSION
 from api.anomaly.service import run_anomaly_scan
 from api.config import get_settings
+from api.db.models.inventory import Balance
 from api.db.models.ml import Anomaly, ModelRegistry
 from api.db.session import tenant_session
 from api.ingestion.fixture_sync import ensure_fixture_connector
 from api.ingestion.fixtures import FixtureConnector
 from api.ingestion.service import IngestionService
-from sqlalchemy import func, select
+from sqlalchemy import func, select, update
 
 ADMIN = get_settings().effective_admin_database_url
 SLUG = "e5_anomaly"
@@ -97,6 +98,25 @@ def test_scan_is_idempotent_and_preserves_reviews(tenant_id: uuid.UUID) -> None:
             select(func.count()).select_from(Anomaly).where(Anomaly.status == "dismissed")
         )
         assert dismissed == 1
+
+
+def test_scan_retires_anomalies_no_longer_firing(tenant_id: uuid.UUID) -> None:
+    with tenant_session(str(tenant_id)) as session:
+        first = run_anomaly_scan(session, tenant_id)
+        assert first["negative_balance"] >= 1
+        # Correct every balance at the source — negatives should disappear.
+        session.execute(update(Balance).values(available=Balance.on_hand, reserved=0))
+
+    with tenant_session(str(tenant_id)) as session:
+        second = run_anomaly_scan(session, tenant_id)
+        assert second.get("negative_balance", 0) == 0
+        assert second["resolved_stale"] >= first["negative_balance"]
+        open_negbal = session.scalar(
+            select(func.count())
+            .select_from(Anomaly)
+            .where(Anomaly.type == "negative_balance", Anomaly.status == "open")
+        )
+        assert open_negbal == 0
 
 
 def test_anomaly_version_registered(tenant_id: uuid.UUID) -> None:

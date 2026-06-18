@@ -13,8 +13,9 @@ from __future__ import annotations
 import uuid
 from collections import defaultdict
 from datetime import UTC, datetime
+from typing import Any, cast
 
-from sqlalchemy import select
+from sqlalchemy import CursorResult, select, tuple_, update
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.orm import Session
 
@@ -115,6 +116,7 @@ def run_anomaly_scan(session: Session, tenant_id: uuid.UUID) -> AnomalySummary:
     now = datetime.now(UTC)
 
     results = detect_all(session)
+    detected_keys = [(str(r.type), r.target_id) for r in results]
 
     summary: AnomalySummary = {"anomalies": len(results)}
     for result in results:
@@ -149,5 +151,15 @@ def run_anomaly_scan(session: Session, tenant_id: uuid.UUID) -> AnomalySummary:
             )
         )
         session.execute(stmt)
+
+    # Retire open anomalies that no longer fire (e.g. the source was corrected,
+    # or a tuning change dropped them). Human decisions (acknowledged/dismissed)
+    # are terminal and never touched.
+    stale = (
+        update(Anomaly).where(Anomaly.status == "open").values(status="resolved", updated_at=now)
+    )
+    if detected_keys:
+        stale = stale.where(tuple_(Anomaly.type, Anomaly.target_id).notin_(detected_keys))
+    summary["resolved_stale"] = cast("CursorResult[Any]", session.execute(stale)).rowcount
 
     return summary
