@@ -458,4 +458,28 @@ Story-level work uses a **5-column Kanban**: Backlog · Doing · Blocked · Revi
 
 ---
 
+## ADR-027 — Anomaly detection: deterministic robust-z / SPC detectors, versioned (Isolation Forest deferred)
+
+**Context.** CV2.E5 surfaces unusual events for planner review: consumption spikes, unit-price jumps, and negative available balances, flagged within 24h with a likely-cause annotation and drill-down to the source record. The epic sketch named Isolation Forest for volume anomalies. As in ADR-025/026, an ML model is the wrong default here: Isolation Forest adds an sklearn dependency and is not cleanly reproducible (random sampling/seeds), while the Done Condition needs none of it. Two data realities also shaped the design: (1) the synthetic CV2.E1 fixtures originally carried no anomalies (transaction `unit_cost` was always null, balances never went negative, consumption was uniform noise spread over two years), so the feature was undemonstrable and untestable; (2) a naive robust-z over-flags very tight series — a 7% price wiggle or a 1.5x usage is genuinely 3.5σ when the baseline dispersion is tiny.
+
+**Decision.**
+- **Pure detectors** in `api/anomaly/engine.py`, no I/O / clock / randomness, fully unit-tested (model-deterministic, T1):
+  - **Consumption spike (S1):** per-item **robust z-score** on issue quantities — `z = (qty − median) / (1.4826 · MAD)`, with a std-dev fallback when MAD collapses. Requires ≥ 5 history; only upward.
+  - **Price jump (S2):** the same robust z on the per-item unit-price series (SPC control limits), flagging deviations in either direction.
+  - **Negative balance (S3):** a pure rule — `available < 0` or `reserved > on_hand`.
+- **Practical-significance floor.** A flag must be statistically unusual **and** materially large: consumption ≥ 3x median; price outside [0.5x, 2x] median. This is what separates a real spike from quiet-series noise and mirrors how production SPC alerting works. (Tuning these dropped the synthetic dataset from 249 noisy flags to 139 that map exactly to the injected cohorts.)
+- **Versioned** (`ANOMALY_VERSION = "anomaly-v1"`), registered in `ml.model_registry` (name+version+params).
+- **Persisted** in a new tenant-scoped, RLS-protected `ml.anomalies` table (`type`, `target_type`/`target_id`, `source_record_id` for drill-down, `score`, `severity`, `detected_for`, `evidence` jsonb with the likely-cause, `model_version`, `status`). Natural key `(tenant, type, target_id)` keeps re-runs idempotent; re-runs preserve a planner's `acknowledged`/`dismissed` decision. An anomaly is an **observation**, not a recommendation — it deliberately does *not* use the `ml.recommendations` envelope.
+- **On-demand** recompute (`make anomalies` / `POST /admin/anomalies`); the "within 24 hours" SLA is met by a **nightly Dramatiq run**, which stays **deferred** (no worker yet, mirrors ADR-025/026). The "last 7 days" panel filters on `detected_for`.
+- **Fixtures enriched (accepted scope).** CV2.E1 fixtures now give each item a characteristic usage rate and price (so normal variation is tight and a real spike stands out) and inject seeded, recent anomalies of all three kinds. The change is additive (more transactions, edited balance values) and preserves the count-pinned ingestion tests.
+
+**Consequences.**
+- The whole panel (engine → schema → service → API → UI) ships with no ML dependency; an Isolation Forest / forecast-residual detector can later slot in as `anomaly-v2` behind the same registry seam if precision/recall demands it.
+- The detectors are honest about MRO reality: price history’s real source is procurement (CV9); E5 runs against fixture-injected transaction prices as the MVP source.
+- AI-produced content is violet-marked in the panel (non-negotiable #8): the model badge and score use the `ai` accent; warn/crit severities keep status colors.
+
+**Alternatives considered.** Isolation Forest now (deferred — dependency weight, non-reproducible, unnecessary for the Done Condition); z-score without a practical-significance floor (rejected — floods the queue on tight series); raising the z-threshold instead of a ratio floor (rejected — real injected anomalies are z≫10, so a higher threshold only trims the false-positive band arbitrarily); storing anomalies as recommendations (rejected — an anomaly is an observation, not a proposed action); leaving fixtures empty and shipping detectors against no data (rejected — untestable, undemonstrable).
+
+---
+
 > **Adding a new ADR?** Number sequentially, follow the same format, include the trade-off honestly. ADRs are immutable — supersede with a new ADR rather than editing an old one.

@@ -16,6 +16,7 @@ from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from api.anomaly.service import run_anomaly_scan
 from api.auth.dependencies import get_current_user, get_tenant_session, require_role
 from api.auth.models import CurrentUser
 from api.db.models.sources import Connector, SyncRun
@@ -106,3 +107,12 @@ def trigger_dedup(
     _admin: Annotated[CurrentUser, Depends(require_role("admin"))],
 ) -> dict[str, int]:
     return run_dedup(session, user.tenant_id)
+
+
+@router.post("/anomalies", summary="Recompute anomaly detections")
+def trigger_anomaly_scan(
+    user: Annotated[CurrentUser, Depends(get_current_user)],
+    session: Annotated[Session, Depends(get_tenant_session)],
+    _admin: Annotated[CurrentUser, Depends(require_role("admin"))],
+) -> dict[str, int]:
+    return run_anomaly_scan(session, user.tenant_id)

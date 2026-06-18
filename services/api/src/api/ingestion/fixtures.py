@@ -2,9 +2,10 @@
 
 A ``SourceConnector`` that generates Maximo-shaped data with realistic mess —
 missing descriptions, duplicate descriptions, null costs, odd UOMs, excess and
-stockout balances, obsolete items with no movement — so the catalog, scoring,
-and dedup epics are built and tested against real-world conditions before the
-live Maximo connector lands.
+stockout balances, obsolete items with no movement, plus seeded anomalies
+(recent consumption spikes, unit-price jumps, negative available balances) — so
+the catalog, scoring, dedup, and anomaly epics are built and tested against
+real-world conditions before the live Maximo connector lands.
 """
 
 from __future__ import annotations
@@ -120,7 +121,7 @@ class FixtureConnector:
     def _build_balances(self) -> list[SourceRecord]:
         now = datetime.now(UTC)
         balances: list[SourceRecord] = []
-        for item in self._items:
+        for index, item in enumerate(self._items):
             location = self._rng.choice(self._locations)
             min_level = self._rng.choice([0, 2, 5, 10])
             max_level = min_level + self._rng.choice([10, 25, 50, 100])
@@ -131,6 +132,13 @@ class FixtureConnector:
                 on_hand = float(max_level * self._rng.randint(3, 8))  # excess
             else:
                 on_hand = float(self._rng.randint(min_level, max_level))
+            # ~3% reservation-integrity breaks: reserved exceeds on-hand, so
+            # available goes negative (CV2.E5.S3 anomaly fodder).
+            reserved = 0.0
+            available = on_hand
+            if index % 31 == 3:
+                reserved = on_hand + float(self._rng.randint(5, 50))
+                available = on_hand - reserved
             balances.append(
                 SourceRecord(
                     f"{item.source_id}@{location.source_id}",
@@ -138,8 +146,8 @@ class FixtureConnector:
                         "item_source_id": item.source_id,
                         "location_source_id": location.source_id,
                         "on_hand": on_hand,
-                        "available": on_hand,
-                        "reserved": 0,
+                        "available": available,
+                        "reserved": reserved,
                         "min_level": float(min_level),
                         "max_level": float(max_level),
                         "as_of": now,
@@ -152,15 +160,25 @@ class FixtureConnector:
         now = datetime.now(UTC)
         txns: list[SourceRecord] = []
         seq = 0
-        for item in self._items:
-            # ~20% of items have no movement at all (obsolete / slow-moving).
-            if self._rng.random() < 0.2:
+        for index, item in enumerate(self._items):
+            base_cost = item.data.get("unit_cost")
+            # Each item has a characteristic usage rate so normal variation is
+            # tight and a genuine spike stands out (robust-z stays clean).
+            base_qty = self._rng.randint(2, 50)
+            is_spike = index % 19 == 5  # ~5% consumption-spike items
+            is_price = index % 19 == 11 and base_cost is not None  # ~5% price-jump items
+            forced = is_spike or is_price
+            # ~20% of items have no movement (obsolete) — anomaly items always move.
+            if not forced and self._rng.random() < 0.2:
                 continue
             location_id = self._balance_location(item.source_id)
             count = self._rng.randint(1, 8)
+            if forced:
+                count = max(count, 6)  # guarantee a baseline (MIN_HISTORY = 5)
             for _ in range(count):
                 seq += 1
                 days_ago = self._rng.randint(0, 720)
+                quantity = max(1.0, round(base_qty * self._rng.uniform(0.6, 1.4)))
                 txns.append(
                     SourceRecord(
                         f"TXN-{seq}",
@@ -168,13 +186,66 @@ class FixtureConnector:
                             "item_source_id": item.source_id,
                             "location_source_id": location_id,
                             "type": "issue",
-                            "quantity": float(self._rng.randint(1, 40)),
-                            "unit_cost": None,
+                            "quantity": float(quantity),
+                            "unit_cost": self._priced(base_cost),
                             "txn_date": now - timedelta(days=days_ago),
                         },
                     )
                 )
+            # Inject a recent (last 7 days) anomalous issue for the cohort items.
+            if is_spike:
+                seq += 1
+                txns.append(
+                    self._issue(
+                        seq,
+                        item.source_id,
+                        location_id,
+                        quantity=float(base_qty * self._rng.randint(8, 15)),
+                        unit_cost=self._priced(base_cost),
+                        when=now - timedelta(days=self._rng.randint(0, 6)),
+                    )
+                )
+            if is_price and base_cost is not None:
+                seq += 1
+                txns.append(
+                    self._issue(
+                        seq,
+                        item.source_id,
+                        location_id,
+                        quantity=float(max(1, round(base_qty * self._rng.uniform(0.6, 1.4)))),
+                        unit_cost=round(base_cost * self._rng.uniform(3.0, 6.0), 2),
+                        when=now - timedelta(days=self._rng.randint(0, 6)),
+                    )
+                )
         return txns
+
+    def _priced(self, base_cost: float | None) -> float | None:
+        """A unit price near the item's baseline (±5%) — the normal price series."""
+        if base_cost is None:
+            return None
+        return round(base_cost * self._rng.uniform(0.95, 1.05), 2)
+
+    def _issue(
+        self,
+        seq: int,
+        item_source_id: str,
+        location_id: str,
+        *,
+        quantity: float,
+        unit_cost: float | None,
+        when: datetime,
+    ) -> SourceRecord:
+        return SourceRecord(
+            f"TXN-{seq}",
+            {
+                "item_source_id": item_source_id,
+                "location_source_id": location_id,
+                "type": "issue",
+                "quantity": quantity,
+                "unit_cost": unit_cost,
+                "txn_date": when,
+            },
+        )
 
     def _balance_location(self, item_source_id: str) -> str:
         for balance in self._balances:

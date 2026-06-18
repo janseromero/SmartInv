@@ -131,6 +131,36 @@ class DuplicateCandidate(Base, TenantMixin, TimestampMixin):
     reviewed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
 
+class Anomaly(Base, TenantMixin, TimestampMixin):
+    """A detected anomaly for planner review (CV2.E5).
+
+    Produced by the deterministic anomaly engine. An anomaly is an
+    *observation*, not a proposed action — it does not carry the recommendation
+    envelope. ``source_record_id`` enables drill-down to the source-system
+    record. ``model_version`` records which model produced it. The natural key
+    ``(tenant, type, target_id)`` keeps re-runs idempotent.
+    """
+
+    __tablename__ = "anomalies"
+    __table_args__ = (
+        UniqueConstraint("tenant_id", "type", "target_id", name="uq_anomalies_target"),
+        {"schema": SCHEMA},
+    )
+
+    id: Mapped[uuid.UUID] = uuid_pk()
+    type: Mapped[str] = mapped_column(String(32), nullable=False)
+    target_type: Mapped[str] = mapped_column(String(32), nullable=False)
+    target_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    source_record_id: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    score: Mapped[Decimal] = mapped_column(Numeric(12, 4), nullable=False)
+    severity: Mapped[str] = mapped_column(String(16), nullable=False)
+    detected_for: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    evidence: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False, default=dict)
+    model_version: Mapped[str] = mapped_column(String(32), nullable=False)
+    status: Mapped[str] = mapped_column(String(16), nullable=False, default="open")
+    reviewed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+
 class FeatureSnapshot(Base, TenantMixin):
     __tablename__ = "feature_snapshots"
     __table_args__ = {"schema": SCHEMA}

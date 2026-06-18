@@ -1,7 +1,7 @@
 # SmartInv — developer shortcuts.
 # The local stack (Postgres, Redis, SeaweedFS) is defined in docker-compose.yml.
 
-.PHONY: dev-up dev-down dev-restart dev-logs bootstrap-buckets check-infra migrate migrate-down seed token api sync-fixtures score dedup
+.PHONY: dev-up dev-down dev-restart dev-logs bootstrap-buckets check-infra migrate migrate-down seed token api sync-fixtures score dedup anomalies
 
 # Boot the local infrastructure and ensure the object-store bucket exists.
 dev-up:
@@ -60,3 +60,7 @@ score:
 # Recompute duplicate-detection candidates for the dev tenant (CV2.E4).
 dedup:
 	uv run python scripts/dedup.py
+
+# Recompute anomaly detections for the dev tenant (CV2.E5).
+anomalies:
+	uv run python scripts/anomalies.py

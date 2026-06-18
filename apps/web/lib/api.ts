@@ -269,3 +269,78 @@ export function reviewDuplicate(
     body: JSON.stringify({ decision, keep_item_id: keepItemId ?? null }),
   });
 }
+
+// --- Anomaly detection (CV2.E5) ------------------------------------------
+
+export interface AnomalyRow {
+  id: string;
+  type: string;
+  target_type: string;
+  target_id: string;
+  source_record_id: string | null;
+  score: number;
+  severity: string;
+  status: string;
+  detected_for: string | null;
+  model_version: string;
+  cause: string | null;
+}
+
+export interface AnomalyTransactionRef {
+  source_id: string;
+  item_number: string | null;
+  description: string | null;
+  location_code: string | null;
+  quantity: number;
+  unit_cost: number | null;
+  txn_date: string | null;
+}
+
+export interface AnomalyDetail extends AnomalyRow {
+  evidence: Record<string, number | string>;
+  transaction: AnomalyTransactionRef | null;
+}
+
+export interface AnomalyPage {
+  anomalies: AnomalyRow[];
+  total: number;
+  page: number;
+  page_size: number;
+}
+
+export interface AnomalySummary {
+  open: number;
+  crit: number;
+  last_7_days: number;
+  by_type: Record<string, number>;
+}
+
+export type AnomalyDecision = 'acknowledge' | 'dismiss';
+
+export interface AnomalyQuery {
+  page?: number;
+  page_size?: number;
+  type?: string;
+  severity?: string;
+  anomaly_status?: string;
+  window_days?: number;
+}
+
+export function fetchAnomalySummary(): Promise<AnomalySummary> {
+  return apiFetch<AnomalySummary>('/anomalies/summary');
+}
+
+export function fetchAnomalies(query: AnomalyQuery): Promise<AnomalyPage> {
+  return apiFetch<AnomalyPage>(`/anomalies${queryString({ ...query })}`);
+}
+
+export function fetchAnomalyDetail(id: string): Promise<AnomalyDetail> {
+  return apiFetch<AnomalyDetail>(`/anomalies/${id}`);
+}
+
+export function reviewAnomaly(id: string, decision: AnomalyDecision): Promise<AnomalyRow> {
+  return apiFetch<AnomalyRow>(`/anomalies/${id}/review`, {
+    method: 'POST',
+    body: JSON.stringify({ decision }),
+  });
+}

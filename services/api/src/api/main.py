@@ -12,7 +12,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
 from api.config import get_settings
-from api.routers import admin, dev_auth, duplicates, identity, inventory
+from api.routers import admin, anomalies, dev_auth, duplicates, identity, inventory
 
 settings = get_settings()
 
@@ -37,6 +37,7 @@ app.include_router(dev_auth.router)
 app.include_router(identity.router)
 app.include_router(inventory.router)
 app.include_router(duplicates.router)
+app.include_router(anomalies.router)
 app.include_router(admin.router)
 
 

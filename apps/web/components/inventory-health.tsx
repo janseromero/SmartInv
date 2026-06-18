@@ -1,5 +1,6 @@
 'use client';
 
+import { AnomaliesPanel } from '@/components/anomalies-panel';
 import {
   type ItemRow,
   fetchInventorySummary,
@@ -150,6 +151,9 @@ export function InventoryHealth() {
       </div>
 
       {s ? <HealthDonut distribution={s.health_distribution} /> : null}
+
+      {/* Anomalies — last 7 days (CV2.E5) */}
+      <AnomaliesPanel />
 
       {/* Filter bar */}
       <div className="flex flex-wrap items-center gap-2">
