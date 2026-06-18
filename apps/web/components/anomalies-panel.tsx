@@ -1,5 +1,6 @@
 'use client';
 
+import { DatabaseIcon, TrendIcon, TriangleAlertIcon } from '@/components/icons';
 import {
   type AnomalyDecision,
   type AnomalyRow,
@@ -10,106 +11,85 @@ import {
 } from '@/lib/api';
 import { Badge } from '@smartinv/ui-web';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import type { ReactNode } from 'react';
 import { useState } from 'react';
 
 const WINDOW_DAYS = 7;
+const MAX_ROWS = 6;
 const integer = new Intl.NumberFormat('en-US');
 
 const TYPE_LABELS: Record<string, string> = {
   consumption_spike: 'Consumption spike',
-  price_jump: 'Price jump',
+  price_jump: 'Unit-price jump',
   negative_balance: 'Negative balance',
 };
 
-const TYPES = [
-  { value: '', label: 'All types' },
-  { value: 'consumption_spike', label: 'Consumption spikes' },
-  { value: 'price_jump', label: 'Price jumps' },
-  { value: 'negative_balance', label: 'Negative balances' },
-];
-
-function severityTone(severity: string): 'crit' | 'warn' {
-  return severity === 'crit' ? 'crit' : 'warn';
-}
+/** Icon + tint per anomaly nature (mirrors the reference UI's signal dots). */
+type Sig = { icon: ReactNode; cls: string };
+const DEFAULT_SIG: Sig = { icon: <DatabaseIcon />, cls: 'bg-surface text-ink-2' };
+const SIG: Record<string, Sig> = {
+  consumption_spike: { icon: <TrendIcon />, cls: 'bg-warn-soft text-warn' },
+  price_jump: { icon: <TriangleAlertIcon />, cls: 'bg-crit-soft text-crit' },
+  negative_balance: DEFAULT_SIG,
+};
 
 function formatDate(iso: string | null): string {
   return iso ? iso.slice(0, 10) : '—';
 }
 
 export function AnomaliesPanel() {
-  const [type, setType] = useState('');
   const [selected, setSelected] = useState<string | null>(null);
 
   const summary = useQuery({ queryKey: ['anomaly-summary'], queryFn: fetchAnomalySummary });
   const anomalies = useQuery({
-    queryKey: ['anomalies', { type }],
-    queryFn: () =>
-      fetchAnomalies({
-        window_days: WINDOW_DAYS,
-        type: type || undefined,
-        page_size: 50,
-      }),
+    queryKey: ['anomalies', { window: WINDOW_DAYS }],
+    queryFn: () => fetchAnomalies({ window_days: WINDOW_DAYS, page_size: 50 }),
   });
 
   const s = summary.data;
+  const rows = anomalies.data?.anomalies.slice(0, MAX_ROWS) ?? [];
 
   return (
-    <section className="rounded-md border border-line bg-card shadow-card p-md flex flex-col gap-3">
-      <header className="flex flex-wrap items-center gap-2">
-        <h2 className="font-display text-ink">Anomalies — last 7 days</h2>
-        <Badge label="AI · model-generated" variant="ai" />
-        {s ? (
-          <span className="text-xs text-ink-3">
-            {integer.format(s.open)} open · {integer.format(s.crit)} critical
-          </span>
-        ) : null}
+    <section className="rounded-md border border-line bg-card shadow-card overflow-hidden">
+      <header className="flex items-center gap-2 px-md py-2.5 border-b border-line">
+        <h3 className="font-display text-sm text-ink">Anomalies — last 7 days</h3>
+        <Badge label="AI" variant="ai" />
         <span className="flex-1" />
-        <select
-          value={type}
-          onChange={(e) => setType(e.target.value)}
-          className="bg-card border border-line rounded-md px-md py-1 text-sm text-ink"
-        >
-          {TYPES.map((t) => (
-            <option key={t.value} value={t.value}>
-              {t.label}
-            </option>
-          ))}
-        </select>
+        {s ? (
+          <span className="text-xs text-ink-3">{integer.format(s.last_7_days)} flagged</span>
+        ) : null}
       </header>
 
-      <table className="w-full text-sm">
-        <thead>
-          <tr className="text-left text-ink-3 border-b border-line">
-            <th className="font-normal py-1.5">Type</th>
-            <th className="font-normal py-1.5">Likely cause</th>
-            <th className="font-normal py-1.5">Severity</th>
-            <th className="font-normal py-1.5 text-right">Detected</th>
-          </tr>
-        </thead>
-        <tbody>
-          {anomalies.data?.anomalies.map((a: AnomalyRow) => (
-            <tr
+      <div className="divide-y divide-line">
+        {rows.map((a: AnomalyRow) => {
+          const sig = SIG[a.type] ?? DEFAULT_SIG;
+          return (
+            <button
               key={a.id}
+              type="button"
               onClick={() => setSelected(a.id)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') setSelected(a.id);
-              }}
-              tabIndex={0}
-              className="border-b border-line hover:bg-surface cursor-pointer"
+              className="w-full flex items-start gap-3 px-md py-2.5 text-left hover:bg-surface"
             >
-              <td className="py-1.5 text-ink">{TYPE_LABELS[a.type] ?? a.type}</td>
-              <td className="py-1.5 text-ink-2 truncate max-w-[360px]">{a.cause ?? '—'}</td>
-              <td className="py-1.5">
-                <Badge label={a.severity} variant="status" tone={severityTone(a.severity)} />
-              </td>
-              <td className="py-1.5 text-right text-ink-3">{formatDate(a.detected_for)}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-      {anomalies.isLoading ? <div className="text-sm text-ink-3">Loading…</div> : null}
-      {anomalies.data && anomalies.data.anomalies.length === 0 ? (
-        <div className="text-sm text-ink-3">No anomalies in the last 7 days.</div>
+              <span
+                className={`mt-0.5 grid place-items-center w-7 h-7 rounded-md flex-none [&_svg]:w-3.5 [&_svg]:h-3.5 ${sig.cls}`}
+              >
+                {sig.icon}
+              </span>
+              <span className="min-w-0">
+                <span className="block text-sm text-ink">{TYPE_LABELS[a.type] ?? a.type}</span>
+                <span className="block text-xs text-ink-2 truncate">{a.cause ?? '—'}</span>
+                <span className="block text-[11px] text-ink-3">
+                  {formatDate(a.detected_for)} · severity {a.severity}
+                </span>
+              </span>
+            </button>
+          );
+        })}
+      </div>
+
+      {anomalies.isLoading ? <div className="px-md py-3 text-sm text-ink-3">Loading…</div> : null}
+      {anomalies.data && rows.length === 0 ? (
+        <div className="px-md py-3 text-sm text-ink-3">No anomalies in the last 7 days.</div>
       ) : null}
 
       {selected ? <AnomalyDrawer anomalyId={selected} onClose={() => setSelected(null)} /> : null}

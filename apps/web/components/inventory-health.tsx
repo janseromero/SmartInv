@@ -1,6 +1,7 @@
 'use client';
 
 import { AnomaliesPanel } from '@/components/anomalies-panel';
+import { DuplicateSummaryCard } from '@/components/duplicate-summary-card';
 import {
   type ItemRow,
   fetchInventorySummary,
@@ -128,10 +129,13 @@ export function InventoryHealth() {
 
   return (
     <div className="flex flex-col gap-4">
-      {/* KPI cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
-        <KpiCard label="Items" value={s ? integer.format(s.total_items) : '—'} />
-        <KpiCard label="Inventory Value" value={s ? currency.format(s.inventory_value) : '—'} />
+      {/* KPI row: portfolio health donut + headline KPIs */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+        {s ? (
+          <HealthDonut distribution={s.health_distribution} />
+        ) : (
+          <div className="rounded-md border border-line bg-card shadow-card min-h-[140px]" />
+        )}
         <KpiCard
           label="Excess Value"
           value={s ? currency.format(s.excess_value) : '—'}
@@ -150,165 +154,186 @@ export function InventoryHealth() {
         />
       </div>
 
-      {s ? <HealthDonut distribution={s.health_distribution} /> : null}
-
-      {/* Anomalies — last 7 days (CV2.E5) */}
-      <AnomaliesPanel />
-
-      {/* Filter bar */}
-      <div className="flex flex-wrap items-center gap-2">
-        <input
-          value={search}
-          onChange={(e) => {
-            setSearch(e.target.value);
-            setPage(1);
-          }}
-          placeholder="Search item number or description…"
-          className="flex-1 min-w-[220px] bg-card border border-line rounded-md px-md py-1.5 text-sm text-ink"
-        />
-        <select
-          value={locationId}
-          onChange={(e) => {
-            setLocationId(e.target.value);
-            setPage(1);
-          }}
-          className="bg-card border border-line rounded-md px-md py-1.5 text-sm text-ink"
-        >
-          <option value="">All sites</option>
-          {locations.data?.map((loc) => (
-            <option key={loc.id} value={loc.id}>
-              {loc.location_code}
-            </option>
-          ))}
-        </select>
-        <select
-          value={itemType}
-          onChange={(e) => {
-            setItemType(e.target.value);
-            setPage(1);
-          }}
-          className="bg-card border border-line rounded-md px-md py-1.5 text-sm text-ink"
-        >
-          <option value="">All types</option>
-          {ITEM_TYPES.map((t) => (
-            <option key={t} value={t}>
-              {t}
-            </option>
-          ))}
-        </select>
-        <select
-          value={healthClass}
-          onChange={(e) => {
-            setHealthClass(e.target.value);
-            setPage(1);
-          }}
-          className="bg-card border border-line rounded-md px-md py-1.5 text-sm text-ink"
-        >
-          {HEALTH_CLASSES.map((h) => (
-            <option key={h.value} value={h.value}>
-              {h.label}
-            </option>
-          ))}
-        </select>
-        <select
-          value={sort}
-          onChange={(e) => setSort(e.target.value as 'item_number' | 'value' | 'on_hand')}
-          className="bg-card border border-line rounded-md px-md py-1.5 text-sm text-ink"
-        >
-          <option value="item_number">Sort: Item #</option>
-          <option value="value">Sort: Value</option>
-          <option value="on_hand">Sort: On hand</option>
-        </select>
-        <label className="flex items-center gap-1 text-sm text-ink-2">
-          <input
-            type="checkbox"
-            checked={missingData}
-            onChange={(e) => {
-              setMissingData(e.target.checked);
-              setPage(1);
-            }}
-          />
-          Missing data
-        </label>
-      </div>
-
-      {/* Items table */}
-      <div className="rounded-md border border-line bg-card shadow-card overflow-hidden">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="text-left text-ink-3 border-b border-line">
-              <th className="font-normal px-md py-2">Item</th>
-              <th className="font-normal px-md py-2">Type</th>
-              <th className="font-normal px-md py-2 text-right">On hand</th>
-              <th className="font-normal px-md py-2 text-right">Value</th>
-              <th className="font-normal px-md py-2 text-right">Health</th>
-              <th className="font-normal px-md py-2">Flags</th>
-            </tr>
-          </thead>
-          <tbody>
-            {items.data?.items.map((item: ItemRow) => (
-              <tr
-                key={item.id}
-                onClick={() => setSelected(item.id)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') setSelected(item.id);
+      {/* Main grid: items needing attention (2 cols) + intelligence sidebar */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div className="lg:col-span-2 flex flex-col gap-3">
+          {/* Filter bar */}
+          <div className="flex flex-wrap items-center gap-2">
+            <input
+              value={search}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                setPage(1);
+              }}
+              placeholder="Search item number or description…"
+              className="flex-1 min-w-[220px] bg-card border border-line rounded-md px-md py-1.5 text-sm text-ink"
+            />
+            <select
+              value={locationId}
+              onChange={(e) => {
+                setLocationId(e.target.value);
+                setPage(1);
+              }}
+              className="bg-card border border-line rounded-md px-md py-1.5 text-sm text-ink"
+            >
+              <option value="">All sites</option>
+              {locations.data?.map((loc) => (
+                <option key={loc.id} value={loc.id}>
+                  {loc.location_code}
+                </option>
+              ))}
+            </select>
+            <select
+              value={itemType}
+              onChange={(e) => {
+                setItemType(e.target.value);
+                setPage(1);
+              }}
+              className="bg-card border border-line rounded-md px-md py-1.5 text-sm text-ink"
+            >
+              <option value="">All types</option>
+              {ITEM_TYPES.map((t) => (
+                <option key={t} value={t}>
+                  {t}
+                </option>
+              ))}
+            </select>
+            <select
+              value={healthClass}
+              onChange={(e) => {
+                setHealthClass(e.target.value);
+                setPage(1);
+              }}
+              className="bg-card border border-line rounded-md px-md py-1.5 text-sm text-ink"
+            >
+              {HEALTH_CLASSES.map((h) => (
+                <option key={h.value} value={h.value}>
+                  {h.label}
+                </option>
+              ))}
+            </select>
+            <select
+              value={sort}
+              onChange={(e) => setSort(e.target.value as 'item_number' | 'value' | 'on_hand')}
+              className="bg-card border border-line rounded-md px-md py-1.5 text-sm text-ink"
+            >
+              <option value="item_number">Sort: Item #</option>
+              <option value="value">Sort: Value</option>
+              <option value="on_hand">Sort: On hand</option>
+            </select>
+            <label className="flex items-center gap-1 text-sm text-ink-2">
+              <input
+                type="checkbox"
+                checked={missingData}
+                onChange={(e) => {
+                  setMissingData(e.target.checked);
+                  setPage(1);
                 }}
-                tabIndex={0}
-                className="border-b border-line hover:bg-surface cursor-pointer"
-              >
-                <td className="px-md py-2">
-                  <div className="font-mono text-ink">{item.item_number}</div>
-                  <div className="text-ink-3 truncate max-w-[280px]">{item.description ?? '—'}</div>
-                </td>
-                <td className="px-md py-2 text-ink-2">{item.item_type ?? '—'}</td>
-                <td className="px-md py-2 text-right text-ink">{integer.format(item.on_hand)}</td>
-                <td className="px-md py-2 text-right text-ink">
-                  {currency.format(item.inventory_value)}
-                </td>
-                <td className="px-md py-2 text-right font-mono text-ink">
-                  {item.health_score ?? '—'}
-                </td>
-                <td className="px-md py-2">
-                  <div className="flex flex-wrap gap-1">
-                    {item.badges.slice(0, 2).map((b) => (
-                      <Badge key={b} label={b} variant="status" tone={BADGE_TONE[b] ?? 'warn'} />
-                    ))}
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        {items.isLoading ? <div className="p-md text-sm text-ink-3">Loading…</div> : null}
-        {items.data && items.data.items.length === 0 ? (
-          <div className="p-md text-sm text-ink-3">No items match these filters.</div>
-        ) : null}
-      </div>
+              />
+              Missing data
+            </label>
+          </div>
 
-      {/* Pagination */}
-      <div className="flex items-center justify-between text-sm text-ink-2">
-        <span>{items.data ? `${integer.format(items.data.total)} items` : ''}</span>
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => setPage((p) => Math.max(1, p - 1))}
-            disabled={page <= 1}
-            className="rounded-md border border-line px-md py-1 disabled:opacity-50"
-          >
-            Prev
-          </button>
-          <span>
-            Page {page} / {totalPages}
-          </span>
-          <button
-            type="button"
-            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-            disabled={page >= totalPages}
-            className="rounded-md border border-line px-md py-1 disabled:opacity-50"
-          >
-            Next
-          </button>
+          {/* Items needing attention */}
+          <div className="rounded-md border border-line bg-card shadow-card overflow-hidden">
+            <div className="flex items-center gap-2 px-md py-2.5 border-b border-line">
+              <h3 className="font-display text-sm text-ink">Items needing attention</h3>
+              <span className="text-xs text-ink-3">
+                {items.data ? `${integer.format(items.data.total)} results` : ''}
+              </span>
+            </div>
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-left text-ink-3 border-b border-line">
+                  <th className="font-normal px-md py-2">Item</th>
+                  <th className="font-normal px-md py-2">Type</th>
+                  <th className="font-normal px-md py-2 text-right">On hand</th>
+                  <th className="font-normal px-md py-2 text-right">Value</th>
+                  <th className="font-normal px-md py-2 text-right">Health</th>
+                  <th className="font-normal px-md py-2">Flags</th>
+                </tr>
+              </thead>
+              <tbody>
+                {items.data?.items.map((item: ItemRow) => (
+                  <tr
+                    key={item.id}
+                    onClick={() => setSelected(item.id)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') setSelected(item.id);
+                    }}
+                    tabIndex={0}
+                    className="border-b border-line hover:bg-surface cursor-pointer"
+                  >
+                    <td className="px-md py-2">
+                      <div className="font-mono text-ink">{item.item_number}</div>
+                      <div className="text-ink-3 truncate max-w-[280px]">
+                        {item.description ?? '—'}
+                      </div>
+                    </td>
+                    <td className="px-md py-2 text-ink-2">{item.item_type ?? '—'}</td>
+                    <td className="px-md py-2 text-right text-ink">
+                      {integer.format(item.on_hand)}
+                    </td>
+                    <td className="px-md py-2 text-right text-ink">
+                      {currency.format(item.inventory_value)}
+                    </td>
+                    <td className="px-md py-2 text-right font-mono text-ink">
+                      {item.health_score ?? '—'}
+                    </td>
+                    <td className="px-md py-2">
+                      <div className="flex flex-wrap gap-1">
+                        {item.badges.slice(0, 2).map((b) => (
+                          <Badge
+                            key={b}
+                            label={b}
+                            variant="status"
+                            tone={BADGE_TONE[b] ?? 'warn'}
+                          />
+                        ))}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            {items.isLoading ? <div className="p-md text-sm text-ink-3">Loading…</div> : null}
+            {items.data && items.data.items.length === 0 ? (
+              <div className="p-md text-sm text-ink-3">No items match these filters.</div>
+            ) : null}
+          </div>
+
+          {/* Pagination */}
+          <div className="flex items-center justify-between text-sm text-ink-2">
+            <span>{items.data ? `${integer.format(items.data.total)} items` : ''}</span>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                disabled={page <= 1}
+                className="rounded-md border border-line px-md py-1 disabled:opacity-50"
+              >
+                Prev
+              </button>
+              <span>
+                Page {page} / {totalPages}
+              </span>
+              <button
+                type="button"
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                disabled={page >= totalPages}
+                className="rounded-md border border-line px-md py-1 disabled:opacity-50"
+              >
+                Next
+              </button>
+            </div>
+          </div>
         </div>
+
+        {/* Intelligence sidebar: duplicates + anomalies (CV2.E4 + E5) */}
+        <aside className="flex flex-col gap-4">
+          <DuplicateSummaryCard />
+          <AnomaliesPanel />
+        </aside>
       </div>
 
       {selected ? <ItemDrawer itemId={selected} onClose={() => setSelected(null)} /> : null}
