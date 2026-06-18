@@ -6,9 +6,22 @@
  * proves the authenticated path end-to-end.
  */
 
-import { getToken } from '@/lib/auth';
+import { clearToken, getToken } from '@/lib/auth';
 
 export const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000';
+
+/**
+ * Handle an expired or otherwise invalid session: drop the dead token and send
+ * the user back to sign-in. Without this, a stale token in localStorage passes
+ * the (presence-only) route guard but 401s every request, leaving the page
+ * silently empty.
+ */
+function handleUnauthorized(): void {
+  clearToken();
+  if (typeof window !== 'undefined' && window.location.pathname !== '/login') {
+    window.location.assign('/login');
+  }
+}
 
 export interface Me {
   sub: string;
@@ -27,6 +40,10 @@ export async function apiFetch<T>(path: string, init: RequestInit = {}): Promise
     headers.set('Content-Type', 'application/json');
   }
   const response = await fetch(`${API_URL}${path}`, { ...init, headers });
+  if (response.status === 401) {
+    handleUnauthorized();
+    throw new Error('Session expired — please sign in again.');
+  }
   if (!response.ok) {
     throw new Error(`API request failed: ${response.status}`);
   }
