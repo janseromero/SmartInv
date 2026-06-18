@@ -3,9 +3,12 @@
 # CV3.E2 — Inventory Optimization Engine
 
 **CV:** [CV3 — Explainable Inventory Recommendations](../index.md)
-**Status:** ⚪ Planned
+**Status:** ✅ Done (deterministic `optimize-eoq-v1`; Pyomo / transfer LP deferred)
 **Depends on:** CV3.E1
 **Prerequisite for:** CV3.E3
+**Design:** [ADR-028](../../../decisions.md#adr-028--explainable-recommendations-deterministic-crostontsb-forecast--closed-form-optimization-versioned-lightgbmpyomo-deferred)
+
+> **Re-scoped (ADR-028):** closed-form safety stock / reorder point / EOQ + min/max, a **seeded** Monte-Carlo stockout estimator (reproducible), and an analytical cost↔risk Pareto frontier. Pyomo/OR-Tools (S1 framing) and the cross-site transfer LP (S5) are deferred to a later slice / CV14.
 
 ---
 

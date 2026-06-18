@@ -3,8 +3,11 @@
 # CV3.E1 — Demand Forecasting Baseline
 
 **CV:** [CV3 — Explainable Inventory Recommendations](../index.md)
-**Status:** ⚪ Planned
+**Status:** ✅ Done (deterministic `forecast-croston-v1`; LightGBM deferred to `forecast-v2`)
 **Prerequisite for:** CV3.E2
+**Design:** [ADR-028](../../../decisions.md#adr-028--explainable-recommendations-deterministic-crostontsb-forecast--closed-form-optimization-versioned-lightgbmpyomo-deferred)
+
+> **Re-scoped (ADR-028):** ships Croston/TSB + CV-based P50/P80/P95 quantiles in `ml.predictions`, versioned, with `make forecast` / `POST /admin/forecast` and a reproducibility fingerprint. LightGBM feature-engineering (S2) and regime-change refresh (S5, now part of CV3.E5) are deferred. On-demand recompute; nightly schedule deferred.
 
 ---
 

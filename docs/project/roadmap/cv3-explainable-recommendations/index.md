@@ -2,7 +2,7 @@
 
 # CV3 — Explainable Inventory Recommendations
 
-**Status:** ⚪ Planned
+**Status:** 🟢 In Progress · E1–E5 delivered deterministically (`forecast-croston-v1` + `optimize-eoq-v1`); LightGBM/Pyomo deferred per [ADR-028](../decisions.md#adr-028--explainable-recommendations-deterministic-crostontsb-forecast--closed-form-optimization-versioned-lightgbmpyomo-deferred)
 **Goal:** A planner accepts AI-generated min/max and reorder recommendations *and trusts them*, because every recommendation arrives with its envelope: claim, evidence, confidence, assumptions, model version, and the approval path.
 
 ---
@@ -21,11 +21,11 @@ The architectural rule that protects this promise is non-negotiable ([AGENTS.md]
 
 | Code | Epic | User-visible outcome | Status |
 |------|------|----------------------|--------|
-| [CV3.E1](cv3-e1-forecasting-baseline/index.md) | Demand Forecasting Baseline | Intermittent-demand forecast per item × site × horizon, with P50/P80/P95 bands and pinned `model_version` | ⚪ Planned |
-| [CV3.E2](cv3-e2-optimization-engine/index.md) | Inventory Optimization Engine | Pyomo / Monte Carlo engine produces min/max, safety stock, and reorder point with stockout-probability deltas | ⚪ Planned |
-| [CV3.E3](cv3-e3-recommendation-envelope/index.md) | Recommendation Envelope | Every recommendation persists as a versioned envelope (claim, evidence, confidence, assumptions, model_version, approval_path) | ⚪ Planned |
-| [CV3.E4](cv3-e4-recommendations-ui/index.md) | Recommendations UI | Planner sees recommendation cards with evidence strip, accept / adjust / override actions, and portfolio impact preview | ⚪ Planned |
-| [CV3.E5](cv3-e5-override-feedback-loop/index.md) | Override & Feedback Loop | Planner overrides are captured with reason, routed to model-improvement backlog, and surfaced as regime-change signals | ⚪ Planned |
+| [CV3.E1](cv3-e1-forecasting-baseline/index.md) | Demand Forecasting Baseline | Croston/TSB intermittent-demand forecast with P50/P80/P95 bands in `ml.predictions`, pinned `model_version` (LightGBM deferred) | ✅ Done |
+| [CV3.E2](cv3-e2-optimization-engine/index.md) | Inventory Optimization Engine | Closed-form min/max + safety stock + reorder point, seeded Monte-Carlo stockout, analytical Pareto frontier (Pyomo deferred) | ✅ Done |
+| [CV3.E3](cv3-e3-recommendation-envelope/index.md) | Recommendation Envelope | Every recommendation persisted in `ml.recommendations` as a complete, append-only envelope | ✅ Done |
+| [CV3.E4](cv3-e4-recommendations-ui/index.md) | Recommendations UI | Optimization Recommendations screen: cards + EvidenceStrip + accept/override + Pareto + capital impact | ✅ Done |
+| [CV3.E5](cv3-e5-override-feedback-loop/index.md) | Override & Feedback Loop | Typed override taxonomy, regime-change signals, acceptance-rate-per-model dashboard | ✅ Done |
 
 ---
 

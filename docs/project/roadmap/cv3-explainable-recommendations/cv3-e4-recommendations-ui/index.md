@@ -3,8 +3,11 @@
 # CV3.E4 — Recommendations UI
 
 **CV:** [CV3 — Explainable Inventory Recommendations](../index.md)
-**Status:** ⚪ Planned
+**Status:** ✅ Done (core screen; bulk-select + full tab set deferred)
 **Depends on:** CV3.E3
+**Design:** [ADR-028](../../../decisions.md#adr-028--explainable-recommendations-deterministic-crostontsb-forecast--closed-form-optimization-versioned-lightgbmpyomo-deferred)
+
+> Optimization Recommendations screen (`/optimize`): KPI row, action tabs, recommendation cards with `EvidenceStrip`, Accept / Override, an envelope drawer with the Pareto scatter + assumptions, and a feedback-loop panel. Accept routes to approval (CV6 seam). Bulk-select "Accept selected" (S4) and the Excess/Transfers/Scenarios/History tabs (S6) are deferred.
 
 ---
 

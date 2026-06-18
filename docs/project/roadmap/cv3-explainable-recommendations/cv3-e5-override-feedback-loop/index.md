@@ -3,8 +3,11 @@
 # CV3.E5 — Override & Feedback Loop
 
 **CV:** [CV3 — Explainable Inventory Recommendations](../index.md)
-**Status:** ⚪ Planned
+**Status:** ✅ Done (eval-suite gating deferred)
 **Depends on:** CV3.E4
+**Design:** [ADR-028](../../../decisions.md#adr-028--explainable-recommendations-deterministic-crostontsb-forecast--closed-form-optimization-versioned-lightgbmpyomo-deferred)
+
+> Overrides are captured in `ml.recommendation_feedback` with a typed reason taxonomy; repeated overrides on the same item axis accumulate into an `ml.regime_signals` record; an acceptance-rate-per-model endpoint feeds the dashboard. Feeding overrides into the eval suite that gates deployments (S5) is deferred until the eval harness exists.
 
 ---
 

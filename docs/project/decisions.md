@@ -482,4 +482,25 @@ Story-level work uses a **5-column Kanban**: Backlog · Doing · Blocked · Revi
 
 ---
 
+## ADR-028 — Explainable recommendations: deterministic Croston/TSB forecast + closed-form optimization, versioned (LightGBM/Pyomo deferred)
+
+**Context.** CV3 is the second killer capability — explainable min/max & reorder recommendations, each carrying its full envelope (claim, evidence, confidence, assumptions, model_version, approval_path). The roadmap sketched a heavy ML/OR stack: LightGBM forecasting, Pyomo/OR-Tools optimization, a cross-site transfer LP. Two of the architecture's own non-negotiables already constrain this: **#1 agents propose, deterministic code disposes** and **#3 no LLM-generated numbers**. As with CV2 (ADR-025/026/027), the heavy libraries add weight and reproducibility risk without being required to satisfy the Done Conditions — and forecasting/optimization for MRO is well-served by classical, fully explainable methods.
+
+**Decision (one ADR for the whole CV3 chain E1–E5).**
+- **E1 Forecasting** — deterministic **Croston / TSB** intermittent-demand baselines (`forecast-croston-v1`) in `api/forecast/`. Demand is bucketed into ~monthly periods; TSB is chosen when trailing zeros signal obsolescence, Croston for dense-intermittent, a naive mean otherwise. P50/P80/P95 bands come from the historical coefficient of variation. Persisted in `ml.predictions` with `model_version` + an input fingerprint (reproducibility, D2). **LightGBM deferred** to `forecast-v2`; deep forecasting is CV14.
+- **E2 Optimization** — **closed-form inventory theory** (`optimize-eoq-v1`) in `api/optimize/`: safety stock = z·σ_LT, reorder point = lead-time demand + safety stock, EOQ for the order quantity, min/max from those. Stockout probability is estimated by a **seeded Monte-Carlo** (reproducible from `MONTE_CARLO_SEED`) and cross-checked against the analytical service level; the cost↔risk **Pareto frontier** is computed analytically across service levels. **Pyomo/OR-Tools and the cross-site transfer LP deferred** (CV14 / a later slice).
+- **E3 Envelope** — reuses the existing `ml.recommendations` table; every recommendation persists the full envelope and is **append-only** (a re-run replaces only still-`proposed` rows; accepted/overridden envelopes are immutable history). `approval_path='cv6_workflow'`; accepting never writes to a source system (#2).
+- **E4 UI** — the Optimization Recommendations screen: cards with the shared `EvidenceStrip` (min/max, stockout, lead time, confidence, model version), Accept / Override, a Pareto scatter, and a portfolio capital-impact summary. Accept routes to approval; AI content is violet-marked (#8).
+- **E5 Override & feedback** — `ml.recommendation_feedback` captures accept/adjust/override with a typed reason taxonomy; repeated overrides on the same item axis accumulate into an `ml.regime_signals` row (regime-change candidate); an acceptance-rate-per-model endpoint feeds the quality dashboard. Not an autonomous learning loop.
+- **New domain column** `inventory.items.lead_time_days` (CV3 owns replenishment lead time; fixtures seed it). Forecasting/optimization run **on-demand** (`make forecast` / `make optimize`, `POST /admin/forecast` / `/admin/optimize`); nightly schedule deferred (mirrors CV2).
+
+**Consequences.**
+- The whole CV3 capability ships with **no ML/OR dependency** and is fully reproducible — same inputs + same versions reproduce every forecast and recommendation; both model families are registered in `ml.model_registry`. LightGBM (`forecast-v2`) and Pyomo (`optimize-v2`) slot in behind the same seams when accuracy demands it.
+- Every recommendation is explainable end-to-end: the claim cites the stockout delta, the evidence carries the Monte-Carlo result and Pareto frontier, the assumptions pin the service level / seed / model versions. No recommendation can exist without its envelope (#4).
+- The optimizer runs on **forecast output**, not raw history — E1 → E2 → E3 → E4 → E5 is a strict pipeline; the optimizer skips items with no demand signal.
+
+**Alternatives considered.** LightGBM / Pyomo / OR-Tools now (deferred — dependency weight, reproducibility risk, unnecessary for the Done Condition); LLM-generated or LLM-edited numbers (forbidden — #1/#3); a separate recommendations table (rejected — the envelope table already exists and is the #4 backbone); mutating envelopes in place on accept/override (rejected — envelopes are immutable history; status transitions + a feedback row capture the decision); deriving regime signals on read only (rejected — the Done Condition asks for a regime-change *record*).
+
+---
+
 > **Adding a new ADR?** Number sequentially, follow the same format, include the trade-off honestly. ADRs are immutable — supersede with a new ADR rather than editing an old one.

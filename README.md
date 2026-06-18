@@ -191,6 +191,8 @@ make sync-fixtures    # load ~1,050 messy synthetic items into the dev tenant (C
 make score            # recompute inventory health scores (CV2.E3)
 make dedup            # recompute duplicate-detection candidates (CV2.E4)
 make anomalies        # recompute anomaly detections (CV2.E5)
+make forecast         # recompute demand forecasts (CV3.E1)
+make optimize         # recompute inventory recommendations (CV3.E2/E3)
 ```
 
 Every tenant-scoped table has a default-deny RLS policy keyed on the

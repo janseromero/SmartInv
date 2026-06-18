@@ -3,8 +3,11 @@
 # CV3.E3 — Recommendation Envelope
 
 **CV:** [CV3 — Explainable Inventory Recommendations](../index.md)
-**Status:** ⚪ Planned
+**Status:** ✅ Done (reuses `ml.recommendations`; append-only)
 **Depends on:** CV3.E2
+**Design:** [ADR-028](../../../decisions.md#adr-028--explainable-recommendations-deterministic-crostontsb-forecast--closed-form-optimization-versioned-lightgbmpyomo-deferred)
+
+> Every recommendation persists the full envelope (claim, evidence, confidence, assumptions, model_version, approval_path) in `ml.recommendations`. Envelopes are **append-only** — a re-run replaces only still-`proposed` rows; accepted/overridden ones are immutable history. SSE serialization (S4) lands with CV5.
 
 ---
 
