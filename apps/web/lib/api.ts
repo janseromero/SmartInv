@@ -361,3 +361,117 @@ export function reviewAnomaly(id: string, decision: AnomalyDecision): Promise<An
     body: JSON.stringify({ decision }),
   });
 }
+
+// --- Recommendations (CV3) -----------------------------------------------
+
+export interface RecommendationRow {
+  id: string;
+  type: string;
+  target_id: string;
+  item_number: string | null;
+  description: string | null;
+  claim: string;
+  confidence: number | null;
+  recommended_action: string | null;
+  capital_delta: number | null;
+  status: string;
+  model_version: string | null;
+}
+
+export interface ParetoPoint {
+  service_level: number;
+  capital: number;
+  stockout_prob: number;
+}
+
+export interface RecommendationEnvelope extends RecommendationRow {
+  payload: Record<string, number | string | null>;
+  evidence: Record<string, unknown>;
+  assumptions: Record<string, unknown>;
+  approval_path: string | null;
+}
+
+export interface RecommendationPage {
+  recommendations: RecommendationRow[];
+  total: number;
+  page: number;
+  page_size: number;
+}
+
+export interface RecommendationSummary {
+  proposed: number;
+  actionable: number;
+  capital_delta: number;
+  avg_confidence: number;
+  by_action: Record<string, number>;
+}
+
+export interface AcceptanceRateRow {
+  model_version: string;
+  total: number;
+  accepted: number;
+  adjusted: number;
+  overridden: number;
+  acceptance_rate: number;
+}
+
+export interface RegimeSignalRow {
+  id: string;
+  item_id: string;
+  item_number: string | null;
+  dimension: string;
+  override_count: number;
+  last_reason_note: string | null;
+  status: string;
+  is_regime_change: boolean;
+}
+
+export const OVERRIDE_REASONS = [
+  { value: 'asset_retirement', label: 'Asset retirement' },
+  { value: 'strategy_shift', label: 'Strategy shift' },
+  { value: 'supply_change', label: 'Supply change' },
+  { value: 'demand_change', label: 'Demand change' },
+  { value: 'other', label: 'Other' },
+] as const;
+
+export interface RecommendationQuery {
+  page?: number;
+  page_size?: number;
+  rec_status?: string;
+  action?: string;
+}
+
+export function fetchRecommendationSummary(): Promise<RecommendationSummary> {
+  return apiFetch<RecommendationSummary>('/recommendations/summary');
+}
+
+export function fetchRecommendations(query: RecommendationQuery): Promise<RecommendationPage> {
+  return apiFetch<RecommendationPage>(`/recommendations${queryString({ ...query })}`);
+}
+
+export function fetchRecommendationDetail(id: string): Promise<RecommendationEnvelope> {
+  return apiFetch<RecommendationEnvelope>(`/recommendations/${id}`);
+}
+
+export function acceptRecommendation(id: string): Promise<{ id: string; status: string }> {
+  return apiFetch(`/recommendations/${id}/accept`, { method: 'POST' });
+}
+
+export function overrideRecommendation(
+  id: string,
+  reasonCode: string,
+  note?: string,
+): Promise<{ id: string; status: string }> {
+  return apiFetch(`/recommendations/${id}/override`, {
+    method: 'POST',
+    body: JSON.stringify({ decision: 'override', reason_code: reasonCode, reason_note: note }),
+  });
+}
+
+export function fetchAcceptanceRate(): Promise<AcceptanceRateRow[]> {
+  return apiFetch<AcceptanceRateRow[]>('/recommendations/acceptance-rate');
+}
+
+export function fetchRegimeSignals(): Promise<RegimeSignalRow[]> {
+  return apiFetch<RegimeSignalRow[]>('/recommendations/regime-signals');
+}
