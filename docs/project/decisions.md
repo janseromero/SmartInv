@@ -436,4 +436,26 @@ Story-level work uses a **5-column Kanban**: Backlog · Doing · Blocked · Revi
 
 ---
 
+## ADR-026 — Duplicate detection: deterministic blocked-similarity engine, versioned (embeddings/classifier deferred)
+
+**Context.** CV2.E4 needs an item-master duplicate-detection queue with confidence-scored pairs that a planner can review and merge. The epic's original sketch (`cv2-e4` index) prescribed sentence-transformer embeddings in `rag.chunks` plus a gradient-boosting pair classifier. Two facts argue against building that now: (1) the `rag.chunks` embedding dimension is explicitly *provisional until CV5 picks the embedding model* (`api/db/models/rag.py`), so building dedup on embeddings hard-commits that choice prematurely; (2) MPN/description NLP enrichment is **CV7's** scope (CV2 out-of-scope list), so manufacturer part numbers are not yet available in the item master. A heavy ML dependency is also an architecture choice requiring review (AGENTS "slow lane"). The Done Condition only requires ≥ 0.85 average confidence for "probable" pairs, reviewable, with the producing model versioned — all achievable deterministically.
+
+**Decision.**
+- **Pure functions** in `api/dedup/engine.py`: `normalize` (lowercase, strip punctuation, drop stopwords, sorted token set), `blocking_key`, and `score_pair`. No I/O, no clock, no randomness — fully unit-tested (model-deterministic, T1).
+- **Blocking (S2):** `(item_type, uom, block-prefix)` caps the O(n²) comparison to within-block pairs. The block-prefix prefers a manufacturer-part prefix when present but falls back to the first 4 chars of the alphabetically-first description token — *never* the item number, since true duplicates carry different item numbers. Blocks larger than 400 are skipped (too-coarse key).
+- **Pair confidence** = weighted mean of five similarity features: description token-set (Jaccard) 0.70, manufacturer-part match 0.10 (bonus; 0 until CV7 extracts MPNs), UoM 0.08, item-type 0.07, unit-cost proximity 0.05. The description dominates because it is the only signal reliably present in raw item masters.
+- **Bands:** `confidence ≥ 0.85` → `probable`; `[0.60, 0.85)` → `possible`; below → dropped. Because blocking already forces equal item-type + UoM, a perfect description match reaches exactly the 0.85 "probable" bar.
+- **Versioned** (`DEDUP_VERSION = "dedup-v1"`); registered in `ml.model_registry` (name+version+weights) on every run.
+- **Persisted** in a new tenant-scoped, RLS-protected `ml.duplicate_candidates` table (canonical ordering `item_a_id < item_b_id`, `confidence`, `band`, `features` jsonb, `model_version`, `status`). Recompute is **on-demand** (`make dedup` / `POST /admin/dedup`); a nightly Dramatiq schedule is deferred (mirrors ADR-025). Re-runs preserve a planner's decision (only still-`open` pairs are refreshed).
+- **Merge is a proposal, never a mutation (S6).** A "merge" verdict records the candidate status and emits an `ml.recommendations` envelope (`type='item_merge'`, `status='proposed'`, `approval_path='cv6_workflow'`) carrying claim, evidence, confidence, and model_version. The actual merge is performed by the deterministic CV6 workflow once it exists (non-negotiable #2 — engines propose, workflow disposes).
+
+**Consequences.**
+- The whole queue (engine → schema → service → API → UI) ships with no ML dependency and no premature embedding-model commitment; the embedding + classifier variant becomes a drop-in `dedup-v2` behind the same model-registry seam once CV5 fixes the embedding model.
+- Synthetic CV2.E1 fixtures draw from a fixed 10-description pool, so detected pairs cluster at the extremes (identical description → ~0.85–0.90, unrelated → dropped) and the `possible` band is sparsely populated. This is a fixture-data characteristic, not an engine limit; realistic near-duplicates (typos, word order, abbreviations) arrive with the live Maximo connector or a future fixture enrichment.
+- AI-produced content is violet-marked in the queue (non-negotiable #8): the model badge, confidence figure, and feature-contribution bars use the `ai` accent; status bands keep ok/warn/crit.
+
+**Alternatives considered.** Sentence-transformer embeddings + gradient-boosting classifier now (deferred — premature embedding commitment, dependency weight, MPN not yet available); blocking on item-number prefix (rejected — duplicates have different item numbers, so pairs would never co-locate); direct DB merge on planner action (forbidden — non-negotiable #2); computing pairs on read (rejected — O(n²), not reviewable/auditable).
+
+---
+
 > **Adding a new ADR?** Number sequentially, follow the same format, include the trade-off honestly. ADRs are immutable — supersede with a new ADR rather than editing an old one.

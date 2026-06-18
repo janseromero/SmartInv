@@ -190,3 +190,82 @@ export function fetchLocations(): Promise<LocationRow[]> {
 export function fetchItemDetail(id: string): Promise<ItemDetail> {
   return apiFetch<ItemDetail>(`/inventory/items/${id}`);
 }
+
+// --- Duplicate detection (CV2.E4) ----------------------------------------
+
+export interface DuplicateItemSide {
+  id: string;
+  item_number: string;
+  description: string | null;
+  uom: string | null;
+  item_type: string | null;
+  status: string | null;
+  unit_cost: number | null;
+  health_score: number | null;
+}
+
+export interface DuplicateCandidate {
+  id: string;
+  confidence: number;
+  band: string;
+  status: string;
+  model_version: string;
+  item_a: DuplicateItemSide;
+  item_b: DuplicateItemSide;
+}
+
+export interface DuplicateCandidateDetail extends DuplicateCandidate {
+  features: Record<string, number>;
+}
+
+export interface DuplicatePage {
+  candidates: DuplicateCandidate[];
+  total: number;
+  page: number;
+  page_size: number;
+}
+
+export interface DuplicateSummary {
+  open: number;
+  probable: number;
+  possible: number;
+  resolved: number;
+}
+
+export type DuplicateDecision = 'merge' | 'not_duplicate' | 'hold';
+
+export interface DuplicateReviewResult {
+  id: string;
+  status: string;
+  recommendation_id: string | null;
+}
+
+export interface DuplicateQuery {
+  page?: number;
+  page_size?: number;
+  band?: string;
+  candidate_status?: string;
+}
+
+export function fetchDuplicateSummary(): Promise<DuplicateSummary> {
+  return apiFetch<DuplicateSummary>('/duplicates/summary');
+}
+
+export function fetchDuplicates(query: DuplicateQuery): Promise<DuplicatePage> {
+  return apiFetch<DuplicatePage>(`/duplicates${queryString({ ...query })}`);
+}
+
+export function fetchDuplicateDetail(id: string): Promise<DuplicateCandidateDetail> {
+  return apiFetch<DuplicateCandidateDetail>(`/duplicates/${id}`);
+}
+
+export function reviewDuplicate(
+  id: string,
+  decision: DuplicateDecision,
+  keepItemId?: string,
+): Promise<DuplicateReviewResult> {
+  return apiFetch<DuplicateReviewResult>(`/duplicates/${id}/review`, {
+    method: 'POST',
+    body: JSON.stringify({ decision, keep_item_id: keepItemId ?? null }),
+  });
+}

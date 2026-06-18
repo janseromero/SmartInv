@@ -17,7 +17,7 @@ import pytest
 from api.config import get_settings
 
 SCHEMAS = ("core", "inventory", "sources", "ml", "agent", "workflow", "audit", "rag")
-EXPECTED_TABLE_COUNT = 28
+EXPECTED_TABLE_COUNT = 29  # +1 for ml.duplicate_candidates (CV2.E4)
 ROLE = "rls_test_role"
 
 

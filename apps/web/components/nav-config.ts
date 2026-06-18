@@ -58,6 +58,15 @@ export const ROUTE_GROUPS: RouteGroup[] = [
         shipsIn: 'CV2',
       },
       {
+        href: '/duplicates',
+        label: 'Duplicate Detection',
+        crumb: 'Operate · Item-master duplicate detection',
+        title: 'Duplicate Detection',
+        sub: 'Probable item-master duplicates surfaced for review — every pair scored, explained, and merged only through approval.',
+        icon: 'database',
+        shipsIn: 'CV2.E4',
+      },
+      {
         href: '/forecast',
         label: 'Demand Forecasting',
         crumb: 'Operate · Demand forecasting',

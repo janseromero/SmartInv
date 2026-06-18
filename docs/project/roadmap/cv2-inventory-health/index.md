@@ -2,7 +2,7 @@
 
 # CV2 — Inventory Health & Visibility
 
-**Status:** 🟢 In Progress · E1 ingestion + E2 catalog + E3 health scoring delivered
+**Status:** 🟢 In Progress · E1 ingestion + E2 catalog + E3 health scoring + E4 duplicate detection delivered
 **Goal:** A planner sees the items they own, scored for health, traceable to source-system records, with anomalies and duplicates surfaced — for one real customer integrated end-to-end.
 
 ---
@@ -24,7 +24,7 @@ The hardest sub-problem is the first source connector. We pick **IBM Maximo** be
 | [CV2.E1](cv2-e1-maximo-connector/index.md) | Maximo Source Connector | Source-agnostic ingestion pipeline + messy fixture data + connector status (real Maximo connector pending) | 🟢 In Progress |
 | [CV2.E2](cv2-e2-catalog-balances-views/index.md) | Catalog & Balances Views | Inventory Health page: catalog, filters, KPI cards, item drawer (TanStack Query + ui-web) | ✅ Done |
 | [CV2.E3](cv2-e3-health-scoring-engine/index.md) | Health Scoring Engine | Deterministic 0–100 score + badges + portfolio donut + Dead-stock/disposal KPI (versioned) | ✅ Done |
-| [CV2.E4](cv2-e4-duplicate-detection/index.md) | Duplicate Detection | Embedding-based item-master deduplication queue with confidence scores | ⚪ Planned |
+| [CV2.E4](cv2-e4-duplicate-detection/index.md) | Duplicate Detection | Item-master duplicate queue: deterministic `dedup-v1` confidence-scored pairs, side-by-side review, merge-as-approval (embeddings deferred) | ✅ Done |
 | [CV2.E5](cv2-e5-anomaly-detection/index.md) | Anomaly Detection | Consumption-spike and price-anomaly surface on a "last 7 days" panel | ⚪ Planned |
 
 ---

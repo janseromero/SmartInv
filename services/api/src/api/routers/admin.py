@@ -19,6 +19,7 @@ from sqlalchemy.orm import Session
 from api.auth.dependencies import get_current_user, get_tenant_session, require_role
 from api.auth.models import CurrentUser
 from api.db.models.sources import Connector, SyncRun
+from api.dedup.service import run_dedup
 from api.ingestion.fixture_sync import run_fixture_sync
 from api.scoring.service import run_scoring
 
@@ -96,3 +97,12 @@ def trigger_scoring(
     _admin: Annotated[CurrentUser, Depends(require_role("admin"))],
 ) -> dict[str, int]:
     return run_scoring(session, user.tenant_id)
+
+
+@router.post("/dedup", summary="Recompute duplicate-detection candidates")
+def trigger_dedup(
+    user: Annotated[CurrentUser, Depends(get_current_user)],
+    session: Annotated[Session, Depends(get_tenant_session)],
+    _admin: Annotated[CurrentUser, Depends(require_role("admin"))],
+) -> dict[str, int]:
+    return run_dedup(session, user.tenant_id)
