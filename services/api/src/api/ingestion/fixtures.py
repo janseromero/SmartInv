@@ -98,6 +98,7 @@ class FixtureConnector:
                         "item_type": self._rng.choice(_ITEM_TYPES),
                         "status": "ACTIVE",
                         "unit_cost": unit_cost,
+                        "lead_time_days": self._rng.choice([7, 14, 21, 30, 45, 60, 90]),
                     },
                 )
             )

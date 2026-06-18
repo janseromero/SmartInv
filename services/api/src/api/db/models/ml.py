@@ -17,6 +17,7 @@ from sqlalchemy import (
     CheckConstraint,
     DateTime,
     ForeignKey,
+    Integer,
     Numeric,
     String,
     Text,
@@ -159,6 +160,56 @@ class Anomaly(Base, TenantMixin, TimestampMixin):
     model_version: Mapped[str] = mapped_column(String(32), nullable=False)
     status: Mapped[str] = mapped_column(String(16), nullable=False, default="open")
     reviewed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+
+class RecommendationFeedback(Base, TenantMixin):
+    """A planner's verdict on a recommendation envelope (CV3.E5).
+
+    Decision is ``accept`` / ``adjust`` / ``override``; overrides carry a typed
+    reason. Feedback is the data engine behind continuous quality — it feeds the
+    acceptance-rate dashboard and the eval suite (it is not an autonomous loop).
+    """
+
+    __tablename__ = "recommendation_feedback"
+    __table_args__ = {"schema": SCHEMA}
+
+    id: Mapped[uuid.UUID] = uuid_pk()
+    recommendation_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("ml.recommendations.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    decision: Mapped[str] = mapped_column(String(16), nullable=False)
+    reason_code: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    reason_note: Mapped[str | None] = mapped_column(Text, nullable=True)
+    adjusted_payload: Mapped[dict[str, Any] | None] = mapped_column(JSONB, nullable=True)
+    model_version: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+
+
+class RegimeSignal(Base, TenantMixin, TimestampMixin):
+    """A recurring-override signal: the world may have changed (CV3.E5.S3).
+
+    Raised when planners repeatedly override recommendations for the same item
+    on the same axis (reason). Surfaces a model-refresh candidate.
+    """
+
+    __tablename__ = "regime_signals"
+    __table_args__ = (
+        UniqueConstraint("tenant_id", "item_id", "dimension", name="uq_regime_signals_axis"),
+        {"schema": SCHEMA},
+    )
+
+    id: Mapped[uuid.UUID] = uuid_pk()
+    item_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("inventory.items.id", ondelete="CASCADE"), nullable=False
+    )
+    dimension: Mapped[str] = mapped_column(String(32), nullable=False)
+    override_count: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
+    last_reason_note: Mapped[str | None] = mapped_column(Text, nullable=True)
+    status: Mapped[str] = mapped_column(String(16), nullable=False, default="open")
 
 
 class FeatureSnapshot(Base, TenantMixin):

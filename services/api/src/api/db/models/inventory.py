@@ -75,6 +75,8 @@ class Item(Base, TenantMixin, TimestampMixin):
     item_type: Mapped[str | None] = mapped_column(String(32), nullable=True)
     status: Mapped[str | None] = mapped_column(String(32), nullable=True)
     unit_cost: Mapped[float | None] = mapped_column(QTY, nullable=True)
+    # Replenishment lead time in days (CV3.E2 — owned by optimization).
+    lead_time_days: Mapped[int | None] = mapped_column(SmallInteger, nullable=True)
     # Health score (CV2.E3) — populated by the scoring service.
     health_score: Mapped[int | None] = mapped_column(SmallInteger, nullable=True)
     health_class: Mapped[str | None] = mapped_column(String(32), nullable=True)

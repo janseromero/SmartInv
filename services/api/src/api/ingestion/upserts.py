@@ -117,6 +117,7 @@ def upsert_item(session: Session, ctx: IngestContext, rec: SourceRecord) -> None
             "item_type": rec.data.get("item_type"),
             "status": rec.data.get("status"),
             "unit_cost": rec.data.get("unit_cost"),
+            "lead_time_days": rec.data.get("lead_time_days"),
         },
     )
 
