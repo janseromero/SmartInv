@@ -3,8 +3,11 @@
 # CV4.E1 — Risk Scoring (Deterministic)
 
 **CV:** [CV4 — Operational Risk Intelligence](../index.md)
-**Status:** ⚪ Planned
+**Status:** ✅ Done (deterministic `risk-v1`; GNN deferred to CV14.E2)
 **Prerequisite for:** CV4.E2, CV4.E3
+**Design:** [ADR-029](../../../decisions.md#adr-029--operational-risk-deterministic-likelihoodxconsequence-score--rule-based-critical-spare-versioned-gnngbm-deferred)
+
+> **Re-scoped (ADR-029):** risk = likelihood (stockout cover / lead time / supplier reliability) × consequence (criticality), 0–100, versioned, with a $ downtime-exposure figure and a per-component breakdown. Persisted on `inventory.items`. Consumes the CV3 forecast + reorder point. Asset-graph rollup (S3) deferred to CV14's graph work; lead-time volatility uses the seeded supplier reliability rather than PO history.
 
 ---
 

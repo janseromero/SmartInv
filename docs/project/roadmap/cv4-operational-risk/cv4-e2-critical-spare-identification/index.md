@@ -3,8 +3,11 @@
 # CV4.E2 — Critical Spare Identification
 
 **CV:** [CV4 — Operational Risk Intelligence](../index.md)
-**Status:** ⚪ Planned
+**Status:** ✅ Done (rule-based; GBM classifier deferred to `critical-v2`)
 **Depends on:** CV4.E1
+**Design:** [ADR-029](../../../decisions.md#adr-029--operational-risk-deterministic-likelihoodxconsequence-score--rule-based-critical-spare-versioned-gnngbm-deferred)
+
+> Rule-based `is_critical_spare` flag with a human-readable reason (criticality ≥ 4, or single-source mid-criticality at stockout risk) + a coverage-ratio metric. **The gradient-boosted classifier (S2) is deferred** and explicitly gated on a *labeled pilot dataset* — a model against synthetic data would be theatre.
 
 ---
 

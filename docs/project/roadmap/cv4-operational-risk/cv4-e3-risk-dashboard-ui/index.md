@@ -3,8 +3,11 @@
 # CV4.E3 — Risk Dashboard UI
 
 **CV:** [CV4 — Operational Risk Intelligence](../index.md)
-**Status:** ⚪ Planned
+**Status:** ✅ Done (LLM risk narrative deferred to CV5/CV10)
 **Depends on:** CV4.E1, CV4.E2
+**Design:** [ADR-029](../../../decisions.md#adr-029--operational-risk-deterministic-likelihoodxconsequence-score--rule-based-critical-spare-versioned-gnngbm-deferred)
+
+> The `/risk` screen: KPI cards (downtime exposure, critical-spare coverage, single-source items, obsolescence candidates), a plant×risk-class heatmap shaded by exposure, the top critical-spare exposures table, and a drill-down with the breakdown + a **grounded, templated** narrative (no LLM). The "Summarize risk story" LLM version (S5) lands with CV5/CV10.
 
 ---
 

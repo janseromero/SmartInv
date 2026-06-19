@@ -3,8 +3,11 @@
 # CV4.E4 — Mitigation Workflows
 
 **CV:** [CV4 — Operational Risk Intelligence](../index.md)
-**Status:** ⚪ Planned
+**Status:** ✅ Done (routes to the approval seam; CV6 executes once built)
 **Depends on:** CV4.E3, CV3.E2, CV6.E1
+**Design:** [ADR-029](../../../decisions.md#adr-029--operational-risk-deterministic-likelihoodxconsequence-score--rule-based-critical-spare-versioned-gnngbm-deferred)
+
+> "Mitigate" reuses the item's CV3 reorder policy to stage a `risk_mitigation` recommendation envelope (`approval_path='cv6_workflow'`, status `proposed`) — never a direct write (#2), identical to CV3 accept / CV2.E4 merge. CV6 performs the actual execution and outcome-tracking once it exists; the risk-narrative card is grounded templated text.
 
 ---
 

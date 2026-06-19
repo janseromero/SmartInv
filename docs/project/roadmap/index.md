@@ -37,7 +37,7 @@ discipline ([Engineering Principles · PR1](../../process/engineering-principles
 | [CV1](cv1-foundations/index.md) | Foundations | ✅ Done · 8 of 8 epics |
 | [CV2](cv2-inventory-health/index.md) | Inventory Health & Visibility | 🟢 In Progress |
 | [CV3](cv3-explainable-recommendations/index.md) | Explainable Inventory Recommendations | 🟢 In Progress · 5 of 5 epics (deterministic) |
-| [CV4](cv4-operational-risk/index.md) | Operational Risk Intelligence | ⚪ Planned |
+| [CV4](cv4-operational-risk/index.md) | Operational Risk Intelligence | 🟢 In Progress · 4 of 4 epics (deterministic) |
 | [CV5](cv5-conversational-analyst/index.md) | Governed Conversational Analyst | ⚪ Planned |
 | [CV6](cv6-workflow-approval/index.md) | Workflow & Approval | ⚪ Planned |
 | [CV7](cv7-data-quality-trust/index.md) | Data Quality & Trust | ⚪ Planned |

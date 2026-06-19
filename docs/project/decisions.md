@@ -503,4 +503,26 @@ Story-level work uses a **5-column Kanban**: Backlog · Doing · Blocked · Revi
 
 ---
 
+## ADR-029 — Operational risk: deterministic likelihood×consequence score + rule-based critical-spare, versioned (GNN/GBM deferred)
+
+**Context.** CV4 surfaces *operational risk* — where missing parts hurt, in dollars — and triggers mitigations. The roadmap already calls for deterministic risk at MVP (GNN deferred to CV14); E2.S2 additionally sketched a gradient-boosted critical-spare classifier. As in ADR-025–028, ML is the wrong default here, and there is a sharper reason than usual: the genuinely ML-worthy task (learning *unlabeled* criticals) **needs labels we do not have** — synthetic fixtures can't supply them, so a classifier now would be theatre. The harder problem is that the risk inputs themselves (item criticality, supplier reliability, lead-time volatility) did not exist in the schema.
+
+**Decision.**
+- **Deterministic score** (`risk-v1`) in `api/risk/`: **risk = likelihood × consequence**. Likelihood is a weighted supply-side severity (stockout cover 0.55, lead time 0.20, supplier unreliability 0.25); consequence is a criticality ramp with a floor (`0.3 + 0.7·(crit−1)/4`). The result is **risk-weighted exposure on a 0–100 scale** — a well-stocked portfolio clusters low *by construction*, so the class bands (critical ≥ 45, high ≥ 25, moderate ≥ 12) are absolute exposure cutoffs, not a uniform split. Pure, fully unit-tested.
+- **Dollar exposure** = downtime-cost/day (escalating by criticality, a documented assumption) × lead time × stockout severity — the figure the dashboard leads with.
+- **Critical-spare flag is rule-based (E2.S1):** criticality ≥ 4, or a single-source mid-criticality item at stockout risk, each with a human-readable reason. **The GBM classifier (E2.S2) is deferred** to `critical-v2` and explicitly gated on a *labeled pilot dataset*; the asset-graph rollup (E1.S3) is deferred to the CV14 graph work.
+- **Schema/fixtures enriched (accepted scope, like CV2.E5):** `inventory.items.criticality` + `primary_supplier_id`, `inventory.suppliers.on_time_rate`, plus the risk columns on items (`risk_score`, `risk_class`, `risk_version`, `risk_breakdown`, `is_critical_spare`, `critical_reason`). Fixtures seed criticality (skewed low), a primary supplier, and per-supplier reliability. The change is additive and preserves the count-pinned ingestion tests.
+- **Risk consumes CV3 (E1 Done Condition):** the score reads the CV3 forecast (`demand_rate`) and reorder point, so risk is grounded in the same governed numbers; the `/risk` list ranks by score.
+- **Mitigation routes to the approval seam (E4):** "Mitigate" reuses the item's CV3 reorder policy to stage a `risk_mitigation` recommendation envelope (`approval_path='cv6_workflow'`, status `proposed`) — never a direct write (#2), identical to CV3 accept / CV2.E4 merge.
+- **Narratives are templated, grounded text (E3.S5/E4.S5):** no LLM, no invented numbers; the CV5 grounding pattern replaces them later.
+
+**Consequences.**
+- CV4 ships with no ML/graph dependency, reproducible and versioned in `ml.model_registry`. The GNN (`risk-v2`, CV14) and the GBM critical-spare classifier (`critical-v2`) slot in behind the same seam — the classifier only once a pilot provides labeled criticality.
+- Every figure is explainable: the breakdown shows the stockout/lead-time/supplier severities, the exposure cites the downtime-cost assumption, the narrative restates them verbatim.
+- The bands are honest about a well-stocked portfolio — "critical" means genuinely exposed (high criticality + actual stockout risk), not merely high-criticality.
+
+**Alternatives considered.** GNN / gradient-boosted classifier now (deferred — no labels, dependency weight, reproducibility); additive weighted sum instead of likelihood×consequence (rejected — it lets a well-stocked critical item score high, which is operationally wrong); uniform 0–100 bands (rejected — the score is risk-weighted exposure and is low by construction for a healthy portfolio); LLM risk narratives (deferred to CV5 — #3); executing mitigation directly (forbidden — #2).
+
+---
+
 > **Adding a new ADR?** Number sequentially, follow the same format, include the trade-off honestly. ADRs are immutable — supersede with a new ADR rather than editing an old one.

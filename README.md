@@ -193,6 +193,7 @@ make dedup            # recompute duplicate-detection candidates (CV2.E4)
 make anomalies        # recompute anomaly detections (CV2.E5)
 make forecast         # recompute demand forecasts (CV3.E1)
 make optimize         # recompute inventory recommendations (CV3.E2/E3)
+make risk             # recompute operational-risk scores (CV4.E1/E2)
 ```
 
 Every tenant-scoped table has a default-deny RLS policy keyed on the
