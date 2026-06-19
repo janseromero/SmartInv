@@ -63,6 +63,13 @@ class HeatmapRow(BaseModel):
     scores: dict[str, int]  # risk dimension -> 0..100
 
 
+class ExposureCell(BaseModel):
+    location_code: str
+    risk_class: str
+    count: int
+    exposure: float
+
+
 # Risk dimensions surfaced in the Plant x dimension heatmap (CV4.E3.S2).
 HEATMAP_DIMENSIONS = ("stockout", "lead_time", "supplier", "criticality")
 
@@ -165,6 +172,38 @@ def risk_heatmap(
             )
         )
     return result
+
+
+@router.get("/exposure", response_model=list[ExposureCell], summary="Plant x risk-class exposure")
+def risk_exposure(
+    _user: Annotated[CurrentUser, Depends(require_role(*READ_ROLES))],
+    session: Annotated[Session, Depends(get_tenant_session)],
+) -> list[ExposureCell]:
+    """Item count + downtime exposure per plant x risk class (Plant × risk class)."""
+    rows = session.execute(
+        select(
+            Location.location_code,
+            Item.risk_class,
+            func.count(func.distinct(Item.id)).label("item_count"),
+            func.coalesce(func.sum(Item.risk_breakdown["downtime_exposure"].as_float()), 0).label(
+                "exposure"
+            ),
+        )
+        .select_from(Item)
+        .join(Balance, Balance.item_id == Item.id)
+        .join(Location, Location.id == Balance.location_id)
+        .where(Item.risk_class.isnot(None))
+        .group_by(Location.location_code, Item.risk_class)
+    ).all()
+    return [
+        ExposureCell(
+            location_code=r.location_code,
+            risk_class=r.risk_class,
+            count=r.item_count,
+            exposure=round(float(r.exposure or 0), 2),
+        )
+        for r in rows
+    ]
 
 
 @router.get("/items", response_model=RiskItemsPage, summary="Top risk exposures")

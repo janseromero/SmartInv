@@ -518,6 +518,13 @@ export interface HeatmapRow {
   scores: Record<string, number>;
 }
 
+export interface ExposureCell {
+  location_code: string;
+  risk_class: string;
+  count: number;
+  exposure: number;
+}
+
 export interface RiskQuery {
   page?: number;
   page_size?: number;
@@ -531,6 +538,10 @@ export function fetchRiskSummary(): Promise<RiskSummary> {
 
 export function fetchRiskHeatmap(): Promise<HeatmapRow[]> {
   return apiFetch<HeatmapRow[]>('/risk/heatmap');
+}
+
+export function fetchRiskExposure(): Promise<ExposureCell[]> {
+  return apiFetch<ExposureCell[]>('/risk/exposure');
 }
 
 export function fetchRiskItems(query: RiskQuery): Promise<RiskItemsPage> {

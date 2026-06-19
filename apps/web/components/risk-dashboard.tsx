@@ -1,8 +1,10 @@
 'use client';
 
 import {
+  type ExposureCell,
   type HeatmapRow,
   type RiskItemRow,
+  fetchRiskExposure,
   fetchRiskHeatmap,
   fetchRiskItemDetail,
   fetchRiskItems,
@@ -36,6 +38,7 @@ export function RiskDashboard() {
 
   const summary = useQuery({ queryKey: ['risk-summary'], queryFn: fetchRiskSummary });
   const heatmap = useQuery({ queryKey: ['risk-heatmap'], queryFn: fetchRiskHeatmap });
+  const exposure = useQuery({ queryKey: ['risk-exposure'], queryFn: fetchRiskExposure });
   const items = useQuery({
     queryKey: ['risk-items', { riskClass, criticalOnly }],
     queryFn: () =>
@@ -74,6 +77,8 @@ export function RiskDashboard() {
       </div>
 
       <Heatmap rows={heatmap.data ?? []} />
+
+      <ExposureTable cells={exposure.data ?? []} onSelectClass={setRiskClass} />
 
       <div className="flex flex-col gap-3">
         <div className="flex flex-wrap items-center gap-2">
@@ -182,6 +187,71 @@ function scoreCell(score: number): string {
   if (score >= 45) return 'bg-crit-soft text-crit font-bold';
   if (score >= 25) return 'bg-warn-soft text-warn-dark';
   return 'bg-ok-soft text-ok';
+}
+
+const EXPOSURE_CLASSES = ['critical', 'high', 'moderate', 'low'] as const;
+
+function ExposureTable({
+  cells,
+  onSelectClass,
+}: { cells: ExposureCell[]; onSelectClass: (c: string) => void }) {
+  const plants = Array.from(new Set(cells.map((c) => c.location_code))).sort();
+  const byKey = new Map(cells.map((c) => [`${c.location_code}|${c.risk_class}`, c]));
+  const maxExposure = Math.max(1, ...cells.map((c) => c.exposure));
+  const template = `120px repeat(${EXPOSURE_CLASSES.length}, minmax(0, 1fr))`;
+
+  function cellTone(exposure: number): string {
+    const intensity = exposure / maxExposure;
+    if (intensity > 0.66) return 'bg-crit-soft text-crit font-bold';
+    if (intensity > 0.33) return 'bg-warn-soft text-warn-dark';
+    if (intensity > 0) return 'bg-ok-soft text-ok';
+    return 'bg-surface text-ink-3';
+  }
+
+  return (
+    <section className="rounded-md border border-line bg-card shadow-card overflow-hidden">
+      <div className="flex items-center gap-2 px-md py-2.5 border-b border-line">
+        <h3 className="font-display text-sm text-ink">Plant × risk exposure</h3>
+        <span className="text-xs text-ink-3">item count · shade = downtime exposure</span>
+      </div>
+      <div className="p-md">
+        <div className="grid gap-1.5 items-center" style={{ gridTemplateColumns: template }}>
+          <div />
+          {EXPOSURE_CLASSES.map((c) => (
+            <div key={c} className="text-[11px] text-ink-3 text-center font-medium capitalize">
+              {c}
+            </div>
+          ))}
+          {plants.map((plant) => (
+            <Fragment key={plant}>
+              <div className="font-mono text-xs text-ink-2 truncate pr-2">{plant}</div>
+              {EXPOSURE_CLASSES.map((c) => {
+                const cell = byKey.get(`${plant}|${c}`);
+                return (
+                  <button
+                    key={c}
+                    type="button"
+                    onClick={() => onSelectClass(c)}
+                    className={`rounded-sm py-2 text-center text-sm font-mono ${cellTone(cell?.exposure ?? 0)}`}
+                    title={
+                      cell ? `${cell.count} items · ${currency.format(cell.exposure)}` : '0 items'
+                    }
+                  >
+                    {cell?.count ?? 0}
+                  </button>
+                );
+              })}
+            </Fragment>
+          ))}
+          {plants.length === 0 ? (
+            <div className="col-span-full text-sm text-ink-3 py-2">
+              No risk scores yet — run `make risk`.
+            </div>
+          ) : null}
+        </div>
+      </div>
+    </section>
+  );
 }
 
 function Heatmap({ rows }: { rows: HeatmapRow[] }) {
