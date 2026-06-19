@@ -475,3 +475,74 @@ export function fetchAcceptanceRate(): Promise<AcceptanceRateRow[]> {
 export function fetchRegimeSignals(): Promise<RegimeSignalRow[]> {
   return apiFetch<RegimeSignalRow[]>('/recommendations/regime-signals');
 }
+
+// --- Operational risk (CV4) ----------------------------------------------
+
+export interface RiskItemRow {
+  id: string;
+  item_number: string;
+  description: string | null;
+  criticality: number | null;
+  risk_score: number | null;
+  risk_class: string | null;
+  downtime_exposure: number;
+  is_critical_spare: boolean;
+  single_source: boolean;
+  supplier_on_time_rate: number | null;
+}
+
+export interface RiskItemDetail extends RiskItemRow {
+  breakdown: Record<string, number>;
+  narrative: string;
+  has_mitigation_policy: boolean;
+}
+
+export interface RiskItemsPage {
+  items: RiskItemRow[];
+  total: number;
+  page: number;
+  page_size: number;
+}
+
+export interface RiskSummary {
+  downtime_exposure: number;
+  critical_spares: number;
+  critical_spare_coverage: number;
+  single_source_items: number;
+  obsolescence_candidates: number;
+  risk_distribution: Record<string, number>;
+}
+
+export interface HeatmapCell {
+  location_code: string;
+  risk_class: string;
+  count: number;
+  exposure: number;
+}
+
+export interface RiskQuery {
+  page?: number;
+  page_size?: number;
+  risk_class?: string;
+  critical_only?: boolean;
+}
+
+export function fetchRiskSummary(): Promise<RiskSummary> {
+  return apiFetch<RiskSummary>('/risk/summary');
+}
+
+export function fetchRiskHeatmap(): Promise<HeatmapCell[]> {
+  return apiFetch<HeatmapCell[]>('/risk/heatmap');
+}
+
+export function fetchRiskItems(query: RiskQuery): Promise<RiskItemsPage> {
+  return apiFetch<RiskItemsPage>(`/risk/items${queryString({ ...query })}`);
+}
+
+export function fetchRiskItemDetail(id: string): Promise<RiskItemDetail> {
+  return apiFetch<RiskItemDetail>(`/risk/items/${id}`);
+}
+
+export function mitigateRisk(id: string): Promise<{ recommendation_id: string; status: string }> {
+  return apiFetch(`/risk/items/${id}/mitigate`, { method: 'POST' });
+}
