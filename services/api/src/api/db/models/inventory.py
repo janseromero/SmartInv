@@ -13,6 +13,7 @@ from datetime import datetime
 from typing import Any
 
 from sqlalchemy import (
+    Boolean,
     DateTime,
     ForeignKey,
     Numeric,
@@ -60,6 +61,8 @@ class Supplier(Base, TenantMixin, TimestampMixin):
     supplier_code: Mapped[str] = mapped_column(Text, nullable=False)
     name: Mapped[str | None] = mapped_column(Text, nullable=True)
     status: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    # Delivery reliability (CV4.E1) — fraction of POs delivered on time [0,1].
+    on_time_rate: Mapped[float | None] = mapped_column(Numeric(5, 4), nullable=True)
 
 
 class Item(Base, TenantMixin, TimestampMixin):
@@ -77,12 +80,24 @@ class Item(Base, TenantMixin, TimestampMixin):
     unit_cost: Mapped[float | None] = mapped_column(QTY, nullable=True)
     # Replenishment lead time in days (CV3.E2 — owned by optimization).
     lead_time_days: Mapped[int | None] = mapped_column(SmallInteger, nullable=True)
+    # Operational risk inputs (CV4.E1).
+    criticality: Mapped[int | None] = mapped_column(SmallInteger, nullable=True)  # 1..5
+    primary_supplier_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("inventory.suppliers.id", ondelete="SET NULL"), nullable=True
+    )
     # Health score (CV2.E3) — populated by the scoring service.
     health_score: Mapped[int | None] = mapped_column(SmallInteger, nullable=True)
     health_class: Mapped[str | None] = mapped_column(String(32), nullable=True)
     score_version: Mapped[str | None] = mapped_column(String(32), nullable=True)
     score_dimensions: Mapped[dict[str, Any] | None] = mapped_column(JSONB, nullable=True)
     scored_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    # Operational risk score (CV4.E1) — populated by the risk service.
+    risk_score: Mapped[int | None] = mapped_column(SmallInteger, nullable=True)
+    risk_class: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    risk_version: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    risk_breakdown: Mapped[dict[str, Any] | None] = mapped_column(JSONB, nullable=True)
+    is_critical_spare: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    critical_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
 
 
 class Asset(Base, TenantMixin, TimestampMixin):

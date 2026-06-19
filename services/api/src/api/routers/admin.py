@@ -24,6 +24,7 @@ from api.dedup.service import run_dedup
 from api.forecast.service import run_forecast
 from api.ingestion.fixture_sync import run_fixture_sync
 from api.optimize.service import run_optimization
+from api.risk.service import run_risk_scan
 from api.scoring.service import run_scoring
 
 router = APIRouter(prefix="/admin", tags=["admin"])
@@ -136,3 +137,12 @@ def trigger_optimization(
     _admin: Annotated[CurrentUser, Depends(require_role("admin"))],
 ) -> dict[str, int]:
     return run_optimization(session, user.tenant_id)
+
+
+@router.post("/risk", summary="Recompute operational risk scores")
+def trigger_risk_scan(
+    user: Annotated[CurrentUser, Depends(get_current_user)],
+    session: Annotated[Session, Depends(get_tenant_session)],
+    _admin: Annotated[CurrentUser, Depends(require_role("admin"))],
+) -> dict[str, int]:
+    return run_risk_scan(session, user.tenant_id)

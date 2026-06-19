@@ -20,6 +20,7 @@ from api.routers import (
     identity,
     inventory,
     recommendations,
+    risk,
 )
 
 settings = get_settings()
@@ -47,6 +48,7 @@ app.include_router(inventory.router)
 app.include_router(duplicates.router)
 app.include_router(anomalies.router)
 app.include_router(recommendations.router)
+app.include_router(risk.router)
 app.include_router(admin.router)
 
 

@@ -100,11 +100,18 @@ def upsert_supplier(session: Session, ctx: IngestContext, rec: SourceRecord) -> 
             "supplier_code": rec.data["supplier_code"],
             "name": rec.data.get("name"),
             "status": rec.data.get("status"),
+            "on_time_rate": rec.data.get("on_time_rate"),
         },
     )
 
 
 def upsert_item(session: Session, ctx: IngestContext, rec: SourceRecord) -> None:
+    supplier_source = rec.data.get("primary_supplier_source_id")
+    primary_supplier_id = (
+        _resolve(session, ctx, Entity.SUPPLIER, supplier_source, Supplier)
+        if supplier_source
+        else None
+    )
     _upsert(
         session,
         Item,
@@ -118,6 +125,8 @@ def upsert_item(session: Session, ctx: IngestContext, rec: SourceRecord) -> None
             "status": rec.data.get("status"),
             "unit_cost": rec.data.get("unit_cost"),
             "lead_time_days": rec.data.get("lead_time_days"),
+            "criticality": rec.data.get("criticality"),
+            "primary_supplier_id": primary_supplier_id,
         },
     )
 

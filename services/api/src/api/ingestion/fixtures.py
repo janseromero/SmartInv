@@ -70,7 +70,14 @@ class FixtureConnector:
         return [
             SourceRecord(
                 f"SUP-{i:03d}",
-                {"supplier_code": f"SUP-{i:03d}", "name": f"Supplier {i}", "status": "active"},
+                {
+                    "supplier_code": f"SUP-{i:03d}",
+                    "name": f"Supplier {i}",
+                    "status": "active",
+                    # Delivery reliability — a few unreliable suppliers seed
+                    # single-source risk (CV4.E1).
+                    "on_time_rate": round(self._rng.uniform(0.6, 0.99), 4),
+                },
             )
             for i in range(1, 11)
         ]
@@ -99,6 +106,11 @@ class FixtureConnector:
                         "status": "ACTIVE",
                         "unit_cost": unit_cost,
                         "lead_time_days": self._rng.choice([7, 14, 21, 30, 45, 60, 90]),
+                        # Criticality skews low; a minority are high-impact spares (CV4).
+                        "criticality": self._rng.choices(
+                            [1, 2, 3, 4, 5], weights=[15, 30, 30, 18, 7]
+                        )[0],
+                        "primary_supplier_source_id": f"SUP-{self._rng.randint(1, 10):03d}",
                     },
                 )
             )
