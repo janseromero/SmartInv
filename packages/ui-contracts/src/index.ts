@@ -6,6 +6,18 @@
  * can be re-skinned (or ported to native) without touching consumers.
  */
 
+// --- Button --------------------------------------------------------------
+
+/** `primary` is teal (default action color); `ai` is violet (AI-triggered only). */
+export type ButtonVariant = 'default' | 'primary' | 'ai' | 'ghost';
+export type ButtonSize = 'md' | 'sm';
+
+/** Presentational props; the component intersects these with native button attrs. */
+export interface ButtonProps {
+  variant?: ButtonVariant;
+  size?: ButtonSize;
+}
+
 // --- Badge ---------------------------------------------------------------
 
 export type BadgeVariant = 'neutral' | 'status' | 'ai';

@@ -13,7 +13,7 @@ import {
   fetchRegimeSignals,
   overrideRecommendation,
 } from '@/lib/api';
-import { Badge, ConfidenceMeter, EvidenceStrip, KpiCard } from '@smartinv/ui-web';
+import { Badge, Button, ConfidenceMeter, EvidenceStrip, KpiCard } from '@smartinv/ui-web';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 
@@ -143,13 +143,9 @@ function RecommendationCard({ row, onOpen }: { row: RecommendationRow; onOpen: (
         {reviewed ? (
           <Badge label={row.status} variant="neutral" />
         ) : (
-          <button
-            type="button"
-            onClick={onOpen}
-            className="rounded-md bg-ai text-white px-md py-1 text-sm"
-          >
+          <Button variant="primary" size="sm" onClick={onOpen}>
             Review
-          </button>
+          </Button>
         )}
       </div>
       <p className="text-sm text-ink-2">{row.claim}</p>
@@ -312,50 +308,34 @@ function EnvelopeDrawer({
                   className="bg-card border border-line rounded-md px-md py-1.5 text-sm text-ink min-h-[60px]"
                 />
                 <div className="flex gap-2">
-                  <button
-                    type="button"
+                  <Button
+                    variant="primary"
+                    className="flex-1"
                     disabled={override.isPending}
                     onClick={() => override.mutate()}
-                    className="flex-1 rounded-md bg-ai text-white px-md py-1.5 text-sm disabled:opacity-50"
                   >
                     Submit override
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setOverriding(false)}
-                    className="rounded-md border border-line px-md py-1.5 text-sm text-ink-2"
-                  >
-                    Cancel
-                  </button>
+                  </Button>
+                  <Button onClick={() => setOverriding(false)}>Cancel</Button>
                 </div>
               </div>
             ) : (
               <div className="mt-auto flex gap-2">
-                <button
-                  type="button"
+                <Button
+                  variant="primary"
+                  className="flex-1"
                   disabled={accept.isPending}
                   onClick={() => accept.mutate()}
-                  className="flex-1 rounded-md bg-ai text-white px-md py-1.5 text-sm disabled:opacity-50"
                 >
                   Accept → approval
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setOverriding(true)}
-                  className="flex-1 rounded-md border border-line px-md py-1.5 text-sm text-ink-2"
-                >
+                </Button>
+                <Button className="flex-1" onClick={() => setOverriding(true)}>
                   Override…
-                </button>
+                </Button>
               </div>
             )}
 
-            <button
-              type="button"
-              onClick={onClose}
-              className="rounded-md border border-line px-md py-1.5 text-sm text-ink-2"
-            >
-              Close
-            </button>
+            <Button onClick={onClose}>Close</Button>
           </>
         )}
       </aside>

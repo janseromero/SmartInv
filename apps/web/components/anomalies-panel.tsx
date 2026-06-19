@@ -9,7 +9,7 @@ import {
   fetchAnomalySummary,
   reviewAnomaly,
 } from '@/lib/api';
-import { Badge } from '@smartinv/ui-web';
+import { Badge, Button } from '@smartinv/ui-web';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { ReactNode } from 'react';
 import { useState } from 'react';
@@ -188,22 +188,20 @@ function AnomalyDrawer({ anomalyId, onClose }: { anomalyId: string; onClose: () 
 
             {open ? (
               <div className="mt-auto flex gap-2">
-                <button
-                  type="button"
+                <Button
+                  className="flex-1"
                   disabled={review.isPending}
                   onClick={() => review.mutate('acknowledge')}
-                  className="flex-1 rounded-md border border-line px-md py-1.5 text-sm text-ink-2 disabled:opacity-50"
                 >
                   Acknowledge
-                </button>
-                <button
-                  type="button"
+                </Button>
+                <Button
+                  className="flex-1"
                   disabled={review.isPending}
                   onClick={() => review.mutate('dismiss')}
-                  className="flex-1 rounded-md border border-line px-md py-1.5 text-sm text-ink-2 disabled:opacity-50"
                 >
                   Dismiss
-                </button>
+                </Button>
               </div>
             ) : (
               <div className="mt-auto rounded-md border border-line p-md text-sm text-ink-2">

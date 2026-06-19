@@ -66,6 +66,8 @@ export const ok = {
 export const warn = {
   DEFAULT: '#D98E1B',
   soft: '#FCF2DF',
+  /** Darker amber for warn text/badges (reference `.b-warn` color). */
+  dark: '#A86A0D',
 } as const;
 
 export const crit = {

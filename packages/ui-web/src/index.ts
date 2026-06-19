@@ -9,6 +9,7 @@
 
 export { ApprovalStep } from './ApprovalStep.js';
 export { Badge } from './Badge.js';
+export { Button } from './Button.js';
 export { ConfidenceMeter } from './ConfidenceMeter.js';
 export { EvidenceStrip } from './EvidenceStrip.js';
 export { KpiCard } from './KpiCard.js';

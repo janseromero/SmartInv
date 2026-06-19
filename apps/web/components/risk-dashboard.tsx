@@ -9,7 +9,7 @@ import {
   fetchRiskSummary,
   mitigateRisk,
 } from '@/lib/api';
-import { Badge, KpiCard } from '@smartinv/ui-web';
+import { Badge, Button, KpiCard } from '@smartinv/ui-web';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 
@@ -319,23 +319,16 @@ function RiskDrawer({ itemId, onClose }: { itemId: string; onClose: () => void }
             {message ? <p className="text-sm text-ok">{message}</p> : null}
 
             <div className="mt-auto flex flex-col gap-2">
-              <button
-                type="button"
+              <Button
+                variant="primary"
                 disabled={mitigate.isPending || !d.has_mitigation_policy}
                 onClick={() => mitigate.mutate()}
-                className="rounded-md bg-ai text-white px-md py-1.5 text-sm disabled:opacity-50"
               >
                 {d.has_mitigation_policy
                   ? 'Mitigate → approval'
                   : 'No policy — run optimizer first'}
-              </button>
-              <button
-                type="button"
-                onClick={onClose}
-                className="rounded-md border border-line px-md py-1.5 text-sm text-ink-2"
-              >
-                Close
-              </button>
+              </Button>
+              <Button onClick={onClose}>Close</Button>
             </div>
           </>
         )}

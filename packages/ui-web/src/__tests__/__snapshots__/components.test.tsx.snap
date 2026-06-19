@@ -52,15 +52,40 @@ exports[`Badge > renders status and ai variants 1`] = `
 <DocumentFragment>
   <div>
     <span
-      class="inline-flex items-center rounded-pill px-2 py-0.5 text-xs font-medium bg-ok-soft text-ok"
+      class="inline-flex items-center gap-1.5 rounded-pill px-2 py-0.5 text-xs font-medium whitespace-nowrap bg-ok-soft text-ok before:content-[''] before:w-1.5 before:h-1.5 before:rounded-pill before:bg-current"
     >
       Healthy
     </span>
     <span
-      class="inline-flex items-center rounded-pill px-2 py-0.5 text-xs font-medium bg-ai-soft text-ai"
+      class="inline-flex items-center gap-1.5 rounded-pill px-2 py-0.5 text-xs font-medium whitespace-nowrap bg-ai-soft text-ai"
     >
       AI
     </span>
+  </div>
+</DocumentFragment>
+`;
+
+exports[`Button > renders the primary (teal) and default variants 1`] = `
+<DocumentFragment>
+  <div>
+    <button
+      class="inline-flex items-center justify-center gap-2 font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed bg-teal border border-teal text-white hover:bg-teal-dark px-md py-1.5 text-sm rounded-md "
+      type="button"
+    >
+      Accept
+    </button>
+    <button
+      class="inline-flex items-center justify-center gap-2 font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed bg-card border border-line text-ink hover:border-ink-3 shadow-card px-md py-1.5 text-sm rounded-md "
+      type="button"
+    >
+      Cancel
+    </button>
+    <button
+      class="inline-flex items-center justify-center gap-2 font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed bg-ai border border-ai text-white px-2.5 py-1 text-xs rounded-sm "
+      type="button"
+    >
+      AI action
+    </button>
   </div>
 </DocumentFragment>
 `;

@@ -2,6 +2,7 @@ import { render } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { ApprovalStep } from '../ApprovalStep.js';
 import { Badge } from '../Badge.js';
+import { Button } from '../Button.js';
 import { ConfidenceMeter } from '../ConfidenceMeter.js';
 import { EvidenceStrip } from '../EvidenceStrip.js';
 import { KpiCard } from '../KpiCard.js';
@@ -12,6 +13,21 @@ describe('Badge', () => {
       <div>
         <Badge label="Healthy" variant="status" tone="ok" />
         <Badge label="AI" variant="ai" />
+      </div>,
+    );
+    expect(asFragment()).toMatchSnapshot();
+  });
+});
+
+describe('Button', () => {
+  it('renders the primary (teal) and default variants', () => {
+    const { asFragment } = render(
+      <div>
+        <Button variant="primary">Accept</Button>
+        <Button>Cancel</Button>
+        <Button variant="ai" size="sm">
+          AI action
+        </Button>
       </div>,
     );
     expect(asFragment()).toMatchSnapshot();

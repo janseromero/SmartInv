@@ -9,7 +9,7 @@ import {
   fetchDuplicates,
   reviewDuplicate,
 } from '@/lib/api';
-import { Badge, ConfidenceMeter, KpiCard } from '@smartinv/ui-web';
+import { Badge, Button, ConfidenceMeter, KpiCard } from '@smartinv/ui-web';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 
@@ -308,40 +308,38 @@ function CompareDrawer({ candidateId, onClose }: { candidateId: string; onClose:
                   Merging proposes an approval action — it never edits source records directly.
                 </div>
                 <div className="flex gap-2">
-                  <button
-                    type="button"
+                  <Button
+                    variant="primary"
+                    className="flex-1"
                     disabled={review.isPending}
                     onClick={() => review.mutate({ decision: 'merge', keepItemId: d.item_a.id })}
-                    className="flex-1 rounded-md bg-ai text-white px-md py-1.5 text-sm disabled:opacity-50"
                   >
                     Merge → keep A
-                  </button>
-                  <button
-                    type="button"
+                  </Button>
+                  <Button
+                    variant="primary"
+                    className="flex-1"
                     disabled={review.isPending}
                     onClick={() => review.mutate({ decision: 'merge', keepItemId: d.item_b.id })}
-                    className="flex-1 rounded-md bg-ai text-white px-md py-1.5 text-sm disabled:opacity-50"
                   >
                     Merge → keep B
-                  </button>
+                  </Button>
                 </div>
                 <div className="flex gap-2">
-                  <button
-                    type="button"
+                  <Button
+                    className="flex-1"
                     disabled={review.isPending}
                     onClick={() => review.mutate({ decision: 'not_duplicate' })}
-                    className="flex-1 rounded-md border border-line px-md py-1.5 text-sm text-ink-2 disabled:opacity-50"
                   >
                     Not a duplicate
-                  </button>
-                  <button
-                    type="button"
+                  </Button>
+                  <Button
+                    className="flex-1"
                     disabled={review.isPending}
                     onClick={() => review.mutate({ decision: 'hold' })}
-                    className="flex-1 rounded-md border border-line px-md py-1.5 text-sm text-ink-2 disabled:opacity-50"
                   >
                     Hold
-                  </button>
+                  </Button>
                 </div>
               </div>
             ) : (
