@@ -84,7 +84,10 @@ def test_summary_and_heatmap(seeded_tenant: uuid.UUID) -> None:
 
     heatmap = client.get("/risk/heatmap").json()
     assert len(heatmap) >= 1
-    assert {"location_code", "risk_class", "count", "exposure"} <= set(heatmap[0])
+    assert {"location_code", "scores"} <= set(heatmap[0])
+    # Plant x risk-dimension scores, each 0..100.
+    assert {"stockout", "lead_time", "supplier", "criticality"} <= set(heatmap[0]["scores"])
+    assert all(0 <= v <= 100 for v in heatmap[0]["scores"].values())
 
 
 def test_items_ranked_by_risk(seeded_tenant: uuid.UUID) -> None:

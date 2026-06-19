@@ -1,7 +1,7 @@
 'use client';
 
 import {
-  type HeatmapCell,
+  type HeatmapRow,
   type RiskItemRow,
   fetchRiskHeatmap,
   fetchRiskItemDetail,
@@ -11,7 +11,7 @@ import {
 } from '@/lib/api';
 import { Badge, Button, KpiCard } from '@smartinv/ui-web';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useState } from 'react';
+import { Fragment, useState } from 'react';
 
 const integer = new Intl.NumberFormat('en-US');
 const currency = new Intl.NumberFormat('en-US', {
@@ -73,100 +73,96 @@ export function RiskDashboard() {
         />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <div className="lg:col-span-2 flex flex-col gap-3">
-          <div className="flex flex-wrap items-center gap-2">
-            <select
-              value={riskClass}
-              onChange={(e) => setRiskClass(e.target.value)}
-              className="bg-card border border-line rounded-md px-md py-1.5 text-sm text-ink"
-            >
-              <option value="">All risk levels</option>
-              {RISK_CLASSES.map((c) => (
-                <option key={c} value={c}>
-                  {c}
-                </option>
-              ))}
-            </select>
-            <label className="flex items-center gap-1 text-sm text-ink-2">
-              <input
-                type="checkbox"
-                checked={criticalOnly}
-                onChange={(e) => setCriticalOnly(e.target.checked)}
-              />
-              Critical spares only
-            </label>
-          </div>
+      <Heatmap rows={heatmap.data ?? []} />
 
-          <div className="rounded-md border border-line bg-card shadow-card overflow-hidden">
-            <div className="flex items-center gap-2 px-md py-2.5 border-b border-line">
-              <h3 className="font-display text-sm text-ink">Top critical-spare exposures</h3>
-              <span className="text-xs text-ink-3">
-                {items.data ? `${integer.format(items.data.total)} items` : ''}
-              </span>
-            </div>
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="text-left text-ink-3 border-b border-line">
-                  <th className="font-normal px-md py-2">Item</th>
-                  <th className="font-normal px-md py-2">Crit.</th>
-                  <th className="font-normal px-md py-2">Risk</th>
-                  <th className="font-normal px-md py-2 text-right">Downtime $</th>
-                  <th className="font-normal px-md py-2">Flags</th>
-                </tr>
-              </thead>
-              <tbody>
-                {items.data?.items.map((item: RiskItemRow) => (
-                  <tr
-                    key={item.id}
-                    onClick={() => setSelected(item.id)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') setSelected(item.id);
-                    }}
-                    tabIndex={0}
-                    className="border-b border-line hover:bg-surface cursor-pointer"
-                  >
-                    <td className="px-md py-2">
-                      <div className="font-mono text-ink">{item.item_number}</div>
-                      <div className="text-ink-3 truncate max-w-[260px]">
-                        {item.description ?? '—'}
-                      </div>
-                    </td>
-                    <td className="px-md py-2 text-ink-2">{item.criticality ?? '—'}</td>
-                    <td className="px-md py-2">
-                      <Badge
-                        label={`${item.risk_class ?? '—'} ${item.risk_score ?? ''}`}
-                        variant="status"
-                        tone={RISK_TONE[item.risk_class ?? 'low'] ?? 'warn'}
-                      />
-                    </td>
-                    <td className="px-md py-2 text-right font-mono text-ink">
-                      {currency.format(item.downtime_exposure)}
-                    </td>
-                    <td className="px-md py-2">
-                      <div className="flex flex-wrap gap-1">
-                        {item.is_critical_spare ? (
-                          <Badge label="Critical spare" variant="status" tone="crit" />
-                        ) : null}
-                        {item.single_source ? (
-                          <Badge label="Single source" variant="status" tone="warn" />
-                        ) : null}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            {items.isLoading ? <div className="p-md text-sm text-ink-3">Loading…</div> : null}
-            {items.data && items.data.items.length === 0 ? (
-              <div className="p-md text-sm text-ink-3">No items match this filter.</div>
-            ) : null}
-          </div>
+      <div className="flex flex-col gap-3">
+        <div className="flex flex-wrap items-center gap-2">
+          <select
+            value={riskClass}
+            onChange={(e) => setRiskClass(e.target.value)}
+            className="bg-card border border-line rounded-md px-md py-1.5 text-sm text-ink"
+          >
+            <option value="">All risk levels</option>
+            {RISK_CLASSES.map((c) => (
+              <option key={c} value={c}>
+                {c}
+              </option>
+            ))}
+          </select>
+          <label className="flex items-center gap-1 text-sm text-ink-2">
+            <input
+              type="checkbox"
+              checked={criticalOnly}
+              onChange={(e) => setCriticalOnly(e.target.checked)}
+            />
+            Critical spares only
+          </label>
         </div>
 
-        <aside className="flex flex-col gap-4">
-          <Heatmap cells={heatmap.data ?? []} onSelectClass={setRiskClass} />
-        </aside>
+        <div className="rounded-md border border-line bg-card shadow-card overflow-hidden">
+          <div className="flex items-center gap-2 px-md py-2.5 border-b border-line">
+            <h3 className="font-display text-sm text-ink">Top critical-spare exposures</h3>
+            <span className="text-xs text-ink-3">
+              {items.data ? `${integer.format(items.data.total)} items` : ''}
+            </span>
+          </div>
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="text-left text-ink-3 border-b border-line">
+                <th className="font-normal px-md py-2">Item</th>
+                <th className="font-normal px-md py-2">Crit.</th>
+                <th className="font-normal px-md py-2">Risk</th>
+                <th className="font-normal px-md py-2 text-right">Downtime $</th>
+                <th className="font-normal px-md py-2">Flags</th>
+              </tr>
+            </thead>
+            <tbody>
+              {items.data?.items.map((item: RiskItemRow) => (
+                <tr
+                  key={item.id}
+                  onClick={() => setSelected(item.id)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') setSelected(item.id);
+                  }}
+                  tabIndex={0}
+                  className="border-b border-line hover:bg-surface cursor-pointer"
+                >
+                  <td className="px-md py-2">
+                    <div className="font-mono text-ink">{item.item_number}</div>
+                    <div className="text-ink-3 truncate max-w-[260px]">
+                      {item.description ?? '—'}
+                    </div>
+                  </td>
+                  <td className="px-md py-2 text-ink-2">{item.criticality ?? '—'}</td>
+                  <td className="px-md py-2">
+                    <Badge
+                      label={`${item.risk_class ?? '—'} ${item.risk_score ?? ''}`}
+                      variant="status"
+                      tone={RISK_TONE[item.risk_class ?? 'low'] ?? 'warn'}
+                    />
+                  </td>
+                  <td className="px-md py-2 text-right font-mono text-ink">
+                    {currency.format(item.downtime_exposure)}
+                  </td>
+                  <td className="px-md py-2">
+                    <div className="flex flex-wrap gap-1">
+                      {item.is_critical_spare ? (
+                        <Badge label="Critical spare" variant="status" tone="crit" />
+                      ) : null}
+                      {item.single_source ? (
+                        <Badge label="Single source" variant="status" tone="warn" />
+                      ) : null}
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          {items.isLoading ? <div className="p-md text-sm text-ink-3">Loading…</div> : null}
+          {items.data && items.data.items.length === 0 ? (
+            <div className="p-md text-sm text-ink-3">No items match this filter.</div>
+          ) : null}
+        </div>
       </div>
 
       {selected ? <RiskDrawer itemId={selected} onClose={() => setSelected(null)} /> : null}
@@ -174,60 +170,60 @@ export function RiskDashboard() {
   );
 }
 
-function Heatmap({
-  cells,
-  onSelectClass,
-}: { cells: HeatmapCell[]; onSelectClass: (c: string) => void }) {
-  const plants = Array.from(new Set(cells.map((c) => c.location_code))).sort();
-  const byKey = new Map(cells.map((c) => [`${c.location_code}|${c.risk_class}`, c]));
-  const maxExposure = Math.max(1, ...cells.map((c) => c.exposure));
+const HEATMAP_DIMENSIONS = [
+  { key: 'stockout', label: 'Stockout' },
+  { key: 'lead_time', label: 'Lead time' },
+  { key: 'supplier', label: 'Supplier' },
+  { key: 'criticality', label: 'Criticality' },
+] as const;
 
-  function cellStyle(exposure: number): string {
-    const intensity = exposure / maxExposure;
-    if (intensity > 0.66) return 'bg-crit-soft text-crit';
-    if (intensity > 0.33) return 'bg-warn-soft text-warn';
-    if (intensity > 0) return 'bg-ok-soft text-ok';
-    return 'bg-surface text-ink-3';
-  }
+function scoreCell(score: number): string {
+  // 0–100 score banded to the soft status palette (reference cell colors).
+  if (score >= 45) return 'bg-crit-soft text-crit font-bold';
+  if (score >= 25) return 'bg-warn-soft text-warn-dark';
+  return 'bg-ok-soft text-ok';
+}
 
+function Heatmap({ rows }: { rows: HeatmapRow[] }) {
+  const template = `120px repeat(${HEATMAP_DIMENSIONS.length}, minmax(0, 1fr))`;
   return (
-    <section className="rounded-md border border-line bg-card shadow-card p-md">
-      <h3 className="font-display text-sm text-ink mb-2">Plant × risk exposure</h3>
-      <table className="w-full text-xs">
-        <thead>
-          <tr className="text-ink-3">
-            <th className="font-normal text-left py-1">Plant</th>
-            {RISK_CLASSES.map((c) => (
-              <th key={c} className="font-normal py-1 capitalize">
-                {c.slice(0, 4)}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {plants.map((plant) => (
-            <tr key={plant}>
-              <td className="py-1 font-mono text-ink-2">{plant}</td>
-              {RISK_CLASSES.map((c) => {
-                const cell = byKey.get(`${plant}|${c}`);
+    <section className="rounded-md border border-line bg-card shadow-card overflow-hidden">
+      <div className="flex items-center gap-2 px-md py-2.5 border-b border-line">
+        <h3 className="font-display text-sm text-ink">Stockout risk heatmap</h3>
+        <span className="text-xs text-ink-3">Plant × risk dimension · score 0–100</span>
+      </div>
+      <div className="p-md">
+        <div className="grid gap-1.5 items-center" style={{ gridTemplateColumns: template }}>
+          <div />
+          {HEATMAP_DIMENSIONS.map((d) => (
+            <div key={d.key} className="text-[11px] text-ink-3 text-center font-medium">
+              {d.label}
+            </div>
+          ))}
+          {rows.map((row) => (
+            <Fragment key={row.location_code}>
+              <div className="font-mono text-xs text-ink-2 truncate pr-2">{row.location_code}</div>
+              {HEATMAP_DIMENSIONS.map((d) => {
+                const score = row.scores[d.key] ?? 0;
                 return (
-                  <td key={c} className="py-0.5 px-0.5">
-                    <button
-                      type="button"
-                      onClick={() => onSelectClass(c)}
-                      className={`w-full rounded py-1 ${cellStyle(cell?.exposure ?? 0)}`}
-                      title={cell ? `${cell.count} items · ${currency.format(cell.exposure)}` : '0'}
-                    >
-                      {cell?.count ?? 0}
-                    </button>
-                  </td>
+                  <div
+                    key={d.key}
+                    className={`rounded-sm py-2 text-center text-sm font-mono ${scoreCell(score)}`}
+                    title={`${row.location_code} · ${d.label}: ${score}/100`}
+                  >
+                    {score}
+                  </div>
                 );
               })}
-            </tr>
+            </Fragment>
           ))}
-        </tbody>
-      </table>
-      <p className="text-[10px] text-ink-3 mt-2">Cell = item count; shade = downtime exposure.</p>
+          {rows.length === 0 ? (
+            <div className="col-span-full text-sm text-ink-3 py-2">
+              No risk scores yet — run `make risk`.
+            </div>
+          ) : null}
+        </div>
+      </div>
     </section>
   );
 }

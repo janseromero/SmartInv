@@ -58,11 +58,13 @@ class RiskSummary(BaseModel):
     risk_distribution: dict[str, int]
 
 
-class HeatmapCell(BaseModel):
+class HeatmapRow(BaseModel):
     location_code: str
-    risk_class: str
-    count: int
-    exposure: float
+    scores: dict[str, int]  # risk dimension -> 0..100
+
+
+# Risk dimensions surfaced in the Plant x dimension heatmap (CV4.E3.S2).
+HEATMAP_DIMENSIONS = ("stockout", "lead_time", "supplier", "criticality")
 
 
 class RiskItemDetail(RiskItemRow):
@@ -126,35 +128,43 @@ def risk_summary(
     )
 
 
-@router.get("/heatmap", response_model=list[HeatmapCell], summary="Plant x risk heatmap")
+@router.get("/heatmap", response_model=list[HeatmapRow], summary="Plant x risk-dimension heatmap")
 def risk_heatmap(
     _user: Annotated[CurrentUser, Depends(require_role(*READ_ROLES))],
     session: Annotated[Session, Depends(get_tenant_session)],
-) -> list[HeatmapCell]:
+) -> list[HeatmapRow]:
+    """Average 0–100 risk-dimension score per plant (Plant × risk dimension)."""
     rows = session.execute(
         select(
             Location.location_code,
-            Item.risk_class,
-            func.count(func.distinct(Item.id)).label("item_count"),
-            func.coalesce(func.sum(Item.risk_breakdown["downtime_exposure"].as_float()), 0).label(
-                "exposure"
-            ),
+            func.avg(Item.risk_breakdown["stockout"].as_float()).label("stockout"),
+            func.avg(Item.risk_breakdown["lead_time"].as_float()).label("lead_time"),
+            func.avg(Item.risk_breakdown["supplier"].as_float()).label("supplier"),
+            func.avg(Item.risk_breakdown["criticality"].as_float()).label("criticality"),
         )
         .select_from(Item)
         .join(Balance, Balance.item_id == Item.id)
         .join(Location, Location.id == Balance.location_id)
-        .where(Item.risk_class.isnot(None))
-        .group_by(Location.location_code, Item.risk_class)
+        .where(Item.risk_score.isnot(None))
+        .group_by(Location.location_code)
+        .order_by(Location.location_code)
     ).all()
-    return [
-        HeatmapCell(
-            location_code=r.location_code,
-            risk_class=r.risk_class,
-            count=r.item_count,
-            exposure=round(float(r.exposure or 0), 2),
+
+    result: list[HeatmapRow] = []
+    for r in rows:
+        result.append(
+            HeatmapRow(
+                location_code=r.location_code,
+                scores={
+                    "stockout": round(float(r.stockout or 0) * 100),
+                    "lead_time": round(float(r.lead_time or 0) * 100),
+                    "supplier": round(float(r.supplier or 0) * 100),
+                    # criticality is stored raw (1..5); normalise to 0..100.
+                    "criticality": round((float(r.criticality or 1) - 1) / 4 * 100),
+                },
+            )
         )
-        for r in rows
-    ]
+    return result
 
 
 @router.get("/items", response_model=RiskItemsPage, summary="Top risk exposures")
