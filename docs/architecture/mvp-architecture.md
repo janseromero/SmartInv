@@ -237,6 +237,18 @@ create table workflow.approval_events (
   created_at       timestamptz default now(),
   unique (tenant_id, approval_id, idempotency_key)
 );
+
+create table workflow.approval_policies (
+  id                uuid primary key,
+  tenant_id         uuid not null,
+  workflow_type     text not null,
+  min_value         numeric(14,2),
+  max_value         numeric(14,2),
+  min_criticality   smallint,
+  required_path     jsonb not null,          -- ordered [{state, reviewer_type: role|user, reviewer}]
+  priority          integer not null,
+  status            text not null
+);
 ```
 
 A small service exposes:

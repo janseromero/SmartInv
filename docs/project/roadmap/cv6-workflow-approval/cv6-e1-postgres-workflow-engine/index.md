@@ -3,7 +3,7 @@
 # CV6.E1 — Postgres Workflow Engine
 
 **CV:** [CV6 — Workflow & Approval](../index.md)
-**Status:** 🟢 In Progress
+**Status:** ✅ Done
 **Prerequisite for:** CV6.E2, CV6.E3, CV6.E4
 
 ---
@@ -21,7 +21,7 @@ The workflow spine. Implements the `WorkflowEngine` interface ([CV1.E7](../../cv
 | CV6.E1.S1 | Implement `PostgresWorkflowEngine` behind the `WorkflowEngine` interface | ✅ Done |
 | CV6.E1.S2 | `workflow.approvals` table + configurable state machine: agent_proposed → ordered reviewer path → approved/rejected | ✅ Done |
 | CV6.E1.S3 | `workflow.approval_events` append-only event log | ✅ Done |
-| CV6.E1.S4 | Policy table: workflow type × value × criticality → required approvers | 📥 Backlog |
+| CV6.E1.S4 | Policy table: workflow type × value × criticality → required approvers | ✅ Done |
 | CV6.E1.S5 | Idempotency keys on every state transition | ✅ Done |
 | CV6.E1.S6 | Engine contract tests assert protocol compliance | ✅ Done |
 

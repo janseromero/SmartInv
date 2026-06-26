@@ -535,7 +535,7 @@ Story-level work uses a **5-column Kanban**: Backlog · Doing · Blocked · Revi
 - The engine is no longer coupled to one approval chain; the UI can later offer reviewer selection without redesigning the workflow table.
 - In-flight approvals are reproducible because the chosen path is persisted, not re-resolved on every action.
 - Idempotency keys make retries safe and prevent duplicate transition events.
-- Policy resolution (`workflow type × value × criticality → required approvers`) remains a separate CV6.E1 slice; it will produce the path that the engine already knows how to execute.
+- Policy resolution (`workflow type × value × criticality → required approvers`) is implemented as tenant-scoped `workflow.approval_policies`; it produces the path that the engine persists and executes.
 
 **Alternatives considered.** Hard-coded planner/manager/finance path (rejected — too rigid for real customers); role-only reviewers (rejected — faster, but forces redesign when named approvers are needed); resolving policy on every transition (rejected — policy edits could rewrite an in-flight approval's required path).
 

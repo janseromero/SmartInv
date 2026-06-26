@@ -23,6 +23,7 @@ from api.contracts.workflow_engine import (
     WorkflowState,
 )
 from api.db.models.workflow import Approval, ApprovalEvent
+from api.workflow.policies import resolve_approval_path
 
 INITIAL_STATE: WorkflowState = "agent_proposed"
 APPROVED_STATE: WorkflowState = "approved"
@@ -102,7 +103,12 @@ class PostgresWorkflowEngine:
         recommendation_id: uuid.UUID | None = None,
         approval_path: tuple[ApprovalStep, ...] | list[ApprovalStep] | None = None,
     ) -> WorkflowHandle:
-        path = _normalize_path(approval_path)
+        resolved_path = approval_path
+        if resolved_path is None:
+            resolved_path = resolve_approval_path(
+                self._session, workflow_type=workflow_type, payload=payload
+            )
+        path = _normalize_path(resolved_path)
         approval = Approval(
             tenant_id=tenant_id,
             type=workflow_type,

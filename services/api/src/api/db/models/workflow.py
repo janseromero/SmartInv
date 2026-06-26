@@ -8,9 +8,20 @@ from __future__ import annotations
 
 import uuid
 from datetime import datetime
+from decimal import Decimal
 from typing import Any
 
-from sqlalchemy import BigInteger, DateTime, ForeignKey, Integer, String, UniqueConstraint, func
+from sqlalchemy import (
+    BigInteger,
+    DateTime,
+    ForeignKey,
+    Integer,
+    Numeric,
+    SmallInteger,
+    String,
+    UniqueConstraint,
+    func,
+)
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -37,6 +48,27 @@ class Approval(Base, TenantMixin, TimestampMixin):
         ForeignKey("ml.recommendations.id", ondelete="SET NULL"),
         nullable=True,
     )
+
+
+class ApprovalPolicy(Base, TenantMixin, TimestampMixin):
+    """Configurable rule that resolves a workflow's required approval path.
+
+    Rules are tenant-scoped because approval policy is customer-specific. The
+    selected ``required_path`` is copied onto each approval at start time so
+    in-flight workflows remain reproducible if policy changes later.
+    """
+
+    __tablename__ = "approval_policies"
+    __table_args__ = {"schema": SCHEMA}
+
+    id: Mapped[uuid.UUID] = uuid_pk()
+    workflow_type: Mapped[str] = mapped_column(String(32), nullable=False)
+    min_value: Mapped[Decimal | None] = mapped_column(Numeric(14, 2), nullable=True)
+    max_value: Mapped[Decimal | None] = mapped_column(Numeric(14, 2), nullable=True)
+    min_criticality: Mapped[int | None] = mapped_column(SmallInteger, nullable=True)
+    required_path: Mapped[list[dict[str, Any]]] = mapped_column(JSONB, nullable=False)
+    priority: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    status: Mapped[str] = mapped_column(String(16), nullable=False, default="active")
 
 
 class ApprovalEvent(Base, TenantMixin):
