@@ -210,23 +210,32 @@ No Temporal at MVP. Use a Postgres-backed state machine:
 
 ```sql
 create table workflow.approvals (
-  id            uuid primary key,
-  tenant_id     uuid not null,
-  type          text not null,           -- 'min_max_change', 'transfer', ...
-  payload       jsonb not null,
-  state         text not null,           -- 'agent_proposed' | 'planner_review' | 'manager_review' | 'approved' | 'rejected'
-  current_actor text,
-  created_at    timestamptz default now(),
-  updated_at    timestamptz default now()
+  id                     uuid primary key,
+  tenant_id              uuid not null,
+  type                   text not null,     -- 'min_max_change', 'transfer', ...
+  payload                jsonb not null,
+  state                  text not null,     -- 'agent_proposed' | reviewer step | 'approved' | 'rejected'
+  approval_path          jsonb not null,    -- ordered [{state, reviewer_type: role|user, reviewer}]
+  current_step_index     integer not null,
+  current_reviewer_type  text,              -- 'role' | 'user'
+  current_reviewer       text,
+  current_actor          text,
+  created_at             timestamptz default now(),
+  updated_at             timestamptz default now()
 );
 
 create table workflow.approval_events (
-  id            bigserial primary key,
-  approval_id   uuid references workflow.approvals(id),
-  actor         text,
-  event         text,                    -- 'submitted', 'approved', 'rejected', 'commented'
-  payload       jsonb,
-  created_at    timestamptz default now()
+  id               bigserial primary key,
+  tenant_id        uuid not null,
+  approval_id      uuid references workflow.approvals(id),
+  actor            text,
+  event            text,                    -- 'submit', 'approve', 'reject', 'cancelled'
+  idempotency_key  text,
+  from_state       text,
+  to_state         text,
+  payload          jsonb,
+  created_at       timestamptz default now(),
+  unique (tenant_id, approval_id, idempotency_key)
 );
 ```
 

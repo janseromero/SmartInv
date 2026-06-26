@@ -10,6 +10,9 @@ from api.contracts.llm_gateway import LLMGateway, LLMMessage, LLMResponse
 from api.contracts.object_store import ObjectNotFoundError, ObjectStore
 from api.contracts.search_index import SearchHit, SearchIndex
 from api.contracts.workflow_engine import (
+    ApprovalStep,
+    InvalidApprovalPathError,
+    InvalidWorkflowTransitionError,
     WorkflowEngine,
     WorkflowHandle,
     WorkflowNotFoundError,
@@ -23,6 +26,9 @@ __all__ = [
     "ObjectStore",
     "SearchHit",
     "SearchIndex",
+    "ApprovalStep",
+    "InvalidApprovalPathError",
+    "InvalidWorkflowTransitionError",
     "WorkflowEngine",
     "WorkflowHandle",
     "WorkflowNotFoundError",

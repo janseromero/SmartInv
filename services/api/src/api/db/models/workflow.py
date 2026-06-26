@@ -10,7 +10,7 @@ import uuid
 from datetime import datetime
 from typing import Any
 
-from sqlalchemy import BigInteger, DateTime, ForeignKey, String, func
+from sqlalchemy import BigInteger, DateTime, ForeignKey, Integer, String, UniqueConstraint, func
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -28,6 +28,10 @@ class Approval(Base, TenantMixin, TimestampMixin):
     payload: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False, default=dict)
     state: Mapped[str] = mapped_column(String(32), nullable=False, default="agent_proposed")
     current_actor: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    current_step_index: Mapped[int] = mapped_column(Integer, nullable=False, default=-1)
+    current_reviewer_type: Mapped[str | None] = mapped_column(String(16), nullable=True)
+    current_reviewer: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    approval_path: Mapped[list[dict[str, Any]]] = mapped_column(JSONB, nullable=False, default=list)
     recommendation_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("ml.recommendations.id", ondelete="SET NULL"),
@@ -39,7 +43,12 @@ class ApprovalEvent(Base, TenantMixin):
     """Append-only approval transition log."""
 
     __tablename__ = "approval_events"
-    __table_args__ = {"schema": SCHEMA}
+    __table_args__ = (
+        UniqueConstraint(
+            "tenant_id", "approval_id", "idempotency_key", name="uq_approval_events_idempotency"
+        ),
+        {"schema": SCHEMA},
+    )
 
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
     approval_id: Mapped[uuid.UUID] = mapped_column(
@@ -49,6 +58,9 @@ class ApprovalEvent(Base, TenantMixin):
     )
     actor: Mapped[str | None] = mapped_column(String(64), nullable=True)
     event: Mapped[str] = mapped_column(String(32), nullable=False)
+    idempotency_key: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    from_state: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    to_state: Mapped[str | None] = mapped_column(String(32), nullable=True)
     payload: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False, default=dict)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()

@@ -2,7 +2,7 @@
 
 # CV6 — Workflow & Approval
 
-**Status:** ⚪ Planned
+**Status:** 🟢 In Progress
 **Goal:** Every state change in SmartInv — every min/max edit, every transfer, every requisition, every source-system write — flows through an approval workflow whose policy depends on risk, value, and role, with append-only audit and zero direct writes from agents.
 
 ---
@@ -25,7 +25,7 @@ The promise to the customer:
 
 | Code | Epic | User-visible outcome | Status |
 |------|------|----------------------|--------|
-| [CV6.E1](cv6-e1-postgres-workflow-engine/index.md) | Postgres Workflow Engine | `workflow.approvals` + `workflow.approval_events` tables driven by a typed state machine behind the `WorkflowEngine` interface | ⚪ Planned |
+| [CV6.E1](cv6-e1-postgres-workflow-engine/index.md) | Postgres Workflow Engine | `workflow.approvals` + `workflow.approval_events` tables driven by a configurable typed state machine behind the `WorkflowEngine` interface | 🟢 In Progress |
 | [CV6.E2](cv6-e2-approval-queue-ui/index.md) | Approval Queue UI | Planner / manager / finance see "my queue", can approve / request changes / reject with reason, see evidence strip and approval steps | ⚪ Planned |
 | [CV6.E3](cv6-e3-audit-trail/index.md) | Audit Trail | Append-only `audit.events` topic + queryable view; every recommendation, approval, override, and source-write is logged | ⚪ Planned |
 | [CV6.E4](cv6-e4-source-system-write-dispatch/index.md) | Source-System Write Dispatch | Approved actions dispatched via Dramatiq workers to Maximo (and future sources) with idempotency and structured error handling | ⚪ Planned |

@@ -39,7 +39,7 @@ discipline ([Engineering Principles · PR1](../../process/engineering-principles
 | [CV3](cv3-explainable-recommendations/index.md) | Explainable Inventory Recommendations | 🟢 In Progress · 5 of 5 epics (deterministic) |
 | [CV4](cv4-operational-risk/index.md) | Operational Risk Intelligence | 🟢 In Progress · 4 of 4 epics (deterministic) |
 | [CV5](cv5-conversational-analyst/index.md) | Governed Conversational Analyst | ⚪ Planned |
-| [CV6](cv6-workflow-approval/index.md) | Workflow & Approval | ⚪ Planned |
+| [CV6](cv6-workflow-approval/index.md) | Workflow & Approval | 🟢 In Progress |
 | [CV7](cv7-data-quality-trust/index.md) | Data Quality & Trust | ⚪ Planned |
 | [CV8](cv8-customer-readiness/index.md) | Customer Readiness | ⚪ Planned |
 

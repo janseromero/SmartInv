@@ -525,4 +525,18 @@ Story-level work uses a **5-column Kanban**: Backlog · Doing · Blocked · Revi
 
 ---
 
+## ADR-030 — Configurable approval paths with role-or-user reviewers
+
+**Context.** CV6 turns recommendation envelopes from CV3/CV4 into governed approvals. A hard-coded path (`planner → manager → finance`) would satisfy the first demo but would fail real industrial workflows, where some actions need only planner approval, critical-spare actions need manager review, high-value actions need finance, and some customers assign approvals to named users rather than roles. The engine also needs reproducibility: an approval already in flight must not change shape if policy changes later.
+
+**Decision.** Store a concrete, ordered `approval_path` on each `workflow.approvals` row at workflow start. Each step has `state`, `reviewer_type`, and `reviewer`. `reviewer_type` supports **Option B**: `role` or `user`. The workflow starts at `agent_proposed`; `submit` moves to the first configured reviewer step; `approve` advances through the stored path and then to `approved`; `reject` / `cancelled` moves to `rejected`. Every transition writes an append-only `workflow.approval_events` row with `from_state`, `to_state`, actor, payload, and an idempotency key.
+
+**Consequences.**
+- The engine is no longer coupled to one approval chain; the UI can later offer reviewer selection without redesigning the workflow table.
+- In-flight approvals are reproducible because the chosen path is persisted, not re-resolved on every action.
+- Idempotency keys make retries safe and prevent duplicate transition events.
+- Policy resolution (`workflow type × value × criticality → required approvers`) remains a separate CV6.E1 slice; it will produce the path that the engine already knows how to execute.
+
+**Alternatives considered.** Hard-coded planner/manager/finance path (rejected — too rigid for real customers); role-only reviewers (rejected — faster, but forces redesign when named approvers are needed); resolving policy on every transition (rejected — policy edits could rewrite an in-flight approval's required path).
+
 > **Adding a new ADR?** Number sequentially, follow the same format, include the trade-off honestly. ADRs are immutable — supersede with a new ADR rather than editing an old one.
