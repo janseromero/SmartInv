@@ -16,6 +16,7 @@ from api.routers import (
     admin,
     anomalies,
     approvals,
+    audit,
     dev_auth,
     duplicates,
     identity,
@@ -50,6 +51,7 @@ app.include_router(duplicates.router)
 app.include_router(anomalies.router)
 app.include_router(recommendations.router)
 app.include_router(approvals.router)
+app.include_router(audit.router)
 app.include_router(risk.router)
 app.include_router(admin.router)
 

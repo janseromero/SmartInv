@@ -14,6 +14,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from api.audit.service import record_audit_event
 from api.auth.dependencies import get_current_user, get_tenant_session, require_role
 from api.auth.models import CurrentUser
 from api.contracts.workflow_engine import InvalidWorkflowTransitionError
@@ -238,6 +239,7 @@ def transition_approval(
         )
 
     event = "approve" if body.action == "approve" else "reject"
+    from_state = approval.state
     payload = {
         "action": body.action,
         "reason_code": body.reason_code,
@@ -253,6 +255,20 @@ def transition_approval(
         )
     except InvalidWorkflowTransitionError as exc:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc
+    record_audit_event(
+        session,
+        tenant_id=user.tenant_id,
+        actor=user.email or user.sub,
+        action=f"approval.{body.action}",
+        resource_type="workflow.approval",
+        resource_id=approval_id,
+        payload={
+            "from_state": from_state,
+            "to_state": handle.state,
+            "reason_code": body.reason_code,
+            "reason_note": body.reason_note,
+        },
+    )
     return ApprovalActionResponse(
         id=handle.id,
         state=handle.state,

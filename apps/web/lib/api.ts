@@ -627,3 +627,46 @@ export function transitionApproval(
 export function fetchApprovalPolicies(): Promise<ApprovalPolicyRow[]> {
   return apiFetch<ApprovalPolicyRow[]>('/approvals/policies');
 }
+
+// --- Audit trail (CV6.E3) ------------------------------------------------
+
+export interface AuditEventRow {
+  id: number;
+  actor: string | null;
+  action: string;
+  resource_type: string | null;
+  resource_id: string | null;
+  payload: Record<string, unknown>;
+  occurred_at: string;
+}
+
+export interface AuditPage {
+  events: AuditEventRow[];
+  total: number;
+}
+
+export interface AuditQuery {
+  actor?: string;
+  action?: string;
+  resource_type?: string;
+  limit?: number;
+}
+
+export function fetchAuditEvents(query: AuditQuery = {}): Promise<AuditPage> {
+  return apiFetch<AuditPage>(`/audit/events${queryString({ ...query })}`);
+}
+
+export async function exportAuditCsv(query: AuditQuery = {}): Promise<string> {
+  const headers = new Headers();
+  const token = getToken();
+  if (token) {
+    headers.set('Authorization', `Bearer ${token}`);
+  }
+  const response = await fetch(`${API_URL}/audit/events.csv${queryString({ ...query })}`, {
+    headers,
+  });
+  if (!response.ok) {
+    throw new Error(`Audit CSV export failed: ${response.status}`);
+  }
+  return response.text();
+}

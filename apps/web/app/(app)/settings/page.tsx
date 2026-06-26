@@ -1,3 +1,4 @@
+import { AuditTrail } from '@/components/audit-trail';
 import { ConnectorsPanel } from '@/components/connectors-panel';
 import { ROUTE_BY_HREF } from '@/components/nav-config';
 import { PageHead } from '@/components/page-head';
@@ -9,7 +10,10 @@ export default function Page() {
   return (
     <div className="px-8 pt-7 pb-15 max-w-[1400px]">
       <PageHead crumb={route.crumb} title={route.title} sub={route.sub} />
-      <ConnectorsPanel />
+      <div className="flex flex-col gap-4">
+        <ConnectorsPanel />
+        <AuditTrail />
+      </div>
     </div>
   );
 }

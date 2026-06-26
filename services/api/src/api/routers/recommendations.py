@@ -15,6 +15,7 @@ from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from api.audit.service import record_audit_event
 from api.auth.dependencies import get_current_user, get_tenant_session, require_role
 from api.auth.models import CurrentUser
 from api.db.models.inventory import Item
@@ -256,6 +257,15 @@ def accept_recommendation(
 ) -> ActionResponse:
     rec = _open_recommendation(session, recommendation_id)
     record_feedback(session, user.tenant_id, rec, decision="accept")
+    record_audit_event(
+        session,
+        tenant_id=user.tenant_id,
+        actor=user.email or user.sub,
+        action="recommendation.accept",
+        resource_type="ml.recommendation",
+        resource_id=rec.id,
+        payload={"recommendation_type": rec.type, "status": rec.status},
+    )
     # Accept routes to the CV6 approval queue; never a direct source write.
     return ActionResponse(id=rec.id, status=rec.status)
 
@@ -284,6 +294,15 @@ def override_recommendation(
         reason_code=body.reason_code,
         reason_note=body.reason_note,
         adjusted_payload=body.adjusted_payload,
+    )
+    record_audit_event(
+        session,
+        tenant_id=user.tenant_id,
+        actor=user.email or user.sub,
+        action="recommendation.override",
+        resource_type="ml.recommendation",
+        resource_id=rec.id,
+        payload={"reason_code": body.reason_code, "reason_note": body.reason_note},
     )
     return ActionResponse(id=rec.id, status=rec.status)
 

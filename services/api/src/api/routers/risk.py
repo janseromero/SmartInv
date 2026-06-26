@@ -16,6 +16,7 @@ from pydantic import BaseModel
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
+from api.audit.service import record_audit_event
 from api.auth.dependencies import get_current_user, get_tenant_session, require_role
 from api.auth.models import CurrentUser
 from api.db.models.inventory import Balance, Item, Location, Supplier
@@ -329,6 +330,15 @@ def mitigate(
     )
     session.add(mitigation)
     session.flush()
+    record_audit_event(
+        session,
+        tenant_id=user.tenant_id,
+        actor=user.email or user.sub,
+        action="risk.mitigate",
+        resource_type="inventory.item",
+        resource_id=item.id,
+        payload={"recommendation_id": str(mitigation.id), "risk_score": item.risk_score},
+    )
     return MitigateResponse(recommendation_id=mitigation.id, status=mitigation.status)
 
 

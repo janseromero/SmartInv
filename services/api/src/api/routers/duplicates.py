@@ -17,6 +17,7 @@ from pydantic import BaseModel
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session, aliased
 
+from api.audit.service import record_audit_event
 from api.auth.dependencies import get_current_user, get_tenant_session, require_role
 from api.auth.models import CurrentUser
 from api.db.models.inventory import Item
@@ -214,4 +215,16 @@ def review_candidate(
         cand.status = "hold"
         cand.reviewed_at = datetime.now(UTC)
 
+    record_audit_event(
+        session,
+        tenant_id=user.tenant_id,
+        actor=user.email or user.sub,
+        action="duplicate.review",
+        resource_type="ml.duplicate_candidate",
+        resource_id=cand.id,
+        payload={
+            "decision": body.decision,
+            "recommendation_id": str(recommendation_id) if recommendation_id else None,
+        },
+    )
     return ReviewResponse(id=cand.id, status=cand.status, recommendation_id=recommendation_id)

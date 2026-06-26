@@ -3,7 +3,7 @@
 # CV6.E3 — Audit Trail
 
 **CV:** [CV6 — Workflow & Approval](../index.md)
-**Status:** ⚪ Planned
+**Status:** ✅ Done
 **Depends on:** CV6.E1
 
 ---
@@ -18,10 +18,10 @@ Append-only audit. Every state-changing operation (recommendation creation, appr
 
 | Code | Story | Status |
 |------|-------|--------|
-| CV6.E3.S1 | `audit.events` append-only table with indexes on actor, tenant_id, kind, time | 📥 Backlog |
-| CV6.E3.S2 | Audit middleware emits an event on every state-changing endpoint | 📥 Backlog |
-| CV6.E3.S3 | Audit query view with role-gated access | 📥 Backlog |
-| CV6.E3.S4 | CSV export for compliance teams | 📥 Backlog |
+| CV6.E3.S1 | `audit.events` append-only table with indexes on actor, tenant_id, kind, time | ✅ Done |
+| CV6.E3.S2 | Audit service emits an event on state-changing workflow/recommendation/review/admin endpoints | ✅ Done |
+| CV6.E3.S3 | Audit query view with role-gated access | ✅ Done |
+| CV6.E3.S4 | CSV export for compliance teams | ✅ Done |
 | CV6.E3.S5 | Regression test asserting no state-changing endpoint can skip audit | 📥 Backlog |
 
 ---

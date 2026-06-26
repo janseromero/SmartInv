@@ -17,6 +17,7 @@ from pydantic import BaseModel
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
+from api.audit.service import record_audit_event
 from api.auth.dependencies import get_current_user, get_tenant_session, require_role
 from api.auth.models import CurrentUser
 from api.db.models.inventory import Item, Location, Transaction
@@ -206,11 +207,20 @@ def review_anomaly(
     body: ReviewRequest,
     _reviewer: Annotated[CurrentUser, Depends(require_role(*REVIEW_ROLES))],
     session: Annotated[Session, Depends(get_tenant_session)],
-    _user: Annotated[CurrentUser, Depends(get_current_user)],
+    user: Annotated[CurrentUser, Depends(get_current_user)],
 ) -> ReviewResponse:
     anomaly = session.get(Anomaly, anomaly_id)
     if anomaly is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Anomaly not found.")
     anomaly.status = "acknowledged" if body.decision == "acknowledge" else "dismissed"
     anomaly.reviewed_at = datetime.now(UTC)
+    record_audit_event(
+        session,
+        tenant_id=user.tenant_id,
+        actor=user.email or user.sub,
+        action="anomaly.review",
+        resource_type="ml.anomaly",
+        resource_id=anomaly.id,
+        payload={"decision": body.decision, "status": anomaly.status},
+    )
     return ReviewResponse(id=anomaly.id, status=anomaly.status)
