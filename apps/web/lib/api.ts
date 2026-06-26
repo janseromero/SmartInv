@@ -555,3 +555,75 @@ export function fetchRiskItemDetail(id: string): Promise<RiskItemDetail> {
 export function mitigateRisk(id: string): Promise<{ recommendation_id: string; status: string }> {
   return apiFetch(`/risk/items/${id}/mitigate`, { method: 'POST' });
 }
+
+// --- Approval queue (CV6.E2) ---------------------------------------------
+
+export type ApprovalBucket = 'my_queue' | 'semi' | 'completed' | 'overrides' | 'all';
+export type ApprovalUiState = 'pending' | 'active' | 'approved' | 'rejected';
+
+export interface ApprovalStepRow {
+  state: string;
+  reviewer_type: 'role' | 'user';
+  reviewer: string;
+  ui_state: ApprovalUiState;
+}
+
+export interface ApprovalRow {
+  id: string;
+  workflow_type: string;
+  state: string;
+  current_reviewer_type: string | null;
+  current_reviewer: string | null;
+  current_actor: string | null;
+  created_at: string;
+  updated_at: string;
+  recommendation_id: string | null;
+  claim: string;
+  target_label: string;
+  confidence: number | null;
+  model_version: string | null;
+  evidence: Array<{ metric: string; value: string; sourceHref?: string }>;
+  impact: Record<string, string>;
+  steps: ApprovalStepRow[];
+}
+
+export interface ApprovalPage {
+  approvals: ApprovalRow[];
+  total: number;
+}
+
+export interface ApprovalPolicyRow {
+  id: string;
+  workflow_type: string;
+  min_value: number | null;
+  max_value: number | null;
+  min_criticality: number | null;
+  required_path: Array<{ state: string; reviewer_type: 'role' | 'user'; reviewer: string }>;
+  priority: number;
+  status: string;
+}
+
+export function fetchApprovals(bucket: ApprovalBucket): Promise<ApprovalPage> {
+  return apiFetch<ApprovalPage>(`/approvals${queryString({ bucket })}`);
+}
+
+export function transitionApproval(
+  id: string,
+  action: 'approve' | 'request_changes' | 'reject',
+  reasonCode?: string,
+  reasonNote?: string,
+): Promise<{ id: string; state: string }> {
+  return apiFetch(`/approvals/${id}/actions`, {
+    method: 'POST',
+    body: JSON.stringify({
+      action,
+      reason_code: reasonCode,
+      reason_note: reasonNote,
+      idempotency_key: `${action}-${id}-${Date.now()}`,
+    }),
+  });
+}
+
+export function fetchApprovalPolicies(): Promise<ApprovalPolicyRow[]> {
+  return apiFetch<ApprovalPolicyRow[]>('/approvals/policies');
+}
