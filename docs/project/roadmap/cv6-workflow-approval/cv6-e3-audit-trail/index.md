@@ -22,7 +22,7 @@ Append-only audit. Every state-changing operation (recommendation creation, appr
 | CV6.E3.S2 | Audit service emits an event on state-changing workflow/recommendation/review/admin endpoints | ✅ Done |
 | CV6.E3.S3 | Audit query view with role-gated access | ✅ Done |
 | CV6.E3.S4 | CSV export for compliance teams | ✅ Done |
-| CV6.E3.S5 | Regression test asserting no state-changing endpoint can skip audit | 📥 Backlog |
+| CV6.E3.S5 | Regression test asserting no state-changing endpoint can skip audit | ✅ Done |
 
 ---
 
