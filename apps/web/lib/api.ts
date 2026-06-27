@@ -670,3 +670,22 @@ export async function exportAuditCsv(query: AuditQuery = {}): Promise<string> {
   }
   return response.text();
 }
+
+// --- Source-system write dispatch (CV6.E4) -------------------------------
+
+export interface SourceWriteRow {
+  id: string;
+  recommendation_id: string | null;
+  target_system: string;
+  operation: string;
+  status: string;
+  attempts: number;
+  max_attempts: number;
+  last_error: string | null;
+  receipt: Record<string, unknown>;
+  updated_at: string;
+}
+
+export function fetchSourceWrites(status?: string): Promise<SourceWriteRow[]> {
+  return apiFetch<SourceWriteRow[]>(`/approvals/dispatch${queryString({ status })}`);
+}

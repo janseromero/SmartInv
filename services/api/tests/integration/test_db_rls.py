@@ -17,7 +17,7 @@ import pytest
 from api.config import get_settings
 
 SCHEMAS = ("core", "inventory", "sources", "ml", "agent", "workflow", "audit", "rag")
-EXPECTED_TABLE_COUNT = 33  # CV2/3 derived tables + CV6 approval_policies
+EXPECTED_TABLE_COUNT = 34  # CV2/3 derived tables + CV6 approval_policies + source_writes
 ROLE = "rls_test_role"
 
 

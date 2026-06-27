@@ -3,7 +3,7 @@
 # CV6.E4 — Source-System Write Dispatch
 
 **CV:** [CV6 — Workflow & Approval](../index.md)
-**Status:** ⚪ Planned
+**Status:** 🟢 In Progress · dispatch spine delivered behind the `SourceWriter` seam; the live Maximo write client (S2) is deferred until CV2.E1.S10
 **Depends on:** CV6.E1, CV2.E1
 
 ---
@@ -20,11 +20,11 @@ This is the operational manifestation of [AGENTS.md non-negotiable #2](../../../
 
 | Code | Story | Status |
 |------|-------|--------|
-| CV6.E4.S1 | Dramatiq worker pool dedicated to source writes | 📥 Backlog |
-| CV6.E4.S2 | Idempotent Maximo write client (min/max change, transfer, requisition) | 📥 Backlog |
-| CV6.E4.S3 | Retry / backoff policy with dead-letter queue for permanent failures | 📥 Backlog |
-| CV6.E4.S4 | Delivery receipt persisted on the originating recommendation | 📥 Backlog |
-| CV6.E4.S5 | Failed writes generate a structured incident with surfaced reason | 📥 Backlog |
+| CV6.E4.S1 | Source-write queue + dispatcher (Dramatiq-ready, runs sync today) | ✅ Done |
+| CV6.E4.S2 | Idempotent **Maximo** write client (min/max change, transfer, requisition) | 📥 Backlog (blocked on CV2.E1.S10) |
+| CV6.E4.S3 | Retry / backoff policy with dead-letter queue for permanent failures | ✅ Done |
+| CV6.E4.S4 | Delivery receipt persisted on the originating recommendation | ✅ Done |
+| CV6.E4.S5 | Failed writes generate a structured incident with surfaced reason | ✅ Done |
 
 ---
 
@@ -35,6 +35,19 @@ This is the operational manifestation of [AGENTS.md non-negotiable #2](../../../
 - A failure surfaces as a structured incident, never silently swallowed.
 
 ---
+
+## Implementation Notes (MVP)
+
+The dispatch spine ships behind a `SourceWriter` seam ([ADR-030 path mirrors
+ADR-024](../../decisions.md)): an `EchoSourceWriter` delivers deterministically
+with no external call, so the queue, idempotency, retry/backoff, dead-letter, and
+delivery-receipt machinery are real and tested today. The **live Maximo write
+client (S2)** is the only deferred piece and is gated on the real
+`MaximoConnector` ([CV2.E1.S10](../../cv2-inventory-health/cv2-e1-maximo-connector/index.md)).
+Swapping `EchoSourceWriter` for `MaximoSourceWriter` changes only
+`api/infra/providers.py`. The dispatcher is synchronous and idempotent so a
+Dramatiq worker later simply calls `process_pending` (run today via
+`make dispatch` / `POST /admin/dispatch`).
 
 ## Out of Scope
 

@@ -19,7 +19,8 @@ from api.auth.dependencies import get_current_user, get_tenant_session, require_
 from api.auth.models import CurrentUser
 from api.contracts.workflow_engine import InvalidWorkflowTransitionError
 from api.db.models.ml import Recommendation
-from api.db.models.workflow import Approval, ApprovalPolicy
+from api.db.models.workflow import Approval, ApprovalPolicy, SourceWrite
+from api.dispatch.service import enqueue_source_write
 from api.infra.providers import get_workflow_engine
 
 router = APIRouter(prefix="/approvals", tags=["approvals"])
@@ -72,6 +73,19 @@ class ApprovalActionResponse(BaseModel):
     state: str
     current_reviewer_type: str | None
     current_reviewer: str | None
+
+
+class SourceWriteResponse(BaseModel):
+    id: uuid.UUID
+    recommendation_id: uuid.UUID | None
+    target_system: str
+    operation: str
+    status: str
+    attempts: int
+    max_attempts: int
+    last_error: str | None
+    receipt: dict[str, Any]
+    updated_at: str
 
 
 class ApprovalPolicyResponse(BaseModel):
@@ -269,6 +283,17 @@ def transition_approval(
             "reason_note": body.reason_note,
         },
     )
+    # A fully-approved workflow stages a source-system write (CV6.E4); dispatch
+    # delivers it. The agent never writes directly (AGENTS non-negotiable #2).
+    if handle.state == "approved" and approval.recommendation_id is not None:
+        recommendation = session.get(Recommendation, approval.recommendation_id)
+        if recommendation is not None:
+            enqueue_source_write(
+                session,
+                tenant_id=user.tenant_id,
+                recommendation=recommendation,
+                approval_id=approval.id,
+            )
     return ApprovalActionResponse(
         id=handle.id,
         state=handle.state,
@@ -299,4 +324,31 @@ def list_approval_policies(
             status=policy.status,
         )
         for policy in policies
+    ]
+
+
+@router.get("/dispatch", response_model=list[SourceWriteResponse])
+def list_source_writes(
+    _reader: Annotated[CurrentUser, Depends(require_role(*READ_ROLES))],
+    session: Annotated[Session, Depends(get_tenant_session)],
+    status_filter: Annotated[str | None, Query(alias="status")] = None,
+) -> list[SourceWriteResponse]:
+    stmt = select(SourceWrite).order_by(SourceWrite.updated_at.desc())
+    if status_filter:
+        stmt = stmt.where(SourceWrite.status == status_filter)
+    writes = session.scalars(stmt).all()
+    return [
+        SourceWriteResponse(
+            id=write.id,
+            recommendation_id=write.recommendation_id,
+            target_system=write.target_system,
+            operation=write.operation,
+            status=write.status,
+            attempts=write.attempts,
+            max_attempts=write.max_attempts,
+            last_error=write.last_error,
+            receipt=write.receipt,
+            updated_at=write.updated_at.isoformat(),
+        )
+        for write in writes
     ]

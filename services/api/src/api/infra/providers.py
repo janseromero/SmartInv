@@ -13,6 +13,7 @@ from api.contracts.llm_gateway import LLMGateway
 from api.contracts.object_store import ObjectStore
 from api.contracts.search_index import SearchIndex
 from api.contracts.workflow_engine import WorkflowEngine
+from api.dispatch.writer import EchoSourceWriter, SourceWriter
 from api.infra.llm_gateway import EchoLLMGateway
 from api.infra.object_store import S3ObjectStore
 from api.infra.search_index import InMemorySearchIndex
@@ -35,3 +36,8 @@ def get_search_index() -> SearchIndex:
 
 def get_workflow_engine(session: Session) -> WorkflowEngine:
     return PostgresWorkflowEngine(session)
+
+
+def get_source_writer() -> SourceWriter:
+    # Echo writer until CV2.E1.S10 lands the real MaximoConnector / write client.
+    return EchoSourceWriter()

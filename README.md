@@ -194,6 +194,7 @@ make anomalies        # recompute anomaly detections (CV2.E5)
 make forecast         # recompute demand forecasts (CV3.E1)
 make optimize         # recompute inventory recommendations (CV3.E2/E3)
 make risk             # recompute operational-risk scores (CV4.E1/E2)
+make dispatch         # deliver pending source-system writes (CV6.E4)
 ```
 
 Every tenant-scoped table has a default-deny RLS policy keyed on the

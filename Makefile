@@ -1,7 +1,7 @@
 # SmartInv — developer shortcuts.
 # The local stack (Postgres, Redis, SeaweedFS) is defined in docker-compose.yml.
 
-.PHONY: dev-up dev-down dev-restart dev-logs bootstrap-buckets check-infra migrate migrate-down seed token api sync-fixtures score dedup anomalies forecast optimize risk
+.PHONY: dev-up dev-down dev-restart dev-logs bootstrap-buckets check-infra migrate migrate-down seed token api sync-fixtures score dedup anomalies forecast optimize risk dispatch
 
 # Boot the local infrastructure and ensure the object-store bucket exists.
 dev-up:
@@ -76,3 +76,7 @@ optimize:
 # Recompute operational-risk scores for the dev tenant (CV4.E1/E2).
 risk:
 	uv run python scripts/risk.py
+
+# Deliver pending source-system writes for the dev tenant (CV6.E4).
+dispatch:
+	uv run python scripts/dispatch.py

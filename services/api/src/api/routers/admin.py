@@ -23,7 +23,9 @@ from api.auth.dependencies import get_current_user, get_tenant_session, require_
 from api.auth.models import CurrentUser
 from api.db.models.sources import Connector, SyncRun
 from api.dedup.service import run_dedup
+from api.dispatch.service import process_pending
 from api.forecast.service import run_forecast
+from api.infra.providers import get_source_writer
 from api.ingestion.fixture_sync import run_fixture_sync
 from api.optimize.service import run_optimization
 from api.risk.service import run_risk_scan
@@ -161,6 +163,22 @@ def trigger_risk_scan(
 ) -> dict[str, int]:
     result = run_risk_scan(session, user.tenant_id)
     _audit_admin_job(session, user, "admin.risk", result)
+    return result
+
+
+@router.post("/dispatch", summary="Deliver pending source-system writes")
+def trigger_dispatch(
+    user: Annotated[CurrentUser, Depends(get_current_user)],
+    session: Annotated[Session, Depends(get_tenant_session)],
+    _admin: Annotated[CurrentUser, Depends(require_role("admin"))],
+) -> dict[str, int]:
+    result = process_pending(
+        session,
+        tenant_id=user.tenant_id,
+        writer=get_source_writer(),
+        actor=user.email or user.sub,
+    )
+    _audit_admin_job(session, user, "admin.dispatch", result)
     return result
 
 

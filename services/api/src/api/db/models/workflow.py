@@ -71,6 +71,43 @@ class ApprovalPolicy(Base, TenantMixin, TimestampMixin):
     status: Mapped[str] = mapped_column(String(16), nullable=False, default="active")
 
 
+class SourceWrite(Base, TenantMixin, TimestampMixin):
+    """A queued write to a source system (CV6.E4).
+
+    Created when an approval reaches ``approved``. A dispatcher delivers it to
+    the source system behind the ``SourceWriter`` seam with idempotency, retries,
+    and dead-letter handling. ``receipt`` holds the delivery receipt; a permanent
+    failure lands in ``dead_letter`` with ``last_error`` (the structured incident).
+    """
+
+    __tablename__ = "source_writes"
+    __table_args__ = (
+        UniqueConstraint("tenant_id", "idempotency_key", name="uq_source_writes_idempotency"),
+        {"schema": SCHEMA},
+    )
+
+    id: Mapped[uuid.UUID] = uuid_pk()
+    recommendation_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("ml.recommendations.id", ondelete="SET NULL"),
+        nullable=True,
+    )
+    approval_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("workflow.approvals.id", ondelete="SET NULL"),
+        nullable=True,
+    )
+    target_system: Mapped[str] = mapped_column(String(32), nullable=False, default="maximo")
+    operation: Mapped[str] = mapped_column(String(32), nullable=False)
+    payload: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False, default=dict)
+    idempotency_key: Mapped[str] = mapped_column(String(128), nullable=False)
+    status: Mapped[str] = mapped_column(String(16), nullable=False, default="pending")
+    attempts: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    max_attempts: Mapped[int] = mapped_column(Integer, nullable=False, default=3)
+    last_error: Mapped[str | None] = mapped_column(String(512), nullable=True)
+    receipt: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False, default=dict)
+
+
 class ApprovalEvent(Base, TenantMixin):
     """Append-only approval transition log."""
 

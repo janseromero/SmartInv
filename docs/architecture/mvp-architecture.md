@@ -183,7 +183,7 @@ sources.connectors, sources.sync_runs, sources.error_log
 ml.model_registry, ml.predictions, ml.recommendations
 agent.conversations, agent.runs, agent.events, agent.tool_catalog
 -- agent.checkpoints owned by LangGraph PostgresSaver (CV5)
-workflow.approvals, workflow.approval_events
+workflow.approvals, workflow.approval_events, workflow.approval_policies, workflow.source_writes
 rag.documents, rag.chunks
 audit.events
 ```

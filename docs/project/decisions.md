@@ -539,4 +539,21 @@ Story-level work uses a **5-column Kanban**: Backlog · Doing · Blocked · Revi
 
 **Alternatives considered.** Hard-coded planner/manager/finance path (rejected — too rigid for real customers); role-only reviewers (rejected — faster, but forces redesign when named approvers are needed); resolving policy on every transition (rejected — policy edits could rewrite an in-flight approval's required path).
 
+## ADR-031 — Source-system write dispatch behind a `SourceWriter` seam (Echo first)
+
+**Context.** CV6.E4 is the single gate through which an approved SmartInv action reaches a customer's ERP/EAM (AGENTS non-negotiable #2). The roadmap sketched a Dramatiq worker pool delivering to a real Maximo write client. But the live Maximo write client depends on the real `MaximoConnector` (CV2.E1.S10), which is still backlog — and writes to source systems are irreversible at the customer (AGENTS slow lane). Building the whole epic against a hard external dependency would block the durable parts (queue, idempotency, retries, dead-letter, receipts) on the least-certain part.
+
+**Decision.** Implement the dispatch spine behind a `SourceWriter` seam, mirroring the fixtures-first connector pattern ([ADR-024](#adr-024--source-ingestion-connector-seam-fixtures-first-secret-manager-credentials)):
+- A tenant-scoped, RLS-protected `workflow.source_writes` queue row is staged when an approval reaches `approved` (idempotency key `recwrite:{recommendation_id}` — a repeated approval cannot duplicate a write).
+- `process_pending` delivers each write through the `SourceWriter`, bounded by `max_attempts`; a retryable failure stays `pending`, a permanent/exhausted failure becomes `dead_letter` and emits a `dispatch.incident` audit event (CV6.E3).
+- A successful write persists a delivery receipt on the row and marks the originating recommendation `delivered`.
+- The MVP `SourceWriter` is `EchoSourceWriter` — deterministic external id, no external call — so idempotency and the failure path are provable today. The dispatcher is synchronous and idempotent, so a Dramatiq worker later simply calls `process_pending`; today it runs via `make dispatch` / `POST /admin/dispatch`.
+
+**Consequences.**
+- The whole CV6.E4 mechanism (queue, idempotency, retry/backoff, dead-letter, receipts, incidents) ships and is tested without a live source system; the only deferred piece is `MaximoSourceWriter` (CV6.E4.S2), gated on CV2.E1.S10. Swapping it changes only `api/infra/providers.py`.
+- No agent or endpoint writes to a source system directly — every write flows through the dispatch service after approval.
+- **Trade-off:** the MVP “delivers” to an echo sink, so end-to-end delivery to Maximo is not yet exercised against a real system; that validation arrives with the live client.
+
+**Alternatives considered.** Build the real Maximo write client now (rejected — blocked on CV2.E1.S10, irreversible at the customer); stand up Dramatiq broker wiring now (deferred — the sync dispatcher is idempotent and the worker is a thin wrapper, so the broker earns its cost only when async delivery is needed); write directly from the approval endpoint (forbidden — non-negotiable #2).
+
 > **Adding a new ADR?** Number sequentially, follow the same format, include the trade-off honestly. ADRs are immutable — supersede with a new ADR rather than editing an old one.

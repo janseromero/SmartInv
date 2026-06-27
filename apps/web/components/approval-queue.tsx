@@ -4,8 +4,10 @@ import {
   type ApprovalBucket,
   type ApprovalPolicyRow,
   type ApprovalRow,
+  type SourceWriteRow,
   fetchApprovalPolicies,
   fetchApprovals,
+  fetchSourceWrites,
   transitionApproval,
 } from '@/lib/api';
 import { ApprovalStep, Badge, Button, EvidenceStrip, KpiCard } from '@smartinv/ui-web';
@@ -102,9 +104,69 @@ export function ApprovalQueue() {
           ) : null}
         </div>
 
-        <PolicyPanel policies={policies.data ?? []} loading={policies.isLoading} />
+        <div className="flex flex-col gap-4">
+          <PolicyPanel policies={policies.data ?? []} loading={policies.isLoading} />
+          <DispatchPanel />
+        </div>
       </div>
     </div>
+  );
+}
+
+const DISPATCH_TONE: Record<string, 'ok' | 'warn' | 'crit'> = {
+  delivered: 'ok',
+  pending: 'warn',
+  dead_letter: 'crit',
+};
+
+function DispatchPanel() {
+  const writes = useQuery({ queryKey: ['source-writes'], queryFn: () => fetchSourceWrites() });
+  const rows = writes.data ?? [];
+  return (
+    <aside className="rounded-md border border-line bg-card shadow-card p-md flex flex-col gap-3">
+      <div>
+        <h2 className="font-medium text-ink">Source-system dispatch</h2>
+        <p className="text-sm text-ink-3 mt-1">
+          Approved actions queued for the source system — delivered with receipts, retries, and
+          dead-letter on permanent failure.
+        </p>
+      </div>
+      {writes.isLoading ? <div className="text-sm text-ink-3">Loading dispatch queue…</div> : null}
+      {rows.length === 0 && !writes.isLoading ? (
+        <div className="text-sm text-ink-3">
+          No queued writes. Approve a recommendation to stage one.
+        </div>
+      ) : null}
+      <div className="flex flex-col gap-2">
+        {rows.map((write: SourceWriteRow) => (
+          <div key={write.id} className="rounded-md border border-line p-3 bg-surface/60">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="font-medium text-sm text-ink">
+                {write.operation.replaceAll('_', ' ')}
+              </span>
+              <Badge label={write.target_system} variant="neutral" />
+              <Badge
+                label={write.status.replaceAll('_', ' ')}
+                variant="status"
+                tone={DISPATCH_TONE[write.status] ?? 'warn'}
+              />
+              <span className="flex-1" />
+              <span className="font-mono text-[10px] text-ink-3">
+                {write.attempts}/{write.max_attempts} attempts
+              </span>
+            </div>
+            {typeof write.receipt.external_id === 'string' ? (
+              <div className="mt-1 font-mono text-[10px] text-ink-3">
+                receipt {write.receipt.external_id}
+              </div>
+            ) : null}
+            {write.last_error ? (
+              <div className="mt-1 text-xs text-crit">{write.last_error}</div>
+            ) : null}
+          </div>
+        ))}
+      </div>
+    </aside>
   );
 }
 
