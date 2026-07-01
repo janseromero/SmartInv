@@ -9,6 +9,8 @@ Thumbs.db
 # --- Logs ---
 *.log
 logs/
+.logs/
+.run/
 
 # --- Environments / secrets ---
 .env

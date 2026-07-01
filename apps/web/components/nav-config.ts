@@ -41,7 +41,6 @@ export const ROUTE_GROUPS: RouteGroup[] = [
         title: 'Executive Overview',
         sub: 'Working capital, risk and opportunity across plants — every figure traceable to source records.',
         icon: 'grid',
-        shipsIn: 'CV2 + CV4 + CV6',
       },
     ],
   },
