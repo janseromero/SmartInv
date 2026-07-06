@@ -52,6 +52,15 @@ class Settings(BaseSettings):
         validation_alias="LANGFUSE_BASE_URL",
     )
 
+    # --- Conversational analyst LLM (CV5.E1 / ADR-006) ---
+    # LiteLLM SDK in-process (ADR-032). Default to gpt-4o-mini for dev/eval;
+    # switch vendor (e.g. claude-3-5-haiku) by changing llm_model alone. The
+    # key is read from OPENAI_API_KEY (LiteLLM's own convention) and is empty
+    # by default, so the analyst endpoint 503s until it is configured.
+    llm_model: str = "gpt-4o-mini"
+    llm_temperature: float = 0.0
+    openai_api_key: str = Field(default="", validation_alias="OPENAI_API_KEY")
+
     # --- Identity (CV1.E6 / ADR-021) ---
     # MVP uses a local HS256 dev token-issuer behind an OIDC-shaped seam.
     # Production swaps in a real IdP (Auth0/Keycloak) by changing token

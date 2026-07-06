@@ -14,6 +14,7 @@ from pydantic import BaseModel, Field
 from api.config import get_settings
 from api.routers import (
     admin,
+    agents,
     anomalies,
     approvals,
     audit,
@@ -52,6 +53,7 @@ app.include_router(duplicates.router)
 app.include_router(anomalies.router)
 app.include_router(recommendations.router)
 app.include_router(forecast.router)
+app.include_router(agents.router)
 app.include_router(approvals.router)
 app.include_router(audit.router)
 app.include_router(risk.router)

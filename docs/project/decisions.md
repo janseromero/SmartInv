@@ -556,4 +556,27 @@ Story-level work uses a **5-column Kanban**: Backlog · Doing · Blocked · Revi
 
 **Alternatives considered.** Build the real Maximo write client now (rejected — blocked on CV2.E1.S10, irreversible at the customer); stand up Dramatiq broker wiring now (deferred — the sync dispatcher is idempotent and the worker is a thin wrapper, so the broker earns its cost only when async delivery is needed); write directly from the approval endpoint (forbidden — non-negotiable #2).
 
+---
+
+## ADR-032 — CV5 conversational analyst: LiteLLM SDK in-process, linear orchestrator, LangGraph/PostgresSaver deferred
+
+**Context.** CV5 ships the governed conversational analyst ("Ask SmartInv"). [ADR-006](#adr-006--agent-orchestration-with-langgraph--postgressaver) chose LangGraph + PostgresSaver + a LiteLLM gateway; the CV5.E1 plan additionally speced LiteLLM as a **proxy container**. Building slice 1 (one thin governed path end to end) surfaced that two of those choices buy nothing yet while adding real cost.
+
+**Decision.**
+- **LiteLLM Python SDK in-process** behind the existing `LLMGateway` contract — not a proxy container. A proxy earns its keep for multi-service/multi-team key management, which the modular monolith does not have. Vendor choice stays a config swap (`llm_model`); default `gpt-4o-mini`, `claude-3-5-haiku` as an alternate target.
+- **In-process `/agents` router** in the monolith rather than a separate `agent` service (same split-later posture as every other module).
+- **Linear Python orchestrator** (plan → execute tools → compose → validate → finalize) instead of LangGraph. With no branching and no durable checkpointing at MVP, a graph engine is ceremony.
+- **PostgresSaver checkpointing deferred**, not removed. Conversations/runs/events are still persisted for history and audit; durable crash-resume activates when a query becomes long-running/multi-step. This consciously defers the CV5.E2 done-condition guarantee ("a crashed orchestrator resumes from checkpoint") — recorded here rather than dropped silently.
+- **The grounding validator is the hard MVP guarantee** ([ADR-014](#adr-014--eval-driven-development-for-ai-features)): a deterministic check that every numeric claim in an answer traces to a tool output; the orchestrator **fails closed** (never ships untraceable numbers). It is unit-tested on every PR, independent of any live model.
+
+**Consequences.**
+- Slice 1 adds only the `litellm` dependency (lazily imported), no new container or service.
+- The `LLMGateway` seam is unchanged, so swapping to the proxy or to LangGraph later is localized.
+- The analyst endpoint `503`s until `OPENAI_API_KEY` is configured; tests inject a deterministic stub planner/composer so the governed path runs in CI without a vendor.
+- **Trade-off:** no durable resume yet (acceptable for sub-6s read-only queries); LangGraph adoption is postponed until the graph actually branches (full CV5.E2 / CV11).
+
+**Alternatives considered.** LiteLLM proxy container now (rejected — ops weight, zero MVP benefit); LangGraph + PostgresSaver now (deferred — no branching/durability need yet); separate `agent` service (deferred — premature split); enforce grounding in the prompt only (rejected — non-negotiable trust is enforced in code, not prose).
+
+---
+
 > **Adding a new ADR?** Number sequentially, follow the same format, include the trade-off honestly. ADRs are immutable — supersede with a new ADR rather than editing an old one.
