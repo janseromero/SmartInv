@@ -12,6 +12,7 @@ import hashlib
 import json
 import uuid
 from collections import defaultdict
+from collections.abc import Iterable
 from datetime import UTC, datetime
 
 from sqlalchemy import delete, select
@@ -64,20 +65,49 @@ def ensure_forecast_version(session: Session) -> uuid.UUID:
     return model_id
 
 
+def bucket_series(
+    events: Iterable[tuple[float, datetime]],
+    now: datetime,
+    periods: int = HISTORY_PERIODS,
+) -> list[float]:
+    """Bucket ``(quantity, txn_date)`` events into fixed periods (oldest -> newest).
+
+    Pure and deterministic: the same events + reference ``now`` always yield the
+    same zero-filled series. Shared by the batch forecast run and the per-item
+    read API so history is bucketed identically in both.
+    """
+    series = [0.0] * periods
+    for quantity, txn_date in events:
+        age_days = (now - txn_date).days
+        period_back = age_days // PERIOD_DAYS  # 0 = current period
+        if 0 <= period_back < periods:
+            series[periods - 1 - period_back] += float(quantity)
+    return series
+
+
+def item_demand_history(session: Session, item_id: uuid.UUID, now: datetime) -> list[float]:
+    """Bucketed issue-demand history for a single item (read-side, for the API)."""
+    events = session.execute(
+        select(Transaction.quantity, Transaction.txn_date).where(
+            Transaction.item_id == item_id,
+            Transaction.type == "issue",
+            Transaction.txn_date.isnot(None),
+        )
+    ).all()
+    return bucket_series(((float(q), d) for q, d in events), now)
+
+
 def _buckets(session: Session, now: datetime) -> dict[uuid.UUID, list[float]]:
     """Per item, demand quantity per period (oldest -> newest), zero-filled."""
-    series: dict[uuid.UUID, list[float]] = defaultdict(lambda: [0.0] * HISTORY_PERIODS)
+    grouped: dict[uuid.UUID, list[tuple[float, datetime]]] = defaultdict(list)
     rows = session.execute(
         select(Transaction.item_id, Transaction.quantity, Transaction.txn_date).where(
             Transaction.type == "issue", Transaction.txn_date.isnot(None)
         )
     ).all()
     for row in rows:
-        age_days = (now - row.txn_date).days
-        period_back = age_days // PERIOD_DAYS  # 0 = current period
-        if 0 <= period_back < HISTORY_PERIODS:
-            series[row.item_id][HISTORY_PERIODS - 1 - period_back] += float(row.quantity)
-    return series
+        grouped[row.item_id].append((float(row.quantity), row.txn_date))
+    return {item_id: bucket_series(events, now) for item_id, events in grouped.items()}
 
 
 def _fingerprint(series: list[float]) -> str:

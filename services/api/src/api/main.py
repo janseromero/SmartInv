@@ -19,6 +19,7 @@ from api.routers import (
     audit,
     dev_auth,
     duplicates,
+    forecast,
     identity,
     inventory,
     recommendations,
@@ -50,6 +51,7 @@ app.include_router(inventory.router)
 app.include_router(duplicates.router)
 app.include_router(anomalies.router)
 app.include_router(recommendations.router)
+app.include_router(forecast.router)
 app.include_router(approvals.router)
 app.include_router(audit.router)
 app.include_router(risk.router)

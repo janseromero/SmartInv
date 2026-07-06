@@ -476,6 +476,66 @@ export function fetchRegimeSignals(): Promise<RegimeSignalRow[]> {
   return apiFetch<RegimeSignalRow[]>('/recommendations/regime-signals');
 }
 
+// --- Demand forecasting (CV3.E1) -----------------------------------------
+
+export interface ForecastItemRow {
+  id: string;
+  item_number: string;
+  description: string | null;
+  method: string;
+  rate: number;
+  p50: number;
+  p80: number;
+  p95: number;
+  cv: number;
+  demand_events: number;
+  model_version: string;
+}
+
+export interface ForecastItemsPage {
+  items: ForecastItemRow[];
+  total: number;
+  page: number;
+  page_size: number;
+}
+
+export interface ForecastSummary {
+  forecasted: number;
+  total_items: number;
+  coverage_pct: number;
+  obsolescence_trending: number;
+  avg_cv: number;
+  by_method: Record<string, number>;
+  model_version: string;
+}
+
+export interface ForecastItemDetail extends ForecastItemRow {
+  horizon: number;
+  period_days: number;
+  history: number[];
+  diagnostics: Record<string, number>;
+  predicted_at: string | null;
+  input_fingerprint: string | null;
+}
+
+export interface ForecastQuery {
+  page?: number;
+  page_size?: number;
+  method?: string;
+}
+
+export function fetchForecastSummary(): Promise<ForecastSummary> {
+  return apiFetch<ForecastSummary>('/forecast/summary');
+}
+
+export function fetchForecastItems(query: ForecastQuery): Promise<ForecastItemsPage> {
+  return apiFetch<ForecastItemsPage>(`/forecast/items${queryString({ ...query })}`);
+}
+
+export function fetchForecastItemDetail(id: string): Promise<ForecastItemDetail> {
+  return apiFetch<ForecastItemDetail>(`/forecast/items/${id}`);
+}
+
 // --- Operational risk (CV4) ----------------------------------------------
 
 export interface RiskItemRow {

@@ -72,7 +72,6 @@ export const ROUTE_GROUPS: RouteGroup[] = [
         title: 'Demand Forecasting',
         sub: 'Probabilistic forecasts built for intermittent MRO demand — with confidence bands on every horizon.',
         icon: 'trend',
-        shipsIn: 'CV3.E1',
       },
       {
         href: '/optimize',

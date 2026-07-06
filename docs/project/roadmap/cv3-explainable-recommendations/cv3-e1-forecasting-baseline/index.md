@@ -9,6 +9,8 @@
 
 > **Re-scoped (ADR-028):** ships Croston/TSB + CV-based P50/P80/P95 quantiles in `ml.predictions`, versioned, with `make forecast` / `POST /admin/forecast` and a reproducibility fingerprint. LightGBM feature-engineering (S2) and regime-change refresh (S5, now part of CV3.E5) are deferred. On-demand recompute; nightly schedule deferred.
 
+> **Read surface & screen (delivered):** a read-only `/forecast` API (`GET /forecast/summary`, `GET /forecast/items`, `GET /forecast/items/{id}`) surfaces the persisted forecasts, and the **Demand Forecasting** screen (`/forecast`) renders portfolio KPIs, the Croston/TSB/naive/empty method mix, a per-item table, and a drill-down that plots bucketed demand history against a flat projection with a P80/P95 band (hand-rolled SVG — no chart dependency). Per-item history is re-bucketed from `inventory.transactions` on read via the shared, unit-tested `bucket_series` helper.
+
 ---
 
 ## What This Is
@@ -21,12 +23,12 @@ Probabilistic demand forecasting tuned for intermittent MRO patterns. Two-tier a
 
 | Code | Story | Status |
 |------|-------|--------|
-| CV3.E1.S1 | Implement Croston / TSB baseline per item × site | 📥 Backlog |
-| CV3.E1.S2 | LightGBM forecaster with feature engineering (seasonality, PM plans, asset state) | 📥 Backlog |
-| CV3.E1.S3 | Quantile forecasts (P50/P80/P95) persisted in `ml.predictions` | 📥 Backlog |
-| CV3.E1.S4 | Model registry entry per model version with held-out MASE | 📥 Backlog |
-| CV3.E1.S5 | Regime-change detection (asset retirement, strategy shift) signals model refresh | 📥 Backlog |
-| CV3.E1.S6 | `GET /api/forecast/{item_id}?horizon=12` endpoint | 📥 Backlog |
+| CV3.E1.S1 | Implement Croston / TSB baseline per item × site | ✅ Done |
+| CV3.E1.S2 | LightGBM forecaster with feature engineering (seasonality, PM plans, asset state) | 📥 Backlog (deferred → `forecast-v2`) |
+| CV3.E1.S3 | Quantile forecasts (P50/P80/P95) persisted in `ml.predictions` | ✅ Done |
+| CV3.E1.S4 | Model registry entry per model version (held-out MASE deferred with `forecast-v2`) | 🛠 Partial — registry entry done; accuracy metrics pending |
+| CV3.E1.S5 | Regime-change detection (asset retirement, strategy shift) signals model refresh | 📥 Backlog (moved to CV3.E5) |
+| CV3.E1.S6 | Forecast read API + Demand Forecasting screen (`/forecast/*`, `/forecast`) | ✅ Done |
 
 ---
 
