@@ -1,22 +1,25 @@
 'use client';
 
 /**
- * Ask SmartInv — conversational analyst chat (CV5.E2.S4).
+ * Ask SmartInv — conversational analyst chat (CV5.E2.S4/S5/S6).
  *
  * Read-only governed Q&A over the JSON `POST /agents/run` endpoint. Renders the
  * grounded answer with its evidence strip; fails visibly (never silently) when
  * an answer is withheld (fail-closed) or the analyst is unconfigured (503).
- * Streaming the run trace is CV5.E2.S3; conversation persistence is S5.
+ * Turns are persisted (S5): the component threads a `conversation_id` so
+ * follow-ups continue the same conversation, and can load a past one.
+ * Streaming the run trace is CV5.E2.S3.
  *
  * The same component powers the full `/analyst` page and the topbar slide-over,
  * so it holds its own local conversation state and takes only a layout variant.
  */
 
 import { analystErrorMessage, groundingLabel, toEvidenceItems } from '@/lib/analyst';
-import { type AgentAnswer, AnalystError, askSmartInv } from '@/lib/api';
+import { type AgentAnswer, AnalystError, askSmartInv, fetchConversation } from '@/lib/api';
+import { SUGGESTED_PROMPTS } from '@/lib/prompts';
 import { EvidenceStrip } from '@smartinv/ui-web';
 import { useMutation } from '@tanstack/react-query';
-import { type FormEvent, useRef, useState } from 'react';
+import { type FormEvent, useEffect, useRef, useState } from 'react';
 
 interface Message {
   id: number;
@@ -26,22 +29,58 @@ interface Message {
   error?: boolean;
 }
 
-const EXAMPLES = [
-  'How many critical spares and what is the total downtime exposure?',
-  'Give me an inventory health overview.',
-  'How many items are at obsolescence risk?',
-];
+interface AnalystChatProps {
+  variant?: 'page' | 'panel';
+  /** Load this existing conversation on mount (null/undefined = fresh chat). */
+  conversationId?: string | null;
+  /** Called when a conversation is created or continued (to refresh history). */
+  onConversationChanged?: (id: string) => void;
+}
 
-export function AnalystChat({ variant = 'page' }: { variant?: 'page' | 'panel' }) {
+export function AnalystChat({
+  variant = 'page',
+  conversationId: initialConversationId = null,
+  onConversationChanged,
+}: AnalystChatProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
+  const [conversationId, setConversationId] = useState<string | null>(initialConversationId);
   const nextId = useRef(1);
   const scrollRef = useRef<HTMLDivElement>(null);
 
+  // Load a past conversation's turns into the transcript on mount / when the
+  // selected conversation changes (the page remounts via key, so this runs once).
+  useEffect(() => {
+    if (!initialConversationId) return;
+    let cancelled = false;
+    fetchConversation(initialConversationId)
+      .then((detail) => {
+        if (cancelled) return;
+        const loaded: Message[] = [];
+        for (const turn of detail.turns) {
+          loaded.push({ id: nextId.current++, role: 'user', text: turn.question });
+          loaded.push({
+            id: nextId.current++,
+            role: 'assistant',
+            text: turn.answer.answer,
+            answer: turn.answer,
+          });
+        }
+        setMessages(loaded);
+        setConversationId(initialConversationId);
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, [initialConversationId]);
+
   const ask = useMutation({
-    mutationFn: (question: string) => askSmartInv(question),
+    mutationFn: (question: string) => askSmartInv(question, conversationId ?? undefined),
     onSuccess: (answer) => {
       pushAssistant({ text: answer.answer, answer });
+      setConversationId(answer.conversation_id);
+      onConversationChanged?.(answer.conversation_id);
     },
     onError: (err) => {
       const status = err instanceof AnalystError ? err.status : 0;
@@ -78,7 +117,7 @@ export function AnalystChat({ variant = 'page' }: { variant?: 'page' | 'panel' }
     <div className={`flex flex-col h-full min-h-0 ${variant === 'page' ? 'min-h-[440px]' : ''}`}>
       <div ref={scrollRef} className="flex-1 min-h-0 overflow-y-auto flex flex-col gap-4 pr-1">
         {messages.length === 0 ? (
-          <EmptyState onPick={submit} />
+          <EmptyState onPick={submit} compact={variant === 'panel'} />
         ) : (
           messages.map((m) =>
             m.role === 'user' ? (
@@ -117,25 +156,35 @@ export function AnalystChat({ variant = 'page' }: { variant?: 'page' | 'panel' }
   );
 }
 
-function EmptyState({ onPick }: { onPick: (q: string) => void }) {
+function EmptyState({ onPick, compact }: { onPick: (q: string) => void; compact?: boolean }) {
   return (
-    <div className="m-auto max-w-md text-center flex flex-col gap-3">
-      <div className="inline-flex mx-auto items-center gap-1.5 rounded-pill bg-ai-soft text-ai px-2.5 py-1 text-xs font-medium">
-        AI · governed answers only
+    <div className="m-auto max-w-md text-center flex flex-col gap-4">
+      <div className="flex flex-col gap-2">
+        <div className="inline-flex mx-auto items-center gap-1.5 rounded-pill bg-ai-soft text-ai px-2.5 py-1 text-xs font-medium">
+          AI · governed answers only
+        </div>
+        <p className="text-sm text-ink-2">
+          Ask about your inventory, health, and operational risk. Every answer carries its evidence
+          and is withheld if a figure can't be traced to a governed source.
+        </p>
       </div>
-      <p className="text-sm text-ink-2">
-        Ask about your inventory, health, and operational risk. Every answer carries its evidence
-        and is withheld if a figure can't be traced to a governed source.
-      </p>
-      <div className="flex flex-col gap-1.5">
-        {EXAMPLES.map((ex) => (
+
+      {/* Suggested prompts panel (CV5.E2.S6) */}
+      <div className="flex flex-col gap-1.5 text-left">
+        <span className="text-[11px] uppercase tracking-wide text-ink-3 px-1">
+          Suggested prompts
+        </span>
+        {SUGGESTED_PROMPTS.map((p) => (
           <button
-            key={ex}
+            key={p.label}
             type="button"
-            onClick={() => onPick(ex)}
-            className="text-left text-sm text-ink-2 rounded-md border border-line bg-card px-md py-2 hover:border-ai hover:text-ink"
+            onClick={() => onPick(p.question)}
+            className="rounded-md border border-line bg-card px-md py-2 hover:border-ai group"
           >
-            {ex}
+            <span className="block text-sm text-ink group-hover:text-ai">{p.label}</span>
+            {compact ? null : (
+              <span className="block text-xs text-ink-3 truncate">{p.question}</span>
+            )}
           </button>
         ))}
       </div>

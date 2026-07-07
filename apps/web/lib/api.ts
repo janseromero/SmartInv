@@ -500,6 +500,28 @@ export interface AgentAnswer {
   evidence: AgentEvidence[];
 }
 
+export interface AskResponse extends AgentAnswer {
+  conversation_id: string;
+}
+
+export interface ConversationRow {
+  id: string;
+  title: string;
+  updated_at: string | null;
+  turns: number;
+}
+
+export interface ConversationTurn {
+  question: string;
+  answer: AgentAnswer;
+}
+
+export interface ConversationDetail {
+  id: string;
+  title: string;
+  turns: ConversationTurn[];
+}
+
 /** Error carrying the HTTP status so the UI can distinguish 503 (unconfigured). */
 export class AnalystError extends Error {
   constructor(public readonly status: number) {
@@ -508,7 +530,7 @@ export class AnalystError extends Error {
   }
 }
 
-export async function askSmartInv(question: string): Promise<AgentAnswer> {
+export async function askSmartInv(question: string, conversationId?: string): Promise<AskResponse> {
   const headers = new Headers({ 'Content-Type': 'application/json' });
   const token = getToken();
   if (token) {
@@ -517,7 +539,7 @@ export async function askSmartInv(question: string): Promise<AgentAnswer> {
   const response = await fetch(`${API_URL}/agents/run`, {
     method: 'POST',
     headers,
-    body: JSON.stringify({ question }),
+    body: JSON.stringify({ question, conversation_id: conversationId ?? null }),
   });
   if (response.status === 401) {
     handleUnauthorized();
@@ -526,7 +548,15 @@ export async function askSmartInv(question: string): Promise<AgentAnswer> {
   if (!response.ok) {
     throw new AnalystError(response.status);
   }
-  return (await response.json()) as AgentAnswer;
+  return (await response.json()) as AskResponse;
+}
+
+export function fetchConversations(): Promise<ConversationRow[]> {
+  return apiFetch<ConversationRow[]>('/agents/conversations');
+}
+
+export function fetchConversation(id: string): Promise<ConversationDetail> {
+  return apiFetch<ConversationDetail>(`/agents/conversations/${id}`);
 }
 
 // --- Demand forecasting (CV3.E1) -----------------------------------------

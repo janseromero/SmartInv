@@ -25,8 +25,8 @@ Per [AGENTS.md MVP scope](../../../../AGENTS.md#mvp-scope--build-this-defer-that
 | CV5.E2.S2 | PostgresSaver checkpointer wired to the `agent` schema | ⏸ Deferred (ADR-032) — guarantee recorded, not dropped |
 | CV5.E2.S3 | `POST /agents/run` returning the answer envelope (JSON now; **SSE streaming** pending) | 🛠 Partial |
 | CV5.E2.S4 | Ask SmartInv chat: `/analyst` page **+ global topbar launcher** (⌘K slide-over, usable from any screen). JSON now; live evidence via the trace stream lands with S3 | ✅ Done |
-| CV5.E2.S5 | Conversation history persisted in `agent.conversations` (Postgres) | 📥 Backlog |
-| CV5.E2.S6 | Suggested prompts side panel (5 starter prompts) | 📥 Backlog |
+| CV5.E2.S5 | Conversation history persisted in `agent.conversations`/`runs`/`events`; multi-turn threading + a history rail with load/new-chat (`GET /agents/conversations[/{id}]`) | ✅ Done |
+| CV5.E2.S6 | Suggested-prompts panel (5 starter prompts) in the empty state | ✅ Done |
 
 ---
 

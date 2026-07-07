@@ -12,14 +12,22 @@ deterministic stub so the governed path is exercised without a model vendor.
 
 from __future__ import annotations
 
+import time
+import uuid
 from dataclasses import dataclass
-from typing import Annotated
+from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from api.agent.catalog import READ_ROLES, ToolScopeError
+from api.agent.history import (
+    get_or_create_user,
+    list_conversations,
+    load_conversation,
+    record_turn,
+)
 from api.agent.orchestrator import (
     AgentAnswer,
     Composer,
@@ -39,6 +47,31 @@ router = APIRouter(tags=["agents"], prefix="/agents")
 
 class AskRequest(BaseModel):
     question: str = Field(min_length=1, max_length=1000)
+    conversation_id: uuid.UUID | None = None
+
+
+class AskResponse(AgentAnswer):
+    """The governed answer plus the conversation it was recorded in."""
+
+    conversation_id: uuid.UUID
+
+
+class ConversationRow(BaseModel):
+    id: uuid.UUID
+    title: str
+    updated_at: str | None = None
+    turns: int
+
+
+class ConversationTurn(BaseModel):
+    question: str
+    answer: dict[str, Any]
+
+
+class ConversationDetail(BaseModel):
+    id: uuid.UUID
+    title: str
+    turns: list[ConversationTurn]
 
 
 @dataclass(frozen=True)
@@ -66,13 +99,14 @@ def get_analyst() -> Analyst:
     )
 
 
-@router.post("/run", response_model=AgentAnswer, summary="Ask SmartInv (governed)")
+@router.post("/run", response_model=AskResponse, summary="Ask SmartInv (governed)")
 def ask(
     body: AskRequest,
     user: Annotated[CurrentUser, Depends(require_role(*READ_ROLES))],
     session: Annotated[Session, Depends(get_tenant_session)],
     analyst: Annotated[Analyst, Depends(get_analyst)],
-) -> AgentAnswer:
+) -> AskResponse:
+    started = time.monotonic()
     try:
         answer = run_agent(
             session,
@@ -85,6 +119,24 @@ def ask(
         )
     except ToolScopeError as exc:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(exc)) from exc
+    latency_ms = int((time.monotonic() - started) * 1000)
+
+    # Persist the turn (CV5.E2.S5) — creates the conversation on the first turn.
+    user_row = get_or_create_user(session, user)
+    try:
+        conversation = record_turn(
+            session,
+            tenant_id=user.tenant_id,
+            user=user_row,
+            conversation_id=body.conversation_id,
+            question=body.question,
+            answer=answer,
+            latency_ms=latency_ms,
+        )
+    except LookupError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Conversation not found."
+        ) from exc
 
     # Audit the query itself (who asked what, and whether it grounded) in
     # addition to the per-tool audit records emitted inside the catalog.
@@ -94,6 +146,7 @@ def ask(
         actor=user.sub,
         action="agent.ask",
         resource_type="conversation",
+        resource_id=conversation.id,
         payload={
             "question": body.question,
             "grounded": answer.grounded,
@@ -101,4 +154,30 @@ def ask(
             "tools": [call.name for call in answer.tool_calls],
         },
     )
-    return answer
+    return AskResponse(**answer.model_dump(), conversation_id=conversation.id)
+
+
+@router.get("/conversations", response_model=list[ConversationRow], summary="List conversations")
+def conversations(
+    user: Annotated[CurrentUser, Depends(require_role(*READ_ROLES))],
+    session: Annotated[Session, Depends(get_tenant_session)],
+) -> list[ConversationRow]:
+    user_row = get_or_create_user(session, user)
+    return [ConversationRow(**row) for row in list_conversations(session, user_row.id)]
+
+
+@router.get(
+    "/conversations/{conversation_id}",
+    response_model=ConversationDetail,
+    summary="Load a conversation",
+)
+def conversation_detail(
+    conversation_id: uuid.UUID,
+    user: Annotated[CurrentUser, Depends(require_role(*READ_ROLES))],
+    session: Annotated[Session, Depends(get_tenant_session)],
+) -> ConversationDetail:
+    user_row = get_or_create_user(session, user)
+    detail = load_conversation(session, user_row.id, conversation_id)
+    if detail is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Conversation not found.")
+    return ConversationDetail(**detail)
