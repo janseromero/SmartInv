@@ -12,12 +12,15 @@ deterministic stub so the governed path is exercised without a model vendor.
 
 from __future__ import annotations
 
+import json
 import time
 import uuid
+from collections.abc import Iterator
 from dataclasses import dataclass
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
@@ -35,6 +38,7 @@ from api.agent.orchestrator import (
     LLMPlanner,
     Planner,
     run_agent,
+    stream_agent,
 )
 from api.audit.service import record_audit_event
 from api.auth.dependencies import get_tenant_session, require_role
@@ -155,6 +159,85 @@ def ask(
         },
     )
     return AskResponse(**answer.model_dump(), conversation_id=conversation.id)
+
+
+def _sse(event_type: str, data: dict[str, Any]) -> str:
+    """Format one Server-Sent Event."""
+    return f"event: {event_type}\ndata: {json.dumps(data)}\n\n"
+
+
+@router.post("/stream", summary="Ask SmartInv (governed, streamed trace)")
+def ask_stream(
+    body: AskRequest,
+    user: Annotated[CurrentUser, Depends(require_role(*READ_ROLES))],
+    session: Annotated[Session, Depends(get_tenant_session)],
+    analyst: Annotated[Analyst, Depends(get_analyst)],
+) -> StreamingResponse:
+    """Stream the governed run *trace* (planning, tool calls, validating), then a
+    terminal ``answer`` event with the validated envelope + conversation id.
+
+    Never streams raw answer tokens — fail-closed grounding runs on the complete
+    answer, which is delivered whole (ADR-032).
+    """
+
+    def event_stream() -> Iterator[str]:
+        started = time.monotonic()
+        try:
+            for event in stream_agent(
+                session,
+                user,
+                user.tenant_id,
+                body.question,
+                analyst.planner,
+                analyst.composer,
+                analyst.model,
+            ):
+                if event.type != "answer":
+                    yield _sse(event.type, event.data)
+                    continue
+
+                answer = event.data["answer"]
+                assert isinstance(answer, AgentAnswer)  # noqa: S101 — internal invariant
+                latency_ms = int((time.monotonic() - started) * 1000)
+                user_row = get_or_create_user(session, user)
+                conversation = record_turn(
+                    session,
+                    tenant_id=user.tenant_id,
+                    user=user_row,
+                    conversation_id=body.conversation_id,
+                    question=body.question,
+                    answer=answer,
+                    latency_ms=latency_ms,
+                )
+                record_audit_event(
+                    session,
+                    tenant_id=user.tenant_id,
+                    actor=user.sub,
+                    action="agent.ask",
+                    resource_type="conversation",
+                    resource_id=conversation.id,
+                    payload={
+                        "question": body.question,
+                        "grounded": answer.grounded,
+                        "model": answer.model,
+                        "tools": [call.name for call in answer.tool_calls],
+                        "streamed": True,
+                    },
+                )
+                payload = AskResponse(
+                    **answer.model_dump(), conversation_id=conversation.id
+                ).model_dump(mode="json")
+                yield _sse("answer", payload)
+        except ToolScopeError as exc:
+            yield _sse("error", {"detail": str(exc), "status": 403})
+        except LookupError:
+            yield _sse("error", {"detail": "Conversation not found.", "status": 404})
+
+    return StreamingResponse(
+        event_stream(),
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+    )
 
 
 @router.get("/conversations", response_model=list[ConversationRow], summary="List conversations")

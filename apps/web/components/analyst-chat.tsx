@@ -15,10 +15,9 @@
  */
 
 import { analystErrorMessage, groundingLabel, toEvidenceItems } from '@/lib/analyst';
-import { type AgentAnswer, AnalystError, askSmartInv, fetchConversation } from '@/lib/api';
+import { type AgentAnswer, AnalystError, askSmartInvStream, fetchConversation } from '@/lib/api';
 import { SUGGESTED_PROMPTS } from '@/lib/prompts';
 import { EvidenceStrip } from '@smartinv/ui-web';
-import { useMutation } from '@tanstack/react-query';
 import { type FormEvent, useEffect, useRef, useState } from 'react';
 
 interface Message {
@@ -27,6 +26,23 @@ interface Message {
   text: string;
   answer?: AgentAnswer;
   error?: boolean;
+}
+
+interface TraceState {
+  phase: string;
+  tools: string[];
+}
+
+// Human-readable label per streamed trace event (CV5.E2.S3).
+const PHASE: Record<string, string> = {
+  planning: 'Planning',
+  tool_call: 'Querying governed data',
+  composing: 'Composing answer',
+  validating: 'Validating grounding',
+};
+
+function phaseLabel(event: string): string {
+  return PHASE[event] ?? 'Working';
 }
 
 interface AnalystChatProps {
@@ -75,38 +91,54 @@ export function AnalystChat({
     };
   }, [initialConversationId]);
 
-  const ask = useMutation({
-    mutationFn: (question: string) => askSmartInv(question, conversationId ?? undefined),
-    onSuccess: (answer) => {
-      pushAssistant({ text: answer.answer, answer });
-      setConversationId(answer.conversation_id);
-      onConversationChanged?.(answer.conversation_id);
-    },
-    onError: (err) => {
-      const status = err instanceof AnalystError ? err.status : 0;
-      pushAssistant({ text: analystErrorMessage(status), error: true });
-    },
-  });
+  const [pending, setPending] = useState(false);
+  const [trace, setTrace] = useState<TraceState | null>(null);
 
-  function pushAssistant(partial: Omit<Message, 'id' | 'role'>) {
-    setMessages((m) => [...m, { id: nextId.current++, role: 'assistant', ...partial }]);
-    queueMicrotask(() => scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight }));
-  }
-
-  function submit(question: string) {
-    const q = question.trim();
-    if (!q || ask.isPending) return;
-    setMessages((m) => [...m, { id: nextId.current++, role: 'user', text: q }]);
-    setInput('');
-    ask.mutate(q);
+  function scrollToBottom() {
     queueMicrotask(() =>
       scrollRef.current?.scrollTo({ top: scrollRef.current?.scrollHeight ?? 0 }),
     );
   }
 
+  function pushAssistant(partial: Omit<Message, 'id' | 'role'>) {
+    setMessages((m) => [...m, { id: nextId.current++, role: 'assistant', ...partial }]);
+    scrollToBottom();
+  }
+
+  async function submit(question: string) {
+    const q = question.trim();
+    if (!q || pending) return;
+    setMessages((m) => [...m, { id: nextId.current++, role: 'user', text: q }]);
+    setInput('');
+    setPending(true);
+    setTrace({ phase: phaseLabel('planning'), tools: [] });
+    scrollToBottom();
+    try {
+      const answer = await askSmartInvStream(q, conversationId ?? undefined, (update) => {
+        setTrace((prev) => {
+          const tools = prev?.tools ?? [];
+          if (update.event === 'tool_call' && typeof update.data.name === 'string') {
+            return { phase: phaseLabel('tool_call'), tools: [...tools, update.data.name] };
+          }
+          return { phase: PHASE[update.event] ?? prev?.phase ?? 'Working', tools };
+        });
+        scrollToBottom();
+      });
+      pushAssistant({ text: answer.answer, answer });
+      setConversationId(answer.conversation_id);
+      onConversationChanged?.(answer.conversation_id);
+    } catch (err) {
+      const status = err instanceof AnalystError ? err.status : 0;
+      pushAssistant({ text: analystErrorMessage(status), error: true });
+    } finally {
+      setPending(false);
+      setTrace(null);
+    }
+  }
+
   function onSubmit(e: FormEvent) {
     e.preventDefault();
-    submit(input);
+    void submit(input);
   }
 
   // Both variants fill their parent, which is responsible for a definite height
@@ -127,7 +159,7 @@ export function AnalystChat({
             ),
           )
         )}
-        {ask.isPending ? <ThinkingBubble /> : null}
+        {pending ? <ThinkingBubble trace={trace} /> : null}
       </div>
 
       <form onSubmit={onSubmit} className="mt-3 flex items-end gap-2">
@@ -137,7 +169,7 @@ export function AnalystChat({
           onKeyDown={(e) => {
             if (e.key === 'Enter' && !e.shiftKey) {
               e.preventDefault();
-              submit(input);
+              void submit(input);
             }
           }}
           rows={1}
@@ -146,7 +178,7 @@ export function AnalystChat({
         />
         <button
           type="submit"
-          disabled={ask.isPending || !input.trim()}
+          disabled={pending || !input.trim()}
           className="rounded-md bg-ai text-white px-4 py-2 text-sm font-medium disabled:opacity-40"
         >
           Ask
@@ -244,10 +276,27 @@ function AssistantBubble({ message }: { message: Message }) {
   );
 }
 
-function ThinkingBubble() {
+function ThinkingBubble({ trace }: { trace: TraceState | null }) {
+  const phase = trace?.phase ?? 'Working';
+  const tools = trace?.tools ?? [];
   return (
-    <div className="self-start rounded-lg border border-ai/30 bg-ai-soft/40 px-md py-2.5 text-sm text-ink-3">
-      Analyzing governed data…
+    <div className="self-start rounded-lg border border-ai/30 bg-ai-soft/40 px-md py-2.5 flex flex-col gap-1.5">
+      <div className="flex items-center gap-2 text-sm text-ink-2">
+        <span className="inline-block w-1.5 h-1.5 rounded-pill bg-ai animate-pulse" />
+        {phase}…
+      </div>
+      {tools.length > 0 ? (
+        <div className="flex flex-wrap gap-1">
+          {tools.map((t) => (
+            <span
+              key={t}
+              className="inline-flex items-center gap-1 rounded-md bg-surface border border-line px-2 py-0.5 font-mono text-[11px] text-ink-3"
+            >
+              {t}
+            </span>
+          ))}
+        </div>
+      ) : null}
     </div>
   );
 }

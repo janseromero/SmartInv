@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import json
 import uuid
+from collections.abc import Iterator
 from dataclasses import dataclass
 from typing import Protocol
 
@@ -78,7 +79,21 @@ class AgentAnswer(BaseModel):
     evidence: list[EvidenceChip]
 
 
-def run_agent(
+@dataclass(frozen=True)
+class TraceEvent:
+    """A governed run-trace event streamed to the UI (CV5.E2.S3).
+
+    Only *progress* is streamed — planning, tool calls, composing, validating.
+    The answer text is never streamed token-by-token: fail-closed grounding runs
+    on the complete answer, so the validated answer is delivered whole in the
+    terminal ``answer`` event (ADR-032).
+    """
+
+    type: str  # 'planning' | 'tool_call' | 'composing' | 'validating' | 'answer'
+    data: dict[str, object]
+
+
+def stream_agent(
     session: Session,
     user: CurrentUser,
     tenant_id: uuid.UUID,
@@ -86,9 +101,15 @@ def run_agent(
     planner: Planner,
     composer: Composer,
     model: str,
-) -> AgentAnswer:
-    """Answer ``question`` over governed tools, failing closed if ungrounded."""
+) -> Iterator[TraceEvent]:
+    """The governed pipeline as a generator of trace events.
+
+    Yields progress events, then a terminal ``answer`` event whose ``data``
+    carries the validated :class:`AgentAnswer`. This is the single source of
+    truth for the pipeline; :func:`run_agent` just drains it.
+    """
     tools = list_tools()
+    yield TraceEvent("planning", {})
     selected = planner.plan(question, tools)
     if not selected:  # safe default: a portfolio question can touch every tool
         selected = [spec.name for spec in tools]
@@ -104,37 +125,72 @@ def run_agent(
             facts.append(
                 Fact(key=key, label=output.labels.get(key, key), value=value, source=output.source)
             )
+        yield TraceEvent(
+            "tool_call", {"name": output.tool, "version": output.version, "source": output.source}
+        )
 
+    evidence = [
+        EvidenceChip(metric=f.key, label=f.label, value=f.value, source=f.source) for f in facts
+    ]
     allowed = expand_allowed([f.value for f in facts])
+
+    yield TraceEvent("composing", {})
     answer = composer.compose(question, facts)
+    yield TraceEvent("validating", {})
     result = check_grounded(answer, allowed)
     if not result.grounded:
         # Retry once, then fail closed rather than ship untraceable numbers.
         answer = composer.compose(question, facts)
         result = check_grounded(answer, allowed)
         if not result.grounded:
-            return AgentAnswer(
+            fallback = AgentAnswer(
                 answer=UNGROUNDED_FALLBACK,
                 grounded=False,
                 confidence=0.0,
                 model=model,
                 tool_calls=tool_calls,
-                evidence=[
-                    EvidenceChip(metric=f.key, label=f.label, value=f.value, source=f.source)
-                    for f in facts
-                ],
+                evidence=evidence,
             )
+            yield TraceEvent("answer", {"answer": fallback})
+            return
 
-    return AgentAnswer(
-        answer=answer,
-        grounded=True,
-        confidence=0.9 if facts else 0.3,
-        model=model,
-        tool_calls=tool_calls,
-        evidence=[
-            EvidenceChip(metric=f.key, label=f.label, value=f.value, source=f.source) for f in facts
-        ],
+    yield TraceEvent(
+        "answer",
+        {
+            "answer": AgentAnswer(
+                answer=answer,
+                grounded=True,
+                confidence=0.9 if facts else 0.3,
+                model=model,
+                tool_calls=tool_calls,
+                evidence=evidence,
+            )
+        },
     )
+
+
+def run_agent(
+    session: Session,
+    user: CurrentUser,
+    tenant_id: uuid.UUID,
+    question: str,
+    planner: Planner,
+    composer: Composer,
+    model: str,
+) -> AgentAnswer:
+    """Answer ``question`` over governed tools, failing closed if ungrounded.
+
+    Thin drain over :func:`stream_agent` so JSON and streaming share one pipeline.
+    """
+    answer: AgentAnswer | None = None
+    for event in stream_agent(session, user, tenant_id, question, planner, composer, model):
+        if event.type == "answer":
+            candidate = event.data["answer"]
+            assert isinstance(candidate, AgentAnswer)  # noqa: S101 — internal invariant
+            answer = candidate
+    if answer is None:  # pragma: no cover — stream_agent always emits 'answer'
+        raise RuntimeError("stream_agent produced no answer")
+    return answer
 
 
 # --- deterministic stubs (tests + no-key dev) --------------------------------

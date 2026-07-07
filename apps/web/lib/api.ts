@@ -551,6 +551,71 @@ export async function askSmartInv(question: string, conversationId?: string): Pr
   return (await response.json()) as AskResponse;
 }
 
+export interface TraceUpdate {
+  event: string;
+  data: Record<string, unknown>;
+}
+
+/**
+ * Stream the governed run trace, resolving with the validated answer.
+ *
+ * `onTrace` receives progress events (planning / tool_call / composing /
+ * validating). The answer text is never streamed token-by-token — it arrives
+ * whole in the terminal `answer` event (ADR-032).
+ */
+export async function askSmartInvStream(
+  question: string,
+  conversationId: string | undefined,
+  onTrace: (update: TraceUpdate) => void,
+): Promise<AskResponse> {
+  const { parseSSEBuffer } = await import('@/lib/sse');
+  const headers = new Headers({ 'Content-Type': 'application/json' });
+  const token = getToken();
+  if (token) {
+    headers.set('Authorization', `Bearer ${token}`);
+  }
+  const response = await fetch(`${API_URL}/agents/stream`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({ question, conversation_id: conversationId ?? null }),
+  });
+  if (response.status === 401) {
+    handleUnauthorized();
+    throw new AnalystError(401);
+  }
+  if (!response.ok || !response.body) {
+    throw new AnalystError(response.status);
+  }
+
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = '';
+  let answer: AskResponse | null = null;
+
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+    const { messages, rest } = parseSSEBuffer(buffer);
+    buffer = rest;
+    for (const message of messages) {
+      if (message.event === 'answer') {
+        answer = message.data as AskResponse;
+      } else if (message.event === 'error') {
+        const status = (message.data as { status?: number }).status ?? 500;
+        throw new AnalystError(status);
+      } else {
+        onTrace({ event: message.event, data: (message.data as Record<string, unknown>) ?? {} });
+      }
+    }
+  }
+
+  if (!answer) {
+    throw new AnalystError(0);
+  }
+  return answer;
+}
+
 export function fetchConversations(): Promise<ConversationRow[]> {
   return apiFetch<ConversationRow[]>('/agents/conversations');
 }

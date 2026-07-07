@@ -8,6 +8,7 @@ orchestrator fails closed.
 
 from __future__ import annotations
 
+import json
 import uuid
 from collections.abc import Iterator
 
@@ -145,5 +146,31 @@ def test_unconfigured_analyst_returns_503(seeded_tenant: uuid.UUID) -> None:
     assert resp.status_code == 503
 
 
+def test_stream_emits_trace_then_answer(seeded_tenant: uuid.UUID) -> None:
+    app.dependency_overrides[get_analyst] = _stub_analyst
+    try:
+        client = _client(seeded_tenant, ["planner"])
+        resp = client.post("/agents/stream", json={"question": "inventory and risk summary"})
+        assert resp.status_code == 200
+        assert resp.headers["content-type"].startswith("text/event-stream")
+        body = resp.text
+        # Trace events precede the terminal answer.
+        assert "event: planning" in body
+        assert "event: tool_call" in body
+        assert "event: answer" in body
+        assert body.index("event: planning") < body.index("event: answer")
+
+        # The terminal answer carries the grounded envelope + conversation id.
+        answer_line = next(
+            line for line in body.splitlines() if line.startswith("data: {") and "grounded" in line
+        )
+        payload = json.loads(answer_line[len("data: ") :])
+        assert payload["grounded"] is True
+        assert "conversation_id" in payload
+    finally:
+        app.dependency_overrides.clear()
+
+
 def test_requires_auth() -> None:
     assert TestClient(app).post("/agents/run", json={"question": "x"}).status_code == 401
+    assert TestClient(app).post("/agents/stream", json={"question": "x"}).status_code == 401
