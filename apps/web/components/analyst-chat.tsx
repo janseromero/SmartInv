@@ -70,12 +70,13 @@ export function AnalystChat({ variant = 'page' }: { variant?: 'page' | 'panel' }
     submit(input);
   }
 
-  const rootClass =
-    variant === 'panel' ? 'flex flex-col h-full' : 'flex flex-col h-[calc(100vh-180px)]';
-
+  // Both variants fill their parent, which is responsible for a definite height
+  // (the page wraps this in a flex-1 min-h-0 column; the launcher in a
+  // full-height aside). The composer sits outside the scroll area so it is
+  // always pinned and visible.
   return (
-    <div className={rootClass}>
-      <div ref={scrollRef} className="flex-1 overflow-y-auto flex flex-col gap-4 pr-1">
+    <div className={`flex flex-col h-full min-h-0 ${variant === 'page' ? 'min-h-[440px]' : ''}`}>
+      <div ref={scrollRef} className="flex-1 min-h-0 overflow-y-auto flex flex-col gap-4 pr-1">
         {messages.length === 0 ? (
           <EmptyState onPick={submit} />
         ) : (
