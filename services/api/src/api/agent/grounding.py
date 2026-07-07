@@ -15,13 +15,23 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass
 
-# A number optionally prefixed by $ and suffixed by % or a K/M/B multiplier.
-# Examples matched: 1,234  ·  $1.2M  ·  45%  ·  0.86  ·  3
+# A number optionally prefixed by $ and suffixed by % or a magnitude multiplier,
+# written either as a letter (K/M/B) or a word (thousand/million/billion).
+# Examples matched: 1,234  ·  $1.2M  ·  $28.1 million  ·  45%  ·  0.86  ·  3
 _NUMBER_RE = re.compile(
-    r"\$?\s*(\d{1,3}(?:,\d{3})+|\d+(?:\.\d+)?)\s*(%|[KkMmBb])?\b",
+    r"\$?\s*(\d{1,3}(?:,\d{3})+(?:\.\d+)?|\d+(?:\.\d+)?)\s*"
+    r"(%|thousand|million|billion|[KMB])?\b",
+    re.IGNORECASE,
 )
 
-_MULTIPLIER = {"k": 1_000.0, "m": 1_000_000.0, "b": 1_000_000_000.0}
+_MULTIPLIER = {
+    "k": 1_000.0,
+    "thousand": 1_000.0,
+    "m": 1_000_000.0,
+    "million": 1_000_000.0,
+    "b": 1_000_000_000.0,
+    "billion": 1_000_000_000.0,
+}
 
 # Small integers are ordinary prose ("the 3 plants", "top 5") and would make the
 # validator hypersensitive, so they are not treated as grounded claims.
@@ -44,12 +54,13 @@ def extract_numbers(text: str) -> list[float]:
     values: list[float] = []
     for raw, suffix in _NUMBER_RE.findall(text):
         value = float(raw.replace(",", ""))
-        if suffix == "%":
+        key = suffix.lower()
+        if key == "%":
             # A percentage is grounded against either its 0..100 or 0..1 form;
             # keep the face value — callers pass both forms in allowed values.
             pass
-        elif suffix:
-            value *= _MULTIPLIER[suffix.lower()]
+        elif key:
+            value *= _MULTIPLIER[key]
         values.append(value)
     return values
 

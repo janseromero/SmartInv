@@ -13,6 +13,33 @@ def test_extracts_plain_currency_percent_and_compact() -> None:
     assert 0.86 in nums
 
 
+def test_comma_grouped_with_decimals_is_one_number() -> None:
+    # Regression: "$28,103,013.75" must not split into 28,103,013 and a stray 75.
+    nums = extract_numbers("Total downtime exposure is $28,103,013.75.")
+    assert 28_103_013.75 in nums
+    assert 75.0 not in nums
+
+
+def test_exact_comma_grouped_value_grounds() -> None:
+    result = check_grounded(
+        "There are 260 critical spares and exposure is $28,103,013.75.",
+        [260.0, 28_103_013.75],
+    )
+    assert result.grounded
+
+
+def test_extracts_word_multipliers() -> None:
+    nums = extract_numbers("Exposure is $28.1 million and demand is 3 thousand units.")
+    assert 28_100_000.0 in nums
+    assert 3_000.0 in nums
+
+
+def test_word_multiplier_grounds_against_full_value() -> None:
+    # The model restated 28,103,013.75 as "$28.1 million" — within 1% tolerance.
+    result = check_grounded("Total downtime exposure is $28.1 million.", [28_103_013.75])
+    assert result.grounded
+
+
 def test_grounded_answer_passes() -> None:
     result = check_grounded(
         "There are 1240 items and 37 critical spares.",
