@@ -2,11 +2,11 @@
 
 # CV5 — Governed Conversational Analyst
 
-**Status:** 🟢 In Progress — slice 1 (governed path) delivered
+**Status:** 🟢 In Progress — governed backend path delivered (CV5.E1 + CV5.E2 core)
 **Goal:** A planner asks SmartInv a question in natural language about their inventory, suppliers, work orders, or recommendations, and gets a grounded answer with evidence chips and source-record links — never invented numbers, never write actions.
 **Design:** [ADR-032](../../decisions.md#adr-032--cv5-conversational-analyst-litellm-sdk-in-process-linear-orchestrator-langgraphpostgressaver-deferred)
 
-> **Slice 1 delivered (backend):** the whole governed path exists end to end — a `LiteLLMGateway` (SDK in-process), a versioned/scoped/audited **tool catalog** (`inventory.summary`, `risk.summary`), a linear orchestrator (plan → tools → compose → **grounding validate** → envelope) that **fails closed** on ungrounded numbers, and `POST /agents/run`. Streaming (SSE), the chat UI, more tools, and the eval suite are the next slices. LangGraph/PostgresSaver deferred per ADR-032.
+> **Governed backend path delivered (CV5.E1 + CV5.E2 core):** the whole governed path exists end to end — a `LiteLLMGateway` (SDK in-process), a versioned/scoped/audited **tool catalog** (`inventory.summary`, `risk.summary`), a linear orchestrator (plan → tools → compose → **grounding validate** → envelope) that **fails closed** on ungrounded numbers, and `POST /agents/run`. Still open: SSE streaming (CV5.E2.S3), the chat UI (CV5.E2.S4), more tools (CV5.E1.S6), the evidence strip (CV5.E3), and the eval suite (CV5.E4). LangGraph/PostgresSaver deferred per ADR-032.
 
 ---
 

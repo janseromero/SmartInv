@@ -3,7 +3,7 @@
 # CV5.E1 — LLM Gateway & Tool Catalog
 
 **CV:** [CV5 — Governed Conversational Analyst](../index.md)
-**Status:** 🟢 In Progress — gateway + first tools delivered (slice 1)
+**Status:** 🟢 In Progress — gateway + first tools delivered
 **Prerequisite for:** CV5.E2
 **Design:** [ADR-032](../../../decisions.md#adr-032--cv5-conversational-analyst-litellm-sdk-in-process-linear-orchestrator-langgraphpostgressaver-deferred)
 
@@ -26,7 +26,7 @@ The catalog *is* the boundary between the LLM and SmartInv's data ([AGENTS.md no
 | CV5.E1.S3 | Pydantic tool I/O schemas (`ToolSpec`/`ToolOutput`) — in `api.agent.catalog` for MVP, extract to a package later | ✅ Done (in-app) |
 | CV5.E1.S4 | Tool registry with version, scope, owner, evaluator pointer | ✅ Done (evaluator pointer pending) |
 | CV5.E1.S5 | Scope enforcement at call time (tenant + role) with audit | ✅ Done |
-| CV5.E1.S6 | Initial tools: `inventory.summary`, `risk.summary` (forecast/optimization tools next slice) | 🛠 Partial |
+| CV5.E1.S6 | Initial tools: `inventory.summary`, `risk.summary` (forecast/optimization tools pending) | 🛠 Partial |
 | CV5.E1.S7 | Wire the Langfuse SDK into the LLM gateway using the `LANGFUSE_*` config delivered by [CV1.E4](../../cv1-foundations/cv1-e4-local-infrastructure/index.md) ([ADR-018](../../../decisions.md#adr-018--langfuse-cloud-free-tier-for-mvp-llm-observability)) | 📥 Backlog |
 
 ---

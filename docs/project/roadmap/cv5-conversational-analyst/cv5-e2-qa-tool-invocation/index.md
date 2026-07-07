@@ -3,7 +3,7 @@
 # CV5.E2 — Read-Only Q&A with Tool Invocation
 
 **CV:** [CV5 — Governed Conversational Analyst](../index.md)
-**Status:** 🟢 In Progress — non-streaming governed path delivered (slice 1)
+**Status:** 🟢 In Progress — non-streaming governed path delivered
 **Depends on:** CV5.E1
 **Design:** [ADR-032](../../../decisions.md#adr-032--cv5-conversational-analyst-litellm-sdk-in-process-linear-orchestrator-langgraphpostgressaver-deferred)
 
@@ -23,9 +23,9 @@ Per [AGENTS.md MVP scope](../../../../AGENTS.md#mvp-scope--build-this-defer-that
 |------|-------|--------|
 | CV5.E2.S1 | Orchestrator: plan → tool calls → composer → **grounding validator** → finalizer (linear Python, not LangGraph — ADR-032) | ✅ Done |
 | CV5.E2.S2 | PostgresSaver checkpointer wired to the `agent` schema | ⏸ Deferred (ADR-032) — guarantee recorded, not dropped |
-| CV5.E2.S3 | `POST /agents/run` returning the answer envelope (JSON now; **SSE streaming** next slice) | 🛠 Partial |
-| CV5.E2.S4 | Conversational analyst page with chat UI and streamed evidence chips | 📥 Backlog (next slice) |
-| CV5.E2.S5 | Conversation history persisted in `agent.conversations` (Postgres) | 📥 Backlog (next slice) |
+| CV5.E2.S3 | `POST /agents/run` returning the answer envelope (JSON now; **SSE streaming** pending) | 🛠 Partial |
+| CV5.E2.S4 | Conversational analyst page with chat UI and streamed evidence chips | 📥 Backlog |
+| CV5.E2.S5 | Conversation history persisted in `agent.conversations` (Postgres) | 📥 Backlog |
 | CV5.E2.S6 | Suggested prompts side panel (5 starter prompts) | 📥 Backlog |
 
 ---

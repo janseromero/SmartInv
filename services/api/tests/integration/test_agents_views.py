@@ -1,4 +1,4 @@
-"""Integration tests for the governed conversational analyst (CV5.E2 slice 1).
+"""Integration tests for the governed conversational analyst (CV5.E2).
 
 The analyst dependency is overridden with the deterministic stub so the full
 governed path (plan -> scoped/audited tools -> compose -> grounding) is exercised

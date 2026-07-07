@@ -560,7 +560,7 @@ Story-level work uses a **5-column Kanban**: Backlog · Doing · Blocked · Revi
 
 ## ADR-032 — CV5 conversational analyst: LiteLLM SDK in-process, linear orchestrator, LangGraph/PostgresSaver deferred
 
-**Context.** CV5 ships the governed conversational analyst ("Ask SmartInv"). [ADR-006](#adr-006--agent-orchestration-with-langgraph--postgressaver) chose LangGraph + PostgresSaver + a LiteLLM gateway; the CV5.E1 plan additionally speced LiteLLM as a **proxy container**. Building slice 1 (one thin governed path end to end) surfaced that two of those choices buy nothing yet while adding real cost.
+**Context.** CV5 ships the governed conversational analyst ("Ask SmartInv"). [ADR-006](#adr-006--agent-orchestration-with-langgraph--postgressaver) chose LangGraph + PostgresSaver + a LiteLLM gateway; the CV5.E1 plan additionally speced LiteLLM as a **proxy container**. Building the first thin governed path end to end (CV5.E1 + CV5.E2 core) surfaced that two of those choices buy nothing yet while adding real cost.
 
 **Decision.**
 - **LiteLLM Python SDK in-process** behind the existing `LLMGateway` contract — not a proxy container. A proxy earns its keep for multi-service/multi-team key management, which the modular monolith does not have. Vendor choice stays a config swap (`llm_model`); default `gpt-4o-mini`, `claude-3-5-haiku` as an alternate target.
@@ -570,7 +570,7 @@ Story-level work uses a **5-column Kanban**: Backlog · Doing · Blocked · Revi
 - **The grounding validator is the hard MVP guarantee** ([ADR-014](#adr-014--eval-driven-development-for-ai-features)): a deterministic check that every numeric claim in an answer traces to a tool output; the orchestrator **fails closed** (never ships untraceable numbers). It is unit-tested on every PR, independent of any live model.
 
 **Consequences.**
-- Slice 1 adds only the `litellm` dependency (lazily imported), no new container or service.
+- This first governed path adds only the `litellm` dependency (lazily imported), no new container or service.
 - The `LLMGateway` seam is unchanged, so swapping to the proxy or to LangGraph later is localized.
 - The analyst endpoint `503`s until `OPENAI_API_KEY` is configured; tests inject a deterministic stub planner/composer so the governed path runs in CI without a vendor.
 - **Trade-off:** no durable resume yet (acceptable for sub-6s read-only queries); LangGraph adoption is postponed until the graph actually branches (full CV5.E2 / CV11).

@@ -1,4 +1,4 @@
-"""Linear governed orchestrator for "Ask SmartInv" (CV5.E2, slice 1).
+"""Linear governed orchestrator for "Ask SmartInv" (CV5.E2).
 
 Flow: plan (select tools) -> execute tools (deterministic, scoped, audited) ->
 compose (answer from tool facts) -> validate (grounding) -> finalize (envelope).

@@ -1,9 +1,9 @@
-"""Governed conversational analyst endpoint — "Ask SmartInv" (CV5.E2, slice 1).
+"""Governed conversational analyst endpoint — "Ask SmartInv" (CV5.E2).
 
 ``POST /agents/run`` answers a natural-language question over the governed tool
 catalog and returns the answer envelope (answer, grounded flag, confidence,
-tool calls, evidence). Read-only; streaming (SSE) and chat history arrive in the
-next slice.
+tool calls, evidence). Read-only; streaming (SSE, CV5.E2.S3) and chat history
+(CV5.E2.S5) arrive later.
 
 The analyst (planner + composer) is an injected dependency: production uses the
 LiteLLM gateway (503 until an API key is configured); tests override it with the

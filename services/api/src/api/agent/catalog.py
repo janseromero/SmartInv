@@ -5,9 +5,9 @@ tenant-scoped (RLS), role-scoped, Pydantic-validated, and audited. Each tool
 returns a flat set of numeric *facts* plus a source link; those facts are the
 only values a composed answer is allowed to state (see :mod:`api.agent.grounding`).
 
-Slice 1 ships two argument-free portfolio tools built directly on the tenant
-session. Parameterized tools (item filters, per-plant drill-down) arrive in the
-next slice; the ``ToolSpec`` already carries the version/scope/schema surface
+This ships two argument-free portfolio tools built directly on the tenant
+session. Parameterized tools (item filters, per-plant drill-down) arrive with
+CV5.E1.S6; the ``ToolSpec`` already carries the version/scope/schema surface
 they need.
 """
 
