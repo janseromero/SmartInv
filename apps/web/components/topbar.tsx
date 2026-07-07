@@ -1,21 +1,15 @@
-import { BellIcon, HelpIcon, SearchIcon } from './icons';
+import { AskSmartInvLauncher } from './ask-smartinv-launcher';
+import { BellIcon, HelpIcon } from './icons';
 import { SessionChip } from './session-chip';
 
 /**
- * Persistent topbar with command bar, tenant chip, notification dot, and
- * help button. Command palette becomes interactive in CV8.E2 (UX Polish);
- * notifications become real in CV6.E3 (Audit Trail) / CV13.E4 (Alert Center).
+ * Persistent topbar. The command bar is the global "Ask SmartInv" launcher
+ * (CV5.E2.S4); notifications become real in CV6.E3 / CV13.E4.
  */
 export function Topbar() {
   return (
     <header className="flex items-center gap-lg px-lg bg-chrome border-b border-chrome-line text-chrome-topbar h-[54px]">
-      <div className="flex-1 max-w-[620px] flex items-center gap-sm bg-chrome-2 border border-chrome-line rounded-md px-md py-1.5 text-sm text-chrome-cmd">
-        <SearchIcon className="w-3.5 h-3.5 flex-none" />
-        <span className="truncate">Search items, suppliers, assets — or ask anything…</span>
-        <kbd className="ml-auto font-mono text-[10px] bg-chrome-kbd border border-chrome-line rounded px-1.5 py-px text-chrome-cmd">
-          ⌘K
-        </kbd>
-      </div>
+      <AskSmartInvLauncher />
 
       <div className="ml-auto flex items-center gap-1.5">
         <SessionChip />

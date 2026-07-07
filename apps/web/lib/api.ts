@@ -476,6 +476,59 @@ export function fetchRegimeSignals(): Promise<RegimeSignalRow[]> {
   return apiFetch<RegimeSignalRow[]>('/recommendations/regime-signals');
 }
 
+// --- Conversational analyst: Ask SmartInv (CV5.E2) ------------------------
+
+export interface AgentToolCall {
+  name: string;
+  version: string;
+  source: string;
+}
+
+export interface AgentEvidence {
+  metric: string;
+  label: string;
+  value: number;
+  source: string;
+}
+
+export interface AgentAnswer {
+  answer: string;
+  grounded: boolean;
+  confidence: number;
+  model: string;
+  tool_calls: AgentToolCall[];
+  evidence: AgentEvidence[];
+}
+
+/** Error carrying the HTTP status so the UI can distinguish 503 (unconfigured). */
+export class AnalystError extends Error {
+  constructor(public readonly status: number) {
+    super(`Ask SmartInv failed: ${status}`);
+    this.name = 'AnalystError';
+  }
+}
+
+export async function askSmartInv(question: string): Promise<AgentAnswer> {
+  const headers = new Headers({ 'Content-Type': 'application/json' });
+  const token = getToken();
+  if (token) {
+    headers.set('Authorization', `Bearer ${token}`);
+  }
+  const response = await fetch(`${API_URL}/agents/run`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({ question }),
+  });
+  if (response.status === 401) {
+    handleUnauthorized();
+    throw new AnalystError(401);
+  }
+  if (!response.ok) {
+    throw new AnalystError(response.status);
+  }
+  return (await response.json()) as AgentAnswer;
+}
+
 // --- Demand forecasting (CV3.E1) -----------------------------------------
 
 export interface ForecastItemRow {

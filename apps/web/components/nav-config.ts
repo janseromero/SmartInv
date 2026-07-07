@@ -114,7 +114,6 @@ export const ROUTE_GROUPS: RouteGroup[] = [
         sub: 'Natural language over governed inventory, usage, work-order and procurement data — answers carry their evidence.',
         icon: 'clock',
         pill: { value: 'AI', tone: 'ai' },
-        shipsIn: 'CV5',
       },
       {
         href: '/agents',
