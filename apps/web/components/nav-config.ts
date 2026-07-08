@@ -23,6 +23,12 @@ export interface RouteMeta {
   pill?: { value: string; tone: 'crit' | 'ai' };
   /** Optional pointer to the CV that ships real content. */
   shipsIn?: string;
+  /**
+   * Hide from the sidebar without removing the route. The page, URL, and
+   * page-head lookup stay intact (still reachable directly); it just isn't
+   * listed in the nav. Used to park deferred Phase-2 placeholders.
+   */
+  hidden?: boolean;
 }
 
 export interface RouteGroup {
@@ -100,6 +106,7 @@ export const ROUTE_GROUPS: RouteGroup[] = [
         sub: 'Act earlier on late POs, negotiate with price evidence, and reduce supply-side uncertainty.',
         icon: 'cart',
         shipsIn: 'CV9',
+        hidden: true,
       },
     ],
   },
@@ -123,6 +130,7 @@ export const ROUTE_GROUPS: RouteGroup[] = [
         sub: 'Specialized agents under human governance — scoped tools, full audit, no direct writes to source systems.',
         icon: 'agent',
         shipsIn: 'CV11',
+        hidden: true,
       },
       {
         href: '/reports',
@@ -132,6 +140,7 @@ export const ROUTE_GROUPS: RouteGroup[] = [
         sub: 'Board-ready narratives and operational reviews — generated from governed metrics, linked back to source records.',
         icon: 'document',
         shipsIn: 'CV10',
+        hidden: true,
       },
     ],
   },

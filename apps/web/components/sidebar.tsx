@@ -24,47 +24,53 @@ export function Sidebar() {
         </div>
       </div>
 
-      {ROUTE_GROUPS.map((group) => (
-        <nav key={group.label} className="px-sm pt-md pb-1">
-          <div className="text-xs font-semibold tracking-widest uppercase text-chrome-muted px-md pb-sm">
-            {group.label}
-          </div>
-          {group.routes.map((route) => {
-            const Icon = ICONS[route.icon];
-            const isActive = pathname === route.href;
-            return (
-              <Link
-                key={route.href}
-                href={route.href}
-                aria-current={isActive ? 'page' : undefined}
-                className={[
-                  'flex items-center gap-md w-full px-md py-1.5 rounded-md text-sm font-medium mb-px',
-                  isActive
-                    ? 'bg-teal/[0.16] text-teal-bright'
-                    : 'text-chrome-ink hover:bg-chrome-2 hover:text-chrome-hover',
-                ].join(' ')}
-              >
-                <Icon
-                  className={['w-4 h-4 flex-none', isActive ? 'opacity-100' : 'opacity-80'].join(
-                    ' ',
-                  )}
-                />
-                <span className="truncate">{route.label}</span>
-                {route.pill ? (
-                  <span
-                    className={[
-                      'ml-auto text-[10px] font-semibold rounded-full px-1.5 leading-4 text-white',
-                      route.pill.tone === 'ai' ? 'bg-ai' : 'bg-crit',
-                    ].join(' ')}
-                  >
-                    {route.pill.value}
-                  </span>
-                ) : null}
-              </Link>
-            );
-          })}
-        </nav>
-      ))}
+      {ROUTE_GROUPS.map((group) => {
+        // Hidden routes stay routable but are dropped from the nav; skip a group
+        // entirely once every route in it is hidden.
+        const visibleRoutes = group.routes.filter((route) => !route.hidden);
+        if (visibleRoutes.length === 0) return null;
+        return (
+          <nav key={group.label} className="px-sm pt-md pb-1">
+            <div className="text-xs font-semibold tracking-widest uppercase text-chrome-muted px-md pb-sm">
+              {group.label}
+            </div>
+            {visibleRoutes.map((route) => {
+              const Icon = ICONS[route.icon];
+              const isActive = pathname === route.href;
+              return (
+                <Link
+                  key={route.href}
+                  href={route.href}
+                  aria-current={isActive ? 'page' : undefined}
+                  className={[
+                    'flex items-center gap-md w-full px-md py-1.5 rounded-md text-sm font-medium mb-px',
+                    isActive
+                      ? 'bg-teal/[0.16] text-teal-bright'
+                      : 'text-chrome-ink hover:bg-chrome-2 hover:text-chrome-hover',
+                  ].join(' ')}
+                >
+                  <Icon
+                    className={['w-4 h-4 flex-none', isActive ? 'opacity-100' : 'opacity-80'].join(
+                      ' ',
+                    )}
+                  />
+                  <span className="truncate">{route.label}</span>
+                  {route.pill ? (
+                    <span
+                      className={[
+                        'ml-auto text-[10px] font-semibold rounded-full px-1.5 leading-4 text-white',
+                        route.pill.tone === 'ai' ? 'bg-ai' : 'bg-crit',
+                      ].join(' ')}
+                    >
+                      {route.pill.value}
+                    </span>
+                  ) : null}
+                </Link>
+              );
+            })}
+          </nav>
+        );
+      })}
 
       {/* User footer */}
       <div className="mt-auto px-lg py-md border-t border-chrome-line flex items-center gap-md">
