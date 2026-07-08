@@ -4,6 +4,7 @@ version = "0.1.0"
 description = "SmartInv — AI-Powered MRO Inventory Intelligence Platform"
 requires-python = ">=3.12"
 dependencies = [
+    "langfuse>=2.7.3,<3",
     "litellm>=1.91.0",
 ]
 

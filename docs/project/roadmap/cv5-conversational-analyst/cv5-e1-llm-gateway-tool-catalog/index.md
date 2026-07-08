@@ -27,7 +27,7 @@ The catalog *is* the boundary between the LLM and SmartInv's data ([AGENTS.md no
 | CV5.E1.S4 | Tool registry with version, scope, owner, evaluator pointer | ✅ Done (evaluator pointer pending) |
 | CV5.E1.S5 | Scope enforcement at call time (tenant + role) with audit | ✅ Done |
 | CV5.E1.S6 | Initial tools: `inventory.summary`, `risk.summary` (forecast/optimization tools pending) | 🛠 Partial |
-| CV5.E1.S7 | Wire the Langfuse SDK into the LLM gateway using the `LANGFUSE_*` config delivered by [CV1.E4](../../cv1-foundations/cv1-e4-local-infrastructure/index.md) ([ADR-018](../../../decisions.md#adr-018--langfuse-cloud-free-tier-for-mvp-llm-observability)) | 📥 Backlog |
+| CV5.E1.S7 | Langfuse SDK wired into the gateway via LiteLLM's success/failure callbacks (registered once when `LANGFUSE_*` keys are present; no-op otherwise). Traces prompt/response/tokens/cost/latency for every analyst LLM call ([ADR-018](../../../decisions.md#adr-018--langfuse-cloud-free-tier-for-mvp-llm-observability)) | ✅ Done |
 
 ---
 
